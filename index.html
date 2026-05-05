@@ -1,256 +1,144 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Campamento Aprender es Divertido</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Campamento Aprender es Divertido</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f2f6fb;
-      color: #1f2937;
-    }
-
-    header {
-      background: #0f4c81;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .contenedor {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-
-    .tarjeta {
-      background: white;
-      border-radius: 14px;
-      padding: 25px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
-    }
-
-    h1, h2, h3 {
-      margin-top: 0;
-    }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px;
-      margin-top: 6px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    button {
-      margin-top: 20px;
-      background: #0f4c81;
-      color: white;
-      border: none;
-      padding: 13px 20px;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0b3a63;
-    }
-
-    .mensaje {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .error {
-      color: #b91c1c;
-    }
-
-    .ok {
-      color: #166534;
-    }
-
-    .oculto {
-      display: none;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-      margin-top: 25px;
-    }
-
-    .modulo {
-      background: #e8f1fb;
-      border-left: 6px solid #0f4c81;
-      padding: 20px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .modulo:hover {
-      background: #dbeafe;
-      transform: translateY(-2px);
-    }
-
-    .datos-usuario {
-      background: #f8fafc;
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-
-    .estudiante {
-      background: #f8fafc;
-      border: 1px solid #dbe3ef;
-      border-radius: 10px;
-      padding: 15px;
-      margin-top: 12px;
-    }
-
-    footer {
-      text-align: center;
-      margin: 30px;
-      color: #64748b;
-      font-size: 14px;
-    }
-  </style>
+<style>
+body {margin:0;font-family:Arial;background:#f2f6fb;}
+header {background:#0f4c81;color:white;padding:20px;text-align:center;}
+.contenedor {max-width:900px;margin:40px auto;padding:20px;}
+.tarjeta {background:white;border-radius:14px;padding:25px;box-shadow:0 8px 20px rgba(0,0,0,0.08);margin-bottom:20px;}
+.grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:25px;}
+.modulo {background:#e8f1fb;border-left:6px solid #0f4c81;padding:20px;border-radius:12px;cursor:pointer;}
+.modulo:hover {background:#dbeafe;}
+.oculto {display:none;}
+.estudiante {background:#f8fafc;border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin-top:10px;}
+.opciones label {margin-right:10px;}
+button {margin-top:15px;background:#0f4c81;color:white;border:none;padding:10px;border-radius:8px;cursor:pointer;}
+</style>
 </head>
 
 <body>
 
 <header>
-  <h1>Campamento Aprender es Divertido</h1>
-  <p>Plataforma de gestión y seguimiento</p>
+<h1>Campamento Aprender es Divertido</h1>
 </header>
 
 <div class="contenedor">
 
-  <section id="login" class="tarjeta">
-    <h2>Inicio de sesión</h2>
+<!-- LOGIN -->
+<section id="login" class="tarjeta">
+<h2>Inicio de sesión</h2>
+<input id="cedula" placeholder="Cédula">
+<input id="password" type="password" placeholder="Contraseña">
+<button onclick="login()">Entrar</button>
+<div id="msgLogin"></div>
+</section>
 
-    <label>Cédula</label>
-    <input type="text" id="cedula">
+<!-- PANEL -->
+<section id="panel" class="tarjeta oculto">
+<h2>Panel</h2>
+<div id="infoUsuario"></div>
 
-    <label>Contraseña</label>
-    <input type="password" id="password">
-
-    <button onclick="iniciarSesion()">Iniciar sesión</button>
-
-    <div id="mensajeLogin" class="mensaje"></div>
-  </section>
-
-  <section id="panel" class="tarjeta oculto">
-    <h2>Panel principal</h2>
-
-    <div id="datosUsuario" class="datos-usuario"></div>
-
-    <div class="grid">
-      <div class="modulo" onclick="abrirModulo('asistencia')">
-        <h3>Pase de lista</h3>
-      </div>
-    </div>
-
-    <button onclick="cerrarSesion()">Cerrar sesión</button>
-  </section>
-
-  <section id="moduloAsistencia" class="tarjeta oculto">
-    <h2>Pase de lista</h2>
-
-    <label>Grupo</label>
-    <select id="grupoAsistencia">
-      <option value="">Seleccione</option>
-      <option>EXPLORADORES</option>
-      <option>CREADORES</option>
-      <option>INNOVADORES</option>
-    </select>
-
-    <button onclick="cargarEstudiantes()">Cargar estudiantes</button>
-
-    <div id="mensajeAsistencia" class="mensaje"></div>
-    <div id="listaEstudiantes"></div>
-
-    <button onclick="volverPanel()">Volver</button>
-  </section>
-
+<div class="grid">
+<div class="modulo" onclick="abrirAsistencia()">Pase de lista</div>
+<div class="modulo">Acompañamientos</div>
+<div class="modulo">Incidencias</div>
+<div class="modulo">Evaluaciones</div>
+<div class="modulo">Reportes</div>
 </div>
 
-<footer>
-  © 2026 Ministerio de Educación – Desarrollado por Aneudy Minier
-</footer>
+<button onclick="cerrar()">Cerrar sesión</button>
+</section>
+
+<!-- ASISTENCIA -->
+<section id="asistencia" class="tarjeta oculto">
+<h2>Pase de lista</h2>
+
+<select id="grupo">
+<option value="">Seleccione grupo</option>
+<option>EXPLORADORES</option>
+<option>CREADORES</option>
+<option>INNOVADORES</option>
+</select>
+
+<button onclick="cargar()">Cargar estudiantes</button>
+
+<div id="msg"></div>
+<div id="lista"></div>
+
+<button onclick="volver()">Volver</button>
+</section>
+
+</div>
 
 <script>
 const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxcTc7PtW4v9lXy4ibA8lMBUwJyKwmigoQbIHSYyyFJ70Xwl5S7fAjIpmnqfwCn4tFq/exec";
 
-let usuarioActual = null;
+let usuario = null;
 
-function iniciarSesion() {
-  const cedula = document.getElementById("cedula").value;
-  const password = document.getElementById("password").value;
+function login(){
+const c = cedula.value;
+const p = password.value;
+const cb = "cb"+Date.now();
 
-  const callback = "cb_" + Date.now();
+window[cb] = r=>{
+if(r.ok){
+usuario=r.usuario;
+login.style.display="none";
+panel.classList.remove("oculto");
+infoUsuario.innerHTML=r.usuario.nombre;
+}
+};
 
-  window[callback] = function(res) {
-    if (res.ok) {
-      usuarioActual = res.usuario;
-      document.getElementById("login").classList.add("oculto");
-      document.getElementById("panel").classList.remove("oculto");
-      document.getElementById("datosUsuario").innerHTML = usuarioActual.nombre;
-    }
-  };
-
-  const script = document.createElement("script");
-  script.src = `${URL_SCRIPT}?accion=login&cedula=${cedula}&password=${password}&callback=${callback}`;
-  document.body.appendChild(script);
+let s=document.createElement("script");
+s.src=`${URL_SCRIPT}?accion=login&cedula=${c}&password=${p}&callback=${cb}`;
+document.body.appendChild(s);
 }
 
-function abrirModulo(modulo) {
-  document.getElementById("panel").classList.add("oculto");
-  document.getElementById("moduloAsistencia").classList.remove("oculto");
+function abrirAsistencia(){
+panel.classList.add("oculto");
+asistencia.classList.remove("oculto");
 }
 
-function volverPanel() {
-  document.getElementById("moduloAsistencia").classList.add("oculto");
-  document.getElementById("panel").classList.remove("oculto");
+function volver(){
+asistencia.classList.add("oculto");
+panel.classList.remove("oculto");
 }
 
-function cargarEstudiantes() {
-  const grupo = document.getElementById("grupoAsistencia").value;
-  const callback = "cb_" + Date.now();
+function cargar(){
+let g=grupo.value;
+let cb="cb"+Date.now();
 
-  window[callback] = function(res) {
-    const cont = document.getElementById("listaEstudiantes");
-    cont.innerHTML = "";
+window[cb]=r=>{
+lista.innerHTML="";
+if(r.estudiantes){
+r.estudiantes.forEach(e=>{
+lista.innerHTML+=`
+<div class="estudiante">
+<b>${e.nombre}</b><br>
+<div class="opciones">
+<label><input type="radio" name="${e.idEstudiante}" value="P">Presente</label>
+<label><input type="radio" name="${e.idEstudiante}" value="T">Tardanza</label>
+<label><input type="radio" name="${e.idEstudiante}" value="A">Ausente</label>
+<label><input type="radio" name="${e.idEstudiante}" value="E">Excusa</label>
+</div>
+</div>`;
+});
+}else{
+msg.innerHTML="No hay estudiantes";
+}
+};
 
-    if (res.estudiantes) {
-      res.estudiantes.forEach(e => {
-        cont.innerHTML += `<div class="estudiante">${e.nombre}</div>`;
-      });
-    }
-  };
-
-  const script = document.createElement("script");
-  script.src = `${URL_SCRIPT}?accion=estudiantes&cedula=${usuarioActual.cedula}&grupo=${grupo}&callback=${callback}`;
-  document.body.appendChild(script);
+let s=document.createElement("script");
+s.src=`${URL_SCRIPT}?accion=estudiantes&cedula=${usuario.cedula}&grupo=${g}&callback=${cb}`;
+document.body.appendChild(s);
 }
 
-function cerrarSesion() {
-  location.reload();
+function cerrar(){
+location.reload();
 }
 </script>
 
