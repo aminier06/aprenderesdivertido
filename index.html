@@ -44,7 +44,7 @@
       font-weight: bold;
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 12px;
       margin-top: 6px;
@@ -115,6 +115,36 @@
       line-height: 1.6;
     }
 
+    .estudiante {
+      background: #f8fafc;
+      border: 1px solid #dbe3ef;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 12px;
+    }
+
+    .opciones-asistencia {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .opciones-asistencia label {
+      font-weight: normal;
+      margin-top: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .opciones-asistencia input {
+      width: auto;
+      margin-right: 6px;
+    }
+
     footer {
       text-align: center;
       margin: 30px;
@@ -180,6 +210,30 @@
     </div>
 
     <button onclick="cerrarSesion()">Cerrar sesión</button>
+  </section>
+
+  <section id="moduloAsistencia" class="tarjeta oculto">
+    <h2>Pase de lista</h2>
+
+    <div class="datos-usuario" id="datosUsuarioAsistencia"></div>
+
+    <label for="fechaAsistencia">Fecha de asistencia</label>
+    <input type="date" id="fechaAsistencia">
+
+    <label for="grupoAsistencia">Grupo</label>
+    <select id="grupoAsistencia">
+      <option value="">Seleccione un grupo</option>
+      <option value="EXPLORADORES">EXPLORADORES</option>
+      <option value="CREADORES">CREADORES</option>
+      <option value="INNOVADORES">INNOVADORES</option>
+    </select>
+
+    <button onclick="cargarEstudiantes()">Cargar estudiantes</button>
+
+    <div id="mensajeAsistencia" class="mensaje"></div>
+    <div id="listaEstudiantes"></div>
+
+    <button onclick="volverAlPanel()">Volver al panel</button>
   </section>
 
 </div>
@@ -250,7 +304,130 @@
   }
 
   function abrirModulo(modulo) {
-    alert("Módulo seleccionado: " + modulo + ". En el próximo paso construiremos esta pantalla.");
+    if (modulo === "asistencia") {
+      abrirModuloAsistencia();
+    } else {
+      alert("Módulo seleccionado: " + modulo + ". En el próximo paso construiremos esta pantalla.");
+    }
+  }
+
+  function abrirModuloAsistencia() {
+    if (!usuarioActual) {
+      alert("Debe iniciar sesión.");
+      return;
+    }
+
+    document.getElementById("panel").classList.add("oculto");
+    document.getElementById("moduloAsistencia").classList.remove("oculto");
+
+    document.getElementById("datosUsuarioAsistencia").innerHTML = `
+      <strong>Usuario:</strong> ${usuarioActual.nombre || ""}<br>
+      <strong>Rol:</strong> ${usuarioActual.rol || ""}<br>
+      <strong>Regional:</strong> ${usuarioActual.regional || ""}<br>
+      <strong>Distrito:</strong> ${usuarioActual.distrito || ""}<br>
+      <strong>Centro sede:</strong> ${usuarioActual.centroSede || ""}
+    `;
+
+    const hoy = new Date().toISOString().split("T")[0];
+    document.getElementById("fechaAsistencia").value = hoy;
+  }
+
+  function cargarEstudiantes() {
+    const grupo = document.getElementById("grupoAsistencia").value;
+    const mensaje = document.getElementById("mensajeAsistencia");
+    const lista = document.getElementById("listaEstudiantes");
+
+    mensaje.textContent = "";
+    mensaje.className = "mensaje";
+    lista.innerHTML = "";
+
+    if (!usuarioActual) {
+      mensaje.textContent = "Debe iniciar sesión.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    if (!grupo) {
+      mensaje.textContent = "Debe seleccionar un grupo.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    mensaje.textContent = "Cargando estudiantes...";
+
+    const callbackName = "callbackEstudiantes_" + Date.now();
+
+    window[callbackName] = function(respuesta) {
+      if (respuesta.ok) {
+        if (!respuesta.estudiantes || respuesta.estudiantes.length === 0) {
+          mensaje.textContent = "No se encontraron estudiantes para este grupo y centro sede.";
+          mensaje.classList.add("error");
+        } else {
+          mensaje.textContent = "Estudiantes cargados: " + respuesta.estudiantes.length;
+          mensaje.classList.add("ok");
+          mostrarEstudiantes(respuesta.estudiantes);
+        }
+      } else {
+        mensaje.textContent = respuesta.mensaje || "No se pudieron cargar los estudiantes.";
+        mensaje.classList.add("error");
+      }
+
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const script = document.createElement("script");
+    script.src = URL_SCRIPT
+      + "?accion=estudiantes"
+      + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
+      + "&grupo=" + encodeURIComponent(grupo)
+      + "&callback=" + callbackName;
+
+    document.body.appendChild(script);
+  }
+
+  function mostrarEstudiantes(estudiantes) {
+    const lista = document.getElementById("listaEstudiantes");
+    lista.innerHTML = "";
+
+    estudiantes.forEach(function(estudiante, index) {
+      const div = document.createElement("div");
+      div.className = "estudiante";
+
+      div.innerHTML = `
+        <strong>${index + 1}. ${estudiante.nombre || ""}</strong><br>
+        <small>ID: ${estudiante.idEstudiante || ""} | Grado: ${estudiante.grado || ""}</small>
+
+        <div class="opciones-asistencia">
+          <label>
+            <input type="radio" name="asistencia_${estudiante.idEstudiante}" value="Presente" checked>
+            Presente
+          </label>
+
+          <label>
+            <input type="radio" name="asistencia_${estudiante.idEstudiante}" value="Tardanza">
+            Tardanza
+          </label>
+
+          <label>
+            <input type="radio" name="asistencia_${estudiante.idEstudiante}" value="Ausente">
+            Ausente
+          </label>
+
+          <label>
+            <input type="radio" name="asistencia_${estudiante.idEstudiante}" value="Excusa">
+            Excusa
+          </label>
+        </div>
+      `;
+
+      lista.appendChild(div);
+    });
+  }
+
+  function volverAlPanel() {
+    document.getElementById("moduloAsistencia").classList.add("oculto");
+    document.getElementById("panel").classList.remove("oculto");
   }
 
   function cerrarSesion() {
@@ -261,6 +438,7 @@
     document.getElementById("mensajeLogin").textContent = "";
 
     document.getElementById("panel").classList.add("oculto");
+    document.getElementById("moduloAsistencia").classList.add("oculto");
     document.getElementById("login").classList.remove("oculto");
   }
 </script>
