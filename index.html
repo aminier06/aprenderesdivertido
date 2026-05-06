@@ -193,6 +193,34 @@
       z-index: 2;
     }
 
+    .tarjetas-dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .tarjeta-indicador {
+      background: #f8fafc;
+      border-left: 6px solid #0f4c81;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .tarjeta-indicador span {
+      display: block;
+      font-size: 14px;
+      color: #475569;
+    }
+
+    .tarjeta-indicador strong {
+      display: block;
+      font-size: 28px;
+      margin-top: 8px;
+      color: #0f4c81;
+    }
+
     footer {
       text-align: center;
       margin: 30px;
@@ -262,6 +290,11 @@
         <p>Registrar o consultar asistencia diaria de los estudiantes.</p>
       </div>
 
+      <div class="modulo" onclick="abrirModulo('dashboard')">
+        <h3>Dashboard de asistencia</h3>
+        <p>Visualizar indicadores, resumen diario y ausencias recurrentes.</p>
+      </div>
+
       <div class="modulo" onclick="abrirModulo('acompanamientos')">
         <h3>Acompañamientos</h3>
         <p>Registrar acompañamientos realizados a docentes o facilitadores.</p>
@@ -316,6 +349,40 @@
     <button class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
   </section>
 
+  <section id="moduloDashboard" class="tarjeta oculto">
+    <h2>Dashboard de asistencia</h2>
+
+    <div class="datos-usuario" id="datosUsuarioDashboard"></div>
+
+    <label for="grupoDashboard">Grupo</label>
+    <select id="grupoDashboard">
+      <option value="">Todos los grupos permitidos</option>
+      <option value="EXPLORADORES">EXPLORADORES</option>
+      <option value="CREADORES">CREADORES</option>
+      <option value="INNOVADORES">INNOVADORES</option>
+    </select>
+
+    <label for="fechaInicioDashboard">Fecha inicial</label>
+    <input type="date" id="fechaInicioDashboard">
+
+    <label for="fechaFinDashboard">Fecha final</label>
+    <input type="date" id="fechaFinDashboard">
+
+    <button onclick="cargarDashboardAsistencia()">Cargar dashboard</button>
+
+    <div id="mensajeDashboard" class="mensaje"></div>
+
+    <div id="resumenDashboard" class="tarjetas-dashboard"></div>
+
+    <h3>Resumen por fecha</h3>
+    <div id="tablaDashboardFechas" class="tabla-contenedor"></div>
+
+    <h3>Estudiantes con ausencias recurrentes</h3>
+    <div id="tablaDashboardAusencias" class="tabla-contenedor"></div>
+
+    <button class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+  </section>
+
 </div>
 
 <footer>
@@ -323,7 +390,7 @@
 </footer>
 
 <script>
-  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby8U1xAiYvzoVlrQpnF_j2kdqgOk_1TRHJIaYX6e3cJxLvTeYGq-ew_4BI5iH6rY_X_Gw/exec";
+  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyl_8Uqh2TCjKAwI-bYN0YekRB2ly0bVPYKMBIqXYPCs2wNjufHwRN5S63UTgn03A9AxQ/exec";
 
   let usuarioActual = null;
   let estudiantesActuales = [];
@@ -408,6 +475,7 @@
     document.getElementById("login").classList.add("oculto");
     document.getElementById("panel").classList.add("oculto");
     document.getElementById("moduloAsistencia").classList.add("oculto");
+    document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("cambioPassword").classList.remove("oculto");
 
     document.getElementById("nuevaPassword").value = "";
@@ -506,6 +574,11 @@
       return;
     }
 
+    if (modulo === "dashboard") {
+      abrirDashboardAsistencia();
+      return;
+    }
+
     if (modulo === "evaluaciones") {
       window.open("https://aminier06.github.io/evaluacioncampamento/", "_blank");
       return;
@@ -522,6 +595,7 @@
 
     document.getElementById("panel").classList.add("oculto");
     document.getElementById("moduloAsistencia").classList.remove("oculto");
+    document.getElementById("moduloDashboard").classList.add("oculto");
 
     document.getElementById("datosUsuarioAsistencia").innerHTML = `
       <strong>Usuario:</strong> ${usuarioActual.nombre || ""}<br>
@@ -559,6 +633,196 @@
         document.getElementById("mensajeAsistencia").classList.add("error");
       }
     }
+  }
+
+  function abrirDashboardAsistencia() {
+    if (!usuarioActual) {
+      alert("Debe iniciar sesión.");
+      return;
+    }
+
+    document.getElementById("panel").classList.add("oculto");
+    document.getElementById("moduloAsistencia").classList.add("oculto");
+    document.getElementById("moduloDashboard").classList.remove("oculto");
+
+    document.getElementById("datosUsuarioDashboard").innerHTML = `
+      <strong>Usuario:</strong> ${usuarioActual.nombre || ""}<br>
+      <strong>Rol:</strong> ${usuarioActual.rol || ""}<br>
+      <strong>Regional:</strong> ${usuarioActual.regional || ""}<br>
+      <strong>Distrito:</strong> ${usuarioActual.distrito || ""}<br>
+      <strong>Centro sede:</strong> ${usuarioActual.centroSede || ""}<br>
+      <strong>Grupo:</strong> ${usuarioActual.grupo || ""}
+    `;
+
+    const hoy = new Date().toISOString().split("T")[0];
+
+    document.getElementById("fechaInicioDashboard").value = "";
+    document.getElementById("fechaFinDashboard").value = hoy;
+
+    document.getElementById("grupoDashboard").disabled = false;
+    document.getElementById("grupoDashboard").value = "";
+
+    if (esFacilitador()) {
+      const grupoUsuario = normalizarTexto(usuarioActual.grupo);
+      document.getElementById("grupoDashboard").value = grupoUsuario;
+      document.getElementById("grupoDashboard").disabled = true;
+    }
+
+    document.getElementById("mensajeDashboard").textContent = "";
+    document.getElementById("mensajeDashboard").className = "mensaje";
+    document.getElementById("resumenDashboard").innerHTML = "";
+    document.getElementById("tablaDashboardFechas").innerHTML = "";
+    document.getElementById("tablaDashboardAusencias").innerHTML = "";
+
+    cargarDashboardAsistencia();
+  }
+
+  function cargarDashboardAsistencia() {
+    const grupo = document.getElementById("grupoDashboard").value;
+    const fechaInicio = document.getElementById("fechaInicioDashboard").value;
+    const fechaFin = document.getElementById("fechaFinDashboard").value;
+    const mensaje = document.getElementById("mensajeDashboard");
+
+    mensaje.textContent = "";
+    mensaje.className = "mensaje";
+
+    if (!usuarioActual) {
+      mensaje.textContent = "Debe iniciar sesión.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    if (esFacilitador() && normalizarTexto(grupo) !== normalizarTexto(usuarioActual.grupo)) {
+      mensaje.textContent = "El facilitador solo puede consultar su grupo asignado.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    mensaje.textContent = "Cargando dashboard...";
+
+    const callbackName = "callbackDashboard_" + Date.now();
+
+    window[callbackName] = function(respuesta) {
+      if (respuesta.ok) {
+        mensaje.textContent = "Dashboard cargado correctamente.";
+        mensaje.classList.add("ok");
+        mostrarResumenDashboard(respuesta.resumen || {});
+        mostrarTablaDashboardFechas(respuesta.porFecha || []);
+        mostrarTablaAusenciasRecurrentes(respuesta.ausenciasRecurrentes || []);
+      } else {
+        mensaje.textContent = respuesta.mensaje || "No se pudo cargar el dashboard.";
+        mensaje.classList.add("error");
+      }
+
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const script = document.createElement("script");
+    script.src = URL_SCRIPT
+      + "?accion=dashboardAsistencia"
+      + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
+      + "&grupo=" + encodeURIComponent(grupo)
+      + "&fechaInicio=" + encodeURIComponent(fechaInicio)
+      + "&fechaFin=" + encodeURIComponent(fechaFin)
+      + "&callback=" + callbackName;
+
+    document.body.appendChild(script);
+  }
+
+  function mostrarResumenDashboard(resumen) {
+    document.getElementById("resumenDashboard").innerHTML = `
+      <div class="tarjeta-indicador">
+        <span>Total de registros</span>
+        <strong>${resumen.totalRegistros || 0}</strong>
+      </div>
+      <div class="tarjeta-indicador">
+        <span>Presentes</span>
+        <strong>${resumen.presentes || 0}</strong>
+      </div>
+      <div class="tarjeta-indicador">
+        <span>Tardanzas</span>
+        <strong>${resumen.tardanzas || 0}</strong>
+      </div>
+      <div class="tarjeta-indicador">
+        <span>Ausentes</span>
+        <strong>${resumen.ausentes || 0}</strong>
+      </div>
+      <div class="tarjeta-indicador">
+        <span>Excusas</span>
+        <strong>${resumen.excusas || 0}</strong>
+      </div>
+      <div class="tarjeta-indicador">
+        <span>% asistencia</span>
+        <strong>${resumen.porcentajeAsistencia || 0}%</strong>
+      </div>
+    `;
+  }
+
+  function mostrarTablaDashboardFechas(datos) {
+    const contenedor = document.getElementById("tablaDashboardFechas");
+
+    if (!datos || datos.length === 0) {
+      contenedor.innerHTML = "<p>No hay datos de asistencia para los filtros seleccionados.</p>";
+      return;
+    }
+
+    let html = "<table>";
+    html += "<thead><tr>";
+    html += "<th>Fecha</th>";
+    html += "<th>Presentes</th>";
+    html += "<th>Tardanzas</th>";
+    html += "<th>Ausentes</th>";
+    html += "<th>Excusas</th>";
+    html += "<th>Total</th>";
+    html += "<th>% asistencia</th>";
+    html += "</tr></thead><tbody>";
+
+    datos.forEach(function(d) {
+      html += "<tr>";
+      html += `<td>${d.fecha || ""}</td>`;
+      html += `<td>${d.presentes || 0}</td>`;
+      html += `<td>${d.tardanzas || 0}</td>`;
+      html += `<td>${d.ausentes || 0}</td>`;
+      html += `<td>${d.excusas || 0}</td>`;
+      html += `<td>${d.total || 0}</td>`;
+      html += `<td>${d.porcentajeAsistencia || 0}%</td>`;
+      html += "</tr>";
+    });
+
+    html += "</tbody></table>";
+    contenedor.innerHTML = html;
+  }
+
+  function mostrarTablaAusenciasRecurrentes(datos) {
+    const contenedor = document.getElementById("tablaDashboardAusencias");
+
+    if (!datos || datos.length === 0) {
+      contenedor.innerHTML = "<p>No hay estudiantes con 2 o más ausencias.</p>";
+      return;
+    }
+
+    let html = "<table>";
+    html += "<thead><tr>";
+    html += "<th>Estudiante</th>";
+    html += "<th>Grupo</th>";
+    html += "<th>Ausencias</th>";
+    html += "<th>Tardanzas</th>";
+    html += "<th>Excusas</th>";
+    html += "</tr></thead><tbody>";
+
+    datos.forEach(function(e) {
+      html += "<tr>";
+      html += `<td>${e.nombre || ""}</td>`;
+      html += `<td>${e.grupo || ""}</td>`;
+      html += `<td>${e.ausencias || 0}</td>`;
+      html += `<td>${e.tardanzas || 0}</td>`;
+      html += `<td>${e.excusas || 0}</td>`;
+      html += "</tr>";
+    });
+
+    html += "</tbody></table>";
+    contenedor.innerHTML = html;
   }
 
   function cargarEstudiantes() {
@@ -879,6 +1143,7 @@
 
   function volverAlPanel() {
     document.getElementById("moduloAsistencia").classList.add("oculto");
+    document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("panel").classList.remove("oculto");
   }
 
@@ -897,6 +1162,7 @@
 
     document.getElementById("panel").classList.add("oculto");
     document.getElementById("moduloAsistencia").classList.add("oculto");
+    document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("cambioPassword").classList.add("oculto");
     document.getElementById("login").classList.remove("oculto");
   }
