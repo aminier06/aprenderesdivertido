@@ -35,37 +35,64 @@
 
 
 
-    .logo-minerd-fijo {
-      position: fixed;
-      top: 14px;
-      left: 18px;
+    header {
+      background: #0f4c81;
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      position: relative;
+      text-align: center;
+      min-height: 92px;
+      box-sizing: border-box;
+    }
+
+    .logo-minerd-header {
+      position: absolute;
+      left: 22px;
+      top: 50%;
+      transform: translateY(-50%);
       width: 105px;
       height: auto;
-      z-index: 1001;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       padding: 6px 8px;
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
 
-    @media (max-width: 700px) {
-      .logo-minerd-fijo {
-        width: 78px;
-        top: 10px;
-        left: 10px;
-        padding: 5px 6px;
-      }
-
-      header {
-        padding-top: 70px;
-      }
+    .texto-encabezado {
+      padding-left: 130px;
+      padding-right: 280px;
     }
 
-    header {
-      background: #0f4c81;
-      color: white;
-      padding: 20px;
-      text-align: center;
+    .texto-encabezado h1 {
+      margin: 0;
+    }
+
+    .texto-encabezado p {
+      margin: 6px 0 0;
+    }
+
+    @media (max-width: 700px) {
+      header {
+        flex-direction: column;
+        min-height: auto;
+        padding: 14px 16px;
+      }
+
+      .logo-minerd-header {
+        position: static;
+        transform: none;
+        width: 86px;
+        margin-bottom: 8px;
+      }
+
+      .texto-encabezado {
+        padding-left: 0;
+        padding-right: 0;
+      }
     }
 
     .contenedor {
@@ -407,11 +434,12 @@
 
 <body>
 
-<img src="logominerd.jpeg" alt="Logo del Ministerio de Educación" class="logo-minerd-fijo">
-
 <header>
-  <h1>Campamento Aprender es Divertido</h1>
-  <p>Plataforma de gestión y seguimiento</p>
+  <img src="logominerd.jpeg" alt="Logo del Ministerio de Educación" class="logo-minerd-header">
+  <div class="texto-encabezado">
+    <h1>Campamento Aprender es Divertido</h1>
+    <p>Plataforma de gestión y seguimiento</p>
+  </div>
 </header>
 
 <div id="usuarioFlotante" class="usuario-flotante oculto"></div>
