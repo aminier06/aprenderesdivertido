@@ -694,8 +694,8 @@
 
     .dashboard-layout {
       display: grid;
-      grid-template-columns: 260px minmax(0, 1fr);
-      gap: 20px;
+      grid-template-columns: 285px minmax(0, 1fr);
+      gap: 22px;
       align-items: start;
       margin-top: 22px;
     }
@@ -703,69 +703,122 @@
     .menu-dashboard-lateral {
       position: sticky;
       top: 18px;
-      background: rgba(248, 250, 252, 0.96);
+      background: rgba(255, 255, 255, 0.96);
       border: 1px solid #dbe3ef;
-      border-radius: 16px;
-      padding: 12px;
-      box-shadow: 0 4px 14px rgba(15, 76, 129, 0.07);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 8px 22px rgba(15, 76, 129, 0.08);
     }
 
     .menu-dashboard-lateral h3 {
-      font-size: 16px;
-      color: #334155;
-      margin: 4px 8px 12px;
+      margin: 0 0 16px;
+      font-size: 18px;
+      color: #1f2937;
+      letter-spacing: 0.1px;
     }
 
     .item-dashboard-lateral {
       width: 100%;
-      margin: 0 0 10px;
-      padding: 12px 12px;
-      border-radius: 12px;
+      margin: 0 0 8px;
+      padding: 13px 12px;
+      border-radius: 14px;
       border: 1px solid transparent;
       background: transparent;
       color: #1f2937;
-      display: flex;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
       align-items: center;
-      gap: 10px;
       text-align: left;
       cursor: pointer;
-      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-      font-size: 15px;
-      font-weight: 700;
+      transition: all 0.2s ease;
+      position: relative;
     }
 
     .item-dashboard-lateral:hover {
-      background: #edf6ff;
+      background: #f1f7ff;
       border-color: #cfe0f3;
       transform: translateX(2px);
     }
 
     .item-dashboard-lateral.activo {
-      background: #e8f1fb;
-      border-color: #bcd5ef;
-      box-shadow: inset 4px 0 0 #0f4c81;
+      background: linear-gradient(90deg, #e8f2ff 0%, #f8fbff 100%);
+      border-color: #b8d4f0;
+      box-shadow: 0 6px 14px rgba(15, 76, 129, 0.12);
+    }
+
+    .item-dashboard-lateral.activo::before {
+      content: "";
+      position: absolute;
+      left: -18px;
+      top: 12px;
+      bottom: 12px;
+      width: 5px;
+      background: #0f4c81;
+      border-radius: 0 8px 8px 0;
     }
 
     .item-dashboard-lateral .mini-icono-dashboard {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      display: inline-flex;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(15, 76, 129, 0.11);
+      background: #e8f1fb;
       color: #0f4c81;
       flex: 0 0 auto;
     }
 
     .item-dashboard-lateral svg {
-      width: 21px;
-      height: 21px;
+      width: 23px;
+      height: 23px;
       stroke: currentColor;
       stroke-width: 2.2;
       fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+
+    .texto-dashboard-lateral strong {
+      display: block;
+      font-size: 16px;
+      color: #1f2937;
+      line-height: 1.15;
+    }
+
+    .texto-dashboard-lateral span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+
+    .item-dashboard-lateral.asistencia .mini-icono-dashboard {
+      color: #2563eb;
+      background: rgba(37, 99, 235, 0.12);
+    }
+
+    .item-dashboard-lateral.incidencias .mini-icono-dashboard {
+      color: #ea580c;
+      background: rgba(234, 88, 12, 0.12);
+    }
+
+    .item-dashboard-lateral.acompanamientos .mini-icono-dashboard {
+      color: #0891b2;
+      background: rgba(8, 145, 178, 0.12);
+    }
+
+    .item-dashboard-lateral.evaluaciones .mini-icono-dashboard {
+      color: #0d9488;
+      background: rgba(13, 148, 136, 0.12);
+    }
+
+    .item-dashboard-lateral.ejecutivo .mini-icono-dashboard {
+      color: #475569;
+      background: rgba(71, 85, 105, 0.12);
     }
 
     .dashboard-area-principal {
@@ -819,20 +872,8 @@
 
       .menu-dashboard-lateral {
         position: static;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-        gap: 10px;
-      }
-
-      .menu-dashboard-lateral h3 {
-        grid-column: 1 / -1;
-      }
-
-      .item-dashboard-lateral {
-        margin-bottom: 0;
       }
     }
-
 
     footer {
       text-align: center;
@@ -1044,7 +1085,7 @@
       <aside class="menu-dashboard-lateral" aria-label="Menú de dashboards">
         <h3>Tableros disponibles</h3>
 
-        <button type="button" class="item-dashboard-lateral" data-dashboard="asistencia" onclick="abrirDashboard('asistencia')">
+        <button type="button" class="item-dashboard-lateral asistencia" data-dashboard="asistencia" onclick="abrirDashboard('asistencia')">
           <span class="mini-icono-dashboard" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <rect x="3" y="4" width="18" height="16" rx="2"></rect>
@@ -1053,10 +1094,13 @@
               <path d="M17 16v-6"></path>
             </svg>
           </span>
-          <span>Asistencia</span>
+          <span class="texto-dashboard-lateral">
+            <strong>Asistencia</strong>
+            <span>Indicadores diarios</span>
+          </span>
         </button>
 
-        <button type="button" class="item-dashboard-lateral" data-dashboard="incidencias" onclick="abrirDashboard('incidencias')">
+        <button type="button" class="item-dashboard-lateral incidencias" data-dashboard="incidencias" onclick="abrirDashboard('incidencias')">
           <span class="mini-icono-dashboard" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M12 3l9 16H3L12 3z"></path>
@@ -1064,10 +1108,13 @@
               <path d="M12 17h.01"></path>
             </svg>
           </span>
-          <span>Incidencias</span>
+          <span class="texto-dashboard-lateral">
+            <strong>Incidencias</strong>
+            <span>Gravedad, estado y categoría</span>
+          </span>
         </button>
 
-        <button type="button" class="item-dashboard-lateral" data-dashboard="acompanamientos" onclick="abrirDashboard('acompanamientos')">
+        <button type="button" class="item-dashboard-lateral acompanamientos" data-dashboard="acompanamientos" onclick="abrirDashboard('acompanamientos')">
           <span class="mini-icono-dashboard" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <rect x="4" y="3" width="11" height="16" rx="2"></rect>
@@ -1077,10 +1124,13 @@
               <path d="M19 19l2 2"></path>
             </svg>
           </span>
-          <span>Acompañamientos</span>
+          <span class="texto-dashboard-lateral">
+            <strong>Acompañamientos</strong>
+            <span>Seguimiento y cumplimiento</span>
+          </span>
         </button>
 
-        <button type="button" class="item-dashboard-lateral" data-dashboard="evaluaciones" onclick="abrirDashboard('evaluaciones')">
+        <button type="button" class="item-dashboard-lateral evaluaciones" data-dashboard="evaluaciones" onclick="abrirDashboard('evaluaciones')">
           <span class="mini-icono-dashboard" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M6 3h9l3 3v15H6z"></path>
@@ -1088,10 +1138,13 @@
               <path d="M8.5 11.5l1.6 1.6 3.4-3.6"></path>
             </svg>
           </span>
-          <span>Evaluaciones</span>
+          <span class="texto-dashboard-lateral">
+            <strong>Evaluaciones</strong>
+            <span>Resultados iniciales y finales</span>
+          </span>
         </button>
 
-        <button type="button" class="item-dashboard-lateral" data-dashboard="ejecutivo" onclick="abrirDashboard('ejecutivo')">
+        <button type="button" class="item-dashboard-lateral ejecutivo" data-dashboard="ejecutivo" onclick="abrirDashboard('ejecutivo')">
           <span class="mini-icono-dashboard" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M5 3h10l4 4v14H5z"></path>
@@ -1101,7 +1154,10 @@
               <path d="M15 17v-3"></path>
             </svg>
           </span>
-          <span>Vista ejecutiva</span>
+          <span class="texto-dashboard-lateral">
+            <strong>Vista ejecutiva</strong>
+            <span>Alertas y resumen general</span>
+          </span>
         </button>
       </aside>
 
