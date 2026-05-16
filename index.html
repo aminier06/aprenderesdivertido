@@ -875,6 +875,71 @@
       }
     }
 
+
+    .modulo.modulo-asignacion { border-left-color: #7c3aed; }
+    .modulo.modulo-asignacion .icono-modulo { color: #7c3aed; background: rgba(124, 58, 237, 0.12); }
+
+    .resumen-asignacion {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .dato-asignacion {
+      background: #ffffff;
+      border: 1px solid #dbe3ef;
+      border-left: 5px solid #7c3aed;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 4px 12px rgba(15, 76, 129, 0.06);
+    }
+
+    .dato-asignacion span {
+      display: block;
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 5px;
+    }
+
+    .dato-asignacion strong {
+      display: block;
+      color: #1f2937;
+      font-size: 20px;
+    }
+
+    .tabla-asignacion select {
+      min-width: 230px;
+      width: 100%;
+      margin-top: 0;
+      font-size: 14px;
+      padding: 9px;
+    }
+
+    .tabla-asignacion td,
+    .tabla-asignacion th {
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .alerta-asignacion {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 14px;
+      line-height: 1.35;
+    }
+
+    .acciones-asignacion {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
     footer {
       text-align: center;
       margin: 30px;
@@ -1022,6 +1087,21 @@
         <h3>Dashboards</h3>
         <p>Visualizar gráficos, matrices e indicadores para el seguimiento general del campamento.</p>
       </div>
+
+      <div id="tileAsignacionGrupos" class="modulo modulo-asignacion oculto" onclick="abrirModulo('asignacionGrupos')">
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M8 7a3 3 0 1 0 0.01 0"></path>
+            <path d="M16 7a3 3 0 1 0 0.01 0"></path>
+            <path d="M4 20v-1a4 4 0 0 1 4-4h0"></path>
+            <path d="M20 20v-1a4 4 0 0 0-4-4h0"></path>
+            <path d="M10.5 15h3"></path>
+            <path d="M12 13.5v3"></path>
+          </svg>
+        </div>
+        <h3>Asignación de grupos</h3>
+        <p>Asignar dos facilitadores a cada grupo operativo de la sede.</p>
+      </div>
     </div>
 
     <button onclick="cerrarSesion()">Cerrar sesión</button>
@@ -1055,9 +1135,14 @@
     <label for="grupoAsistencia">Grupo</label>
     <select id="grupoAsistencia" onchange="cargarEstudiantes()">
       <option value="">Seleccione un grupo</option>
-      <option value="EXPLORADORES">EXPLORADORES</option>
-      <option value="CREADORES">CREADORES</option>
-      <option value="INNOVADORES">INNOVADORES</option>
+      <option value="Grupo 1">Grupo 1</option>
+      <option value="Grupo 2">Grupo 2</option>
+      <option value="Grupo 3">Grupo 3</option>
+      <option value="Grupo 4">Grupo 4</option>
+      <option value="Grupo 5">Grupo 5</option>
+      <option value="Grupo 6">Grupo 6</option>
+      <option value="Grupo 7">Grupo 7</option>
+      <option value="Grupo 8">Grupo 8</option>
     </select>
 
     <button onclick="guardarAsistencia()" id="btnGuardarAsistencia" class="oculto">Guardar asistencia</button>
@@ -1198,9 +1283,14 @@
                 <label for="grupoDashboard">Grupo</label>
                 <select id="grupoDashboard">
                   <option value="">Todos los grupos permitidos</option>
-                  <option value="EXPLORADORES">EXPLORADORES</option>
-                  <option value="CREADORES">CREADORES</option>
-                  <option value="INNOVADORES">INNOVADORES</option>
+                  <option value="Grupo 1">Grupo 1</option>
+                  <option value="Grupo 2">Grupo 2</option>
+                  <option value="Grupo 3">Grupo 3</option>
+                  <option value="Grupo 4">Grupo 4</option>
+                  <option value="Grupo 5">Grupo 5</option>
+                  <option value="Grupo 6">Grupo 6</option>
+                  <option value="Grupo 7">Grupo 7</option>
+                  <option value="Grupo 8">Grupo 8</option>
                 </select>
               </div>
 
@@ -1389,9 +1479,14 @@
           <label for="grupoIncidencia">Grupo</label>
           <select id="grupoIncidencia">
             <option value="">No aplica / todos los grupos</option>
-            <option value="EXPLORADORES">EXPLORADORES</option>
-            <option value="CREADORES">CREADORES</option>
-            <option value="INNOVADORES">INNOVADORES</option>
+            <option value="Grupo 1">Grupo 1</option>
+            <option value="Grupo 2">Grupo 2</option>
+            <option value="Grupo 3">Grupo 3</option>
+            <option value="Grupo 4">Grupo 4</option>
+            <option value="Grupo 5">Grupo 5</option>
+            <option value="Grupo 6">Grupo 6</option>
+            <option value="Grupo 7">Grupo 7</option>
+            <option value="Grupo 8">Grupo 8</option>
           </select>
         </div>
       </div>
@@ -1532,6 +1627,38 @@
     <button class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
   </section>
 
+
+  <section id="moduloAsignacionGrupos" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Asignación de grupos operativos</h2>
+        <p class="nota">Módulo disponible solo para coordinadores de sede. Cada grupo operativo debe tener exactamente dos facilitadores.</p>
+      </div>
+    </div>
+
+    <div id="resumenAsignacionGrupos" class="resumen-asignacion"></div>
+
+    <div id="bloqueCuotaManual" class="bloque-formulario oculto">
+      <h3>Cuota de estudiantes</h3>
+      <p class="nota">No se encontró una cuota en la hoja SEDES. Digite la cuota de estudiantes de la sede para calcular la cantidad de grupos.</p>
+      <label for="cuotaManualAsignacion">Cuota asignada a la sede</label>
+      <input type="number" id="cuotaManualAsignacion" min="1" step="1" placeholder="Ejemplo: 100">
+      <button type="button" onclick="recalcularAsignacionConCuota()">Calcular grupos</button>
+    </div>
+
+    <div id="alertaAsignacionGrupos" class="alerta-asignacion oculto"></div>
+
+    <div id="tablaAsignacionGrupos" class="tabla-contenedor tabla-asignacion oculto"></div>
+
+    <div class="acciones-asignacion">
+      <button type="button" id="btnGuardarAsignacionGrupos" class="oculto" onclick="guardarAsignacionGrupos()">Guardar asignaciones</button>
+      <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+    </div>
+
+    <div id="mensajeAsignacionGrupos" class="mensaje"></div>
+  </section>
+
+
 </div>
 
 <footer>
@@ -1539,7 +1666,7 @@
 </footer>
 
 <script>
-  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwh-qVOJcK7ouuRHd-7TpFGtovM4OKdwLMOpqe3g3ekn6ooK6hHiLII5NQEtmp85yobkQ/exec";
+  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxpL9MWbcX4FAOFqNRjIu-imzhJZCKC81gfWlx8JnrctJc62St--1zYRCZouUhQY045SQ/exec";
 
   let usuarioActual = null;
   let estudiantesActuales = [];
@@ -1555,7 +1682,9 @@
   let graficosDashboard = {};
   let sedesIncidencias = [];
   let sedeSeleccionadaIncidencia = null;
+    datosAsignacionGrupos = null;
   let modoIncidenciaActual = "consulta";
+  let datosAsignacionGrupos = null;
 
   const itemsCoordinador = [
     ["item01", "Llega puntualmente y organiza la jornada junto al equipo docente."],
@@ -1610,6 +1739,30 @@
 
   function esCoordinadorSede() {
     return normalizarTexto(usuarioActual && usuarioActual.rol) === "Coordinador sede";
+  }
+
+  function asegurarOpcionGrupo(select, grupo) {
+    if (!select || !grupo) return;
+
+    const existe = Array.from(select.options).some(function(op) {
+      return normalizarTexto(op.value) === normalizarTexto(grupo);
+    });
+
+    if (!existe) {
+      const option = document.createElement("option");
+      option.value = grupo;
+      option.textContent = grupo;
+      select.appendChild(option);
+    }
+  }
+
+  function construirGruposOperativos(cantidad) {
+    const total = Math.max(0, Number(cantidad || 0));
+    const grupos = [];
+    for (let i = 1; i <= total; i++) {
+      grupos.push("Grupo " + i);
+    }
+    return grupos;
   }
 
   function iniciarSesion() {
@@ -1673,6 +1826,8 @@
     document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("moduloAcompanamientos").classList.add("oculto");
     document.getElementById("moduloIncidencias").classList.add("oculto");
+    const moduloAsignacion = document.getElementById("moduloAsignacionGrupos");
+    if (moduloAsignacion) moduloAsignacion.classList.add("oculto");
     document.getElementById("cambioPassword").classList.remove("oculto");
 
     document.getElementById("nuevaPassword").value = "";
@@ -1764,6 +1919,18 @@
     `;
 
     tarjetaUsuario.classList.remove("oculto");
+    actualizarVisibilidadAsignacionGrupos(usuario);
+  }
+
+  function actualizarVisibilidadAsignacionGrupos(usuario) {
+    const tile = document.getElementById("tileAsignacionGrupos");
+    if (!tile) return;
+
+    if (normalizarTexto(usuario && usuario.rol) === "Coordinador sede") {
+      tile.classList.remove("oculto");
+    } else {
+      tile.classList.add("oculto");
+    }
   }
 
   function ocultarDatosUsuarioFlotante() {
@@ -1795,6 +1962,11 @@
       return;
     }
 
+    if (modulo === "asignacionGrupos") {
+      abrirModuloAsignacionGrupos();
+      return;
+    }
+
     if (modulo === "evaluaciones") {
       window.open("https://aminier06.github.io/evaluacioncampamento/", "_blank");
       return;
@@ -1814,6 +1986,8 @@
     document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("moduloAcompanamientos").classList.add("oculto");
     document.getElementById("moduloIncidencias").classList.add("oculto");
+    const moduloAsignacion = document.getElementById("moduloAsignacionGrupos");
+    if (moduloAsignacion) moduloAsignacion.classList.add("oculto");
 
     document.getElementById("datosUsuarioAsistencia").innerHTML = `
       <strong>Usuario:</strong> ${usuarioActual.nombre || ""}<br>
@@ -1873,6 +2047,7 @@
         if (esFacilitador()) {
           const grupoUsuario = normalizarTexto(usuarioActual.grupo);
           if (grupoUsuario) {
+            asegurarOpcionGrupo(document.getElementById("grupoAsistencia"), grupoUsuario);
             document.getElementById("grupoAsistencia").value = grupoUsuario;
             document.getElementById("grupoAsistencia").disabled = true;
             cargarEstudiantes();
@@ -2043,6 +2218,8 @@
     document.getElementById("moduloAsistencia").classList.add("oculto");
     document.getElementById("moduloAcompanamientos").classList.add("oculto");
     document.getElementById("moduloIncidencias").classList.add("oculto");
+    const moduloAsignacion = document.getElementById("moduloAsignacionGrupos");
+    if (moduloAsignacion) moduloAsignacion.classList.add("oculto");
     document.getElementById("moduloDashboard").classList.remove("oculto");
 
     document.getElementById("datosUsuarioDashboard").innerHTML = `
@@ -2686,6 +2863,8 @@
     document.getElementById("moduloAsistencia").classList.add("oculto");
     document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("moduloIncidencias").classList.add("oculto");
+    const moduloAsignacion = document.getElementById("moduloAsignacionGrupos");
+    if (moduloAsignacion) moduloAsignacion.classList.add("oculto");
     document.getElementById("moduloAcompanamientos").classList.remove("oculto");
 
     document.getElementById("datosUsuarioAcompanamientos").innerHTML = `
@@ -4394,8 +4573,335 @@
     document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("moduloAcompanamientos").classList.add("oculto");
     document.getElementById("moduloIncidencias").classList.add("oculto");
+    const moduloAsignacion = document.getElementById("moduloAsignacionGrupos");
+    if (moduloAsignacion) moduloAsignacion.classList.add("oculto");
     document.getElementById("panel").classList.remove("oculto");
   }
+
+
+  function abrirModuloAsignacionGrupos() {
+    if (!usuarioActual) {
+      alert("Debe iniciar sesión.");
+      return;
+    }
+
+    if (!esCoordinadorSede()) {
+      alert("Este módulo está disponible solo para coordinadores de sede.");
+      return;
+    }
+
+    document.getElementById("panel").classList.add("oculto");
+    document.getElementById("moduloAsistencia").classList.add("oculto");
+    document.getElementById("moduloDashboard").classList.add("oculto");
+    document.getElementById("moduloAcompanamientos").classList.add("oculto");
+    document.getElementById("moduloIncidencias").classList.add("oculto");
+    document.getElementById("moduloAsignacionGrupos").classList.remove("oculto");
+
+    datosAsignacionGrupos = null;
+    document.getElementById("resumenAsignacionGrupos").innerHTML = "";
+    document.getElementById("tablaAsignacionGrupos").innerHTML = "";
+    document.getElementById("tablaAsignacionGrupos").classList.add("oculto");
+    document.getElementById("bloqueCuotaManual").classList.add("oculto");
+    document.getElementById("alertaAsignacionGrupos").classList.add("oculto");
+    document.getElementById("alertaAsignacionGrupos").innerHTML = "";
+    document.getElementById("btnGuardarAsignacionGrupos").classList.add("oculto");
+    document.getElementById("mensajeAsignacionGrupos").textContent = "";
+    document.getElementById("mensajeAsignacionGrupos").className = "mensaje";
+
+    cargarFacilitadoresSede();
+  }
+
+  function cargarFacilitadoresSede() {
+    const mensaje = document.getElementById("mensajeAsignacionGrupos");
+    mensaje.textContent = "Cargando facilitadores de la sede...";
+    mensaje.className = "mensaje";
+
+    const callbackName = "callbackFacilitadoresSede_" + Date.now();
+
+    window[callbackName] = function(respuesta) {
+      if (respuesta.ok) {
+        datosAsignacionGrupos = respuesta;
+        renderizarModuloAsignacionGrupos();
+        mensaje.textContent = "";
+        mensaje.className = "mensaje";
+      } else {
+        mensaje.textContent = respuesta.mensaje || "No se pudieron cargar los facilitadores.";
+        mensaje.classList.add("error");
+      }
+
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const script = document.createElement("script");
+    script.src = URL_SCRIPT
+      + "?accion=facilitadoresSede"
+      + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
+      + "&callback=" + callbackName;
+
+    document.body.appendChild(script);
+  }
+
+  function renderizarModuloAsignacionGrupos() {
+    if (!datosAsignacionGrupos) return;
+
+    const sede = datosAsignacionGrupos.sede || {};
+    const cuota = Number(datosAsignacionGrupos.cuota || 0);
+    const gruposEsperados = Number(datosAsignacionGrupos.gruposEsperados || 0);
+    const facilitadoresRequeridos = Number(datosAsignacionGrupos.facilitadoresRequeridos || 0);
+    const facilitadoresRegistrados = Number(datosAsignacionGrupos.facilitadoresRegistrados || (datosAsignacionGrupos.facilitadores || []).length);
+
+    document.getElementById("resumenAsignacionGrupos").innerHTML = `
+      <div class="dato-asignacion"><span>Regional</span><strong>${sede.regional || usuarioActual.regional || ""}</strong></div>
+      <div class="dato-asignacion"><span>Distrito</span><strong>${sede.distrito || usuarioActual.distrito || ""}</strong></div>
+      <div class="dato-asignacion"><span>Centro sede</span><strong>${sede.centroSede || usuarioActual.centroSede || ""}</strong></div>
+      <div class="dato-asignacion"><span>Cuota</span><strong>${cuota > 0 ? cuota : "No definida"}</strong></div>
+      <div class="dato-asignacion"><span>Grupos esperados</span><strong>${gruposEsperados || "Pendiente"}</strong></div>
+      <div class="dato-asignacion"><span>Facilitadores requeridos</span><strong>${facilitadoresRequeridos || "Pendiente"}</strong></div>
+      <div class="dato-asignacion"><span>Facilitadores registrados</span><strong>${facilitadoresRegistrados}</strong></div>
+    `;
+
+    if (!cuota || cuota <= 0 || !gruposEsperados) {
+      document.getElementById("bloqueCuotaManual").classList.remove("oculto");
+      document.getElementById("tablaAsignacionGrupos").classList.add("oculto");
+      document.getElementById("btnGuardarAsignacionGrupos").classList.add("oculto");
+
+      const alerta = document.getElementById("alertaAsignacionGrupos");
+      alerta.classList.remove("oculto");
+      alerta.textContent = datosAsignacionGrupos.mensajeCuota || "Debe indicar la cuota para calcular los grupos operativos.";
+      return;
+    }
+
+    document.getElementById("bloqueCuotaManual").classList.add("oculto");
+    renderizarTablaAsignacion(datosAsignacionGrupos.grupos || construirGruposOperativos(gruposEsperados));
+  }
+
+  function recalcularAsignacionConCuota() {
+    const cuota = Number(document.getElementById("cuotaManualAsignacion").value || 0);
+    const mensaje = document.getElementById("mensajeAsignacionGrupos");
+
+    mensaje.textContent = "";
+    mensaje.className = "mensaje";
+
+    if (!cuota || cuota <= 0) {
+      mensaje.textContent = "Debe digitar una cuota válida.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    const gruposEsperados = Math.ceil(cuota / 25);
+
+    datosAsignacionGrupos.cuota = cuota;
+    datosAsignacionGrupos.gruposEsperados = gruposEsperados;
+    datosAsignacionGrupos.facilitadoresRequeridos = gruposEsperados * 2;
+    datosAsignacionGrupos.grupos = construirGruposOperativos(gruposEsperados);
+
+    renderizarModuloAsignacionGrupos();
+  }
+
+  function renderizarTablaAsignacion(grupos) {
+    const facilitadores = datosAsignacionGrupos.facilitadores || [];
+    const tabla = document.getElementById("tablaAsignacionGrupos");
+    const alerta = document.getElementById("alertaAsignacionGrupos");
+
+    if (!facilitadores.length) {
+      tabla.classList.add("oculto");
+      document.getElementById("btnGuardarAsignacionGrupos").classList.add("oculto");
+      alerta.classList.remove("oculto");
+      alerta.textContent = "No hay facilitadores activos registrados para esta sede.";
+      return;
+    }
+
+    if (facilitadores.length < grupos.length * 2) {
+      alerta.classList.remove("oculto");
+      alerta.textContent = "Advertencia: hay menos facilitadores registrados que los requeridos. Se requieren " + (grupos.length * 2) + " y hay " + facilitadores.length + ".";
+    } else {
+      alerta.classList.add("oculto");
+      alerta.textContent = "";
+    }
+
+    const opciones = facilitadores.map(function(f) {
+      const cedula = normalizarTexto(f.cedula);
+      const nombre = normalizarTexto(f.nombre);
+      return `<option value="${escapeHtml(cedula)}">${escapeHtml(nombre)} | ${escapeHtml(cedula)}</option>`;
+    }).join("");
+
+    const asignadosPorGrupo = {};
+    facilitadores.forEach(function(f) {
+      const grupoActual = normalizarTexto(f.grupoActual);
+      if (!grupoActual) return;
+      if (!asignadosPorGrupo[grupoActual]) asignadosPorGrupo[grupoActual] = [];
+      asignadosPorGrupo[grupoActual].push(normalizarTexto(f.cedula));
+    });
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th>Grupo operativo</th>
+            <th>Facilitador 1</th>
+            <th>Facilitador 2</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    grupos.forEach(function(grupo) {
+      const asignados = asignadosPorGrupo[grupo] || [];
+      const cedula1 = asignados[0] || "";
+      const cedula2 = asignados[1] || "";
+
+      html += `
+        <tr>
+          <td><strong>${escapeHtml(grupo)}</strong></td>
+          <td>
+            <select class="select-asignacion-grupo" data-grupo="${escapeHtml(grupo)}" data-orden="1">
+              <option value="">Seleccione facilitador</option>
+              ${opciones}
+            </select>
+          </td>
+          <td>
+            <select class="select-asignacion-grupo" data-grupo="${escapeHtml(grupo)}" data-orden="2">
+              <option value="">Seleccione facilitador</option>
+              ${opciones}
+            </select>
+          </td>
+          <td id="estado-${escapeHtml(grupo).replace(/\s+/g, "-")}">Pendiente</td>
+        </tr>
+      `;
+    });
+
+    html += "</tbody></table>";
+    tabla.innerHTML = html;
+    tabla.classList.remove("oculto");
+
+    document.querySelectorAll(".select-asignacion-grupo").forEach(function(select) {
+      const grupo = select.dataset.grupo;
+      const orden = Number(select.dataset.orden || 0);
+      const asignados = asignadosPorGrupo[grupo] || [];
+      const valor = asignados[orden - 1] || "";
+      if (valor) select.value = valor;
+
+      select.addEventListener("change", actualizarEstadoVisualAsignacion);
+    });
+
+    document.getElementById("btnGuardarAsignacionGrupos").classList.remove("oculto");
+    actualizarEstadoVisualAsignacion();
+  }
+
+  function actualizarEstadoVisualAsignacion() {
+    const grupos = datosAsignacionGrupos && datosAsignacionGrupos.grupos ? datosAsignacionGrupos.grupos : [];
+    grupos.forEach(function(grupo) {
+      const selects = Array.from(document.querySelectorAll(`.select-asignacion-grupo[data-grupo="${grupo}"]`));
+      const seleccionados = selects.map(function(s) { return normalizarTexto(s.value); }).filter(Boolean);
+      const estado = document.getElementById("estado-" + grupo.replace(/\s+/g, "-"));
+      if (!estado) return;
+
+      if (seleccionados.length === 2 && seleccionados[0] !== seleccionados[1]) {
+        estado.innerHTML = '<span class="badge-estado">Completo</span>';
+      } else if (seleccionados.length === 0) {
+        estado.innerHTML = '<span class="badge-gravedad media">Pendiente</span>';
+      } else {
+        estado.innerHTML = '<span class="badge-gravedad alta">Incompleto</span>';
+      }
+    });
+  }
+
+  function guardarAsignacionGrupos() {
+    const mensaje = document.getElementById("mensajeAsignacionGrupos");
+    mensaje.textContent = "";
+    mensaje.className = "mensaje";
+
+    if (!datosAsignacionGrupos) {
+      mensaje.textContent = "No se han cargado los datos de asignación.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    const asignaciones = [];
+    const cedulasUsadas = {};
+    let hayIncompletos = false;
+    let hayDuplicados = false;
+
+    document.querySelectorAll(".select-asignacion-grupo").forEach(function(select) {
+      const grupo = normalizarTexto(select.dataset.grupo);
+      const orden = Number(select.dataset.orden || 0);
+      const cedula = normalizarTexto(select.value);
+
+      if (!cedula) {
+        hayIncompletos = true;
+        return;
+      }
+
+      if (cedulasUsadas[cedula]) {
+        hayDuplicados = true;
+      }
+
+      cedulasUsadas[cedula] = true;
+
+      asignaciones.push({
+        grupo: grupo,
+        cedulaFacilitador: cedula,
+        ordenFacilitador: orden
+      });
+    });
+
+    if (hayIncompletos) {
+      mensaje.textContent = "Debe seleccionar dos facilitadores para cada grupo.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    if (hayDuplicados) {
+      mensaje.textContent = "Un mismo facilitador no puede estar asignado a más de un grupo.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    const payload = {
+      cedulaCoordinador: usuarioActual.cedula,
+      cuota: datosAsignacionGrupos.cuota || document.getElementById("cuotaManualAsignacion").value || "",
+      asignaciones: asignaciones
+    };
+
+    mensaje.textContent = "Guardando asignaciones...";
+    mensaje.className = "mensaje";
+
+    const callbackName = "callbackGuardarAsignacion_" + Date.now();
+
+    window[callbackName] = function(respuesta) {
+      if (respuesta.ok) {
+        mensaje.textContent = respuesta.mensaje || "Asignaciones guardadas correctamente.";
+        mensaje.classList.add("ok");
+        cargarFacilitadoresSede();
+      } else {
+        mensaje.textContent = respuesta.mensaje || "No se pudieron guardar las asignaciones.";
+        mensaje.classList.add("error");
+      }
+
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const script = document.createElement("script");
+    script.src = URL_SCRIPT
+      + "?accion=guardarAsignacionGrupos"
+      + "&payload=" + encodeURIComponent(JSON.stringify(payload))
+      + "&callback=" + callbackName;
+
+    document.body.appendChild(script);
+  }
+
+  function escapeHtml(valor) {
+    return String(valor || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
 
   function cerrarSesion() {
     usuarioActual = null;
@@ -4424,6 +4930,8 @@
     document.getElementById("moduloDashboard").classList.add("oculto");
     document.getElementById("moduloAcompanamientos").classList.add("oculto");
     document.getElementById("moduloIncidencias").classList.add("oculto");
+    const moduloAsignacion = document.getElementById("moduloAsignacionGrupos");
+    if (moduloAsignacion) moduloAsignacion.classList.add("oculto");
     document.getElementById("cambioPassword").classList.add("oculto");
     document.getElementById("login").classList.remove("oculto");
   }
