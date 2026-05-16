@@ -696,20 +696,6 @@
         <p>Registrar o consultar asistencia diaria de los estudiantes.</p>
       </div>
 
-      <div class="modulo modulo-dashboard" onclick="abrirModulo('dashboard')">
-        <div class="icono-modulo" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-            <path d="M7 16v-4"></path>
-            <path d="M12 16V8"></path>
-            <path d="M17 16v-6"></path>
-            <path d="M6.5 18h11"></path>
-          </svg>
-        </div>
-        <h3>Dashboard de asistencia</h3>
-        <p>Visualizar indicadores, resumen diario y ausencias recurrentes.</p>
-      </div>
-
       <div class="modulo modulo-acompanamientos" onclick="abrirModulo('acompanamientos')">
         <div class="icono-modulo" aria-hidden="true">
           <svg viewBox="0 0 24 24">
@@ -749,18 +735,18 @@
         <p>Registro de evaluación inicial y final.</p>
       </div>
 
-      <div class="modulo modulo-reportes" onclick="abrirModulo('reportes')">
+      <div class="modulo modulo-dashboard" onclick="abrirModulo('dashboards')">
         <div class="icono-modulo" aria-hidden="true">
           <svg viewBox="0 0 24 24">
-            <path d="M5 3h10l4 4v14H5z"></path>
-            <path d="M15 3v5h5"></path>
-            <path d="M9 17v-4"></path>
-            <path d="M12 17v-7"></path>
-            <path d="M15 17v-3"></path>
+            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+            <path d="M7 16v-4"></path>
+            <path d="M12 16V8"></path>
+            <path d="M17 16v-6"></path>
+            <path d="M6.5 18h11"></path>
           </svg>
         </div>
-        <h3>Reportes</h3>
-        <p>Consultar información consolidada del campamento.</p>
+        <h3>Dashboards</h3>
+        <p>Visualizar gráficos, matrices e indicadores para el seguimiento general del campamento.</p>
       </div>
     </div>
 
@@ -815,35 +801,109 @@
   </section>
 
   <section id="moduloDashboard" class="tarjeta oculto">
-    <h2>Dashboard de asistencia</h2>
+    <h2>Dashboards del campamento</h2>
+    <p class="nota">Seleccione el tablero que desea consultar. Este módulo es únicamente para visualización, análisis y seguimiento.</p>
 
     <div class="datos-usuario" id="datosUsuarioDashboard"></div>
 
-    <label for="grupoDashboard">Grupo</label>
-    <select id="grupoDashboard">
-      <option value="">Todos los grupos permitidos</option>
-      <option value="EXPLORADORES">EXPLORADORES</option>
-      <option value="CREADORES">CREADORES</option>
-      <option value="INNOVADORES">INNOVADORES</option>
-    </select>
+    <div class="grid">
+      <div class="modulo modulo-dashboard" onclick="abrirDashboardAsistencia()">
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+            <path d="M7 16v-4"></path>
+            <path d="M12 16V8"></path>
+            <path d="M17 16v-6"></path>
+            <path d="M6.5 18h11"></path>
+          </svg>
+        </div>
+        <h3>Asistencia</h3>
+        <p>Indicadores diarios, porcentaje de asistencia y ausencias recurrentes.</p>
+      </div>
 
-    <label for="fechaInicioDashboard">Fecha inicial</label>
-    <input type="date" id="fechaInicioDashboard">
+      <div class="modulo modulo-incidencias" onclick="mostrarDashboardEnConstruccion('incidencias')">
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3l9 16H3L12 3z"></path>
+            <path d="M12 8v5"></path>
+            <path d="M12 17h.01"></path>
+          </svg>
+        </div>
+        <h3>Incidencias</h3>
+        <p>Gráficos por gravedad, categoría, estado, regional, distrito y sede.</p>
+      </div>
 
-    <label for="fechaFinDashboard">Fecha final</label>
-    <input type="date" id="fechaFinDashboard">
+      <div class="modulo modulo-acompanamientos" onclick="mostrarDashboardEnConstruccion('acompañamientos')">
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="4" y="3" width="11" height="16" rx="2"></rect>
+            <path d="M7 8h5"></path>
+            <path d="M7 12h4"></path>
+            <circle cx="16.5" cy="16.5" r="3.5"></circle>
+            <path d="M19 19l2 2"></path>
+          </svg>
+        </div>
+        <h3>Acompañamientos</h3>
+        <p>Seguimiento a acompañamientos realizados, pendientes y cumplimiento.</p>
+      </div>
 
-    <button onclick="cargarDashboardAsistencia()">Cargar dashboard</button>
+      <div class="modulo modulo-evaluaciones" onclick="mostrarDashboardEnConstruccion('evaluaciones')">
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 3h9l3 3v15H6z"></path>
+            <path d="M15 3v4h4"></path>
+            <path d="M8.5 11.5l1.6 1.6 3.4-3.6"></path>
+            <path d="M8 17h8"></path>
+          </svg>
+        </div>
+        <h3>Evaluaciones</h3>
+        <p>Resultados iniciales y finales por grupo, sede, distrito y regional.</p>
+      </div>
+
+      <div class="modulo modulo-reportes" onclick="mostrarDashboardEnConstruccion('ejecutivo')">
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 3h10l4 4v14H5z"></path>
+            <path d="M15 3v5h5"></path>
+            <path d="M9 17v-4"></path>
+            <path d="M12 17v-7"></path>
+            <path d="M15 17v-3"></path>
+          </svg>
+        </div>
+        <h3>Vista ejecutiva</h3>
+        <p>Resumen general por regional, distrito y sede con alertas de seguimiento.</p>
+      </div>
+    </div>
 
     <div id="mensajeDashboard" class="mensaje"></div>
 
-    <div id="resumenDashboard" class="tarjetas-dashboard"></div>
+    <div id="dashboardAsistenciaContenido" class="bloque-formulario oculto">
+      <h3>Dashboard de asistencia</h3>
 
-    <h3>Resumen por fecha</h3>
-    <div id="tablaDashboardFechas" class="tabla-contenedor"></div>
+      <label for="grupoDashboard">Grupo</label>
+      <select id="grupoDashboard">
+        <option value="">Todos los grupos permitidos</option>
+        <option value="EXPLORADORES">EXPLORADORES</option>
+        <option value="CREADORES">CREADORES</option>
+        <option value="INNOVADORES">INNOVADORES</option>
+      </select>
 
-    <h3>Estudiantes con ausencias recurrentes</h3>
-    <div id="tablaDashboardAusencias" class="tabla-contenedor"></div>
+      <label for="fechaInicioDashboard">Fecha inicial</label>
+      <input type="date" id="fechaInicioDashboard">
+
+      <label for="fechaFinDashboard">Fecha final</label>
+      <input type="date" id="fechaFinDashboard">
+
+      <button onclick="cargarDashboardAsistencia()">Cargar dashboard de asistencia</button>
+
+      <div id="resumenDashboard" class="tarjetas-dashboard"></div>
+
+      <h3>Resumen por fecha</h3>
+      <div id="tablaDashboardFechas" class="tabla-contenedor"></div>
+
+      <h3>Estudiantes con ausencias recurrentes</h3>
+      <div id="tablaDashboardAusencias" class="tabla-contenedor"></div>
+    </div>
 
     <button class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
   </section>
@@ -1123,7 +1183,7 @@
 </footer>
 
 <script>
-  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwh-qVOJcK7ouuRHd-7TpFGtovM4OKdwLMOpqe3g3ekn6ooK6hHiLII5NQEtmp85yobkQ/exec";
+  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxgDR5gengDWNlPhr9BwVQoy7Adh0Grp_gbwJSzYf1SuNYF1IUBjVJM5_oOcpR7PYwrXg/exec";
 
   let usuarioActual = null;
   let estudiantesActuales = [];
@@ -1359,8 +1419,8 @@
       return;
     }
 
-    if (modulo === "dashboard") {
-      abrirDashboardAsistencia();
+    if (modulo === "dashboards" || modulo === "dashboard") {
+      abrirModuloDashboards();
       return;
     }
 
@@ -1612,7 +1672,7 @@
     cargarEstudiantes();
   }
 
-  function abrirDashboardAsistencia() {
+  function abrirModuloDashboards() {
     if (!usuarioActual) {
       alert("Debe iniciar sesión.");
       return;
@@ -1632,6 +1692,22 @@
       <strong>Centro sede:</strong> ${usuarioActual.centroSede || ""}<br>
       <strong>Grupo:</strong> ${usuarioActual.grupo || ""}
     `;
+
+    document.getElementById("mensajeDashboard").textContent = "";
+    document.getElementById("mensajeDashboard").className = "mensaje";
+    document.getElementById("dashboardAsistenciaContenido").classList.add("oculto");
+    document.getElementById("resumenDashboard").innerHTML = "";
+    document.getElementById("tablaDashboardFechas").innerHTML = "";
+    document.getElementById("tablaDashboardAusencias").innerHTML = "";
+  }
+
+  function abrirDashboardAsistencia() {
+    if (!usuarioActual) {
+      alert("Debe iniciar sesión.");
+      return;
+    }
+
+    document.getElementById("dashboardAsistenciaContenido").classList.remove("oculto");
 
     const hoy = new Date().toISOString().split("T")[0];
 
@@ -1654,6 +1730,17 @@
     document.getElementById("tablaDashboardAusencias").innerHTML = "";
 
     cargarDashboardAsistencia();
+  }
+
+  function mostrarDashboardEnConstruccion(nombre) {
+    document.getElementById("dashboardAsistenciaContenido").classList.add("oculto");
+    document.getElementById("resumenDashboard").innerHTML = "";
+    document.getElementById("tablaDashboardFechas").innerHTML = "";
+    document.getElementById("tablaDashboardAusencias").innerHTML = "";
+
+    const mensaje = document.getElementById("mensajeDashboard");
+    mensaje.textContent = "El dashboard de " + nombre + " será incorporado en la siguiente fase.";
+    mensaje.className = "mensaje";
   }
 
   function abrirModuloAcompanamientos() {
