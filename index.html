@@ -5377,12 +5377,9 @@
     document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
 
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = `
-      <div class="dato-asignacion"><span>Alcance</span><strong>${escapeHtml(usuarioActual.rol || "")}</strong></div>
-      <div class="dato-asignacion"><span>Regional</span><strong>${escapeHtml(usuarioActual.regional || "Todas")}</strong></div>
-      <div class="dato-asignacion"><span>Distrito</span><strong>${escapeHtml(usuarioActual.distrito || "Todos")}</strong></div>
-      <div class="dato-asignacion"><span>Estudiantes</span><strong>${total}</strong></div>
-      <div class="dato-asignacion"><span>Con grupo</span><strong>${asignados}</strong></div>
-      <div class="dato-asignacion"><span>Sin grupo</span><strong>${sinAsignar}</strong></div>
+      <div class="dato-asignacion"><span>Total de estudiantes</span><strong>${total}</strong></div>
+      <div class="dato-asignacion"><span>Asignados</span><strong>${asignados}</strong></div>
+      <div class="dato-asignacion"><span>Pendientes</span><strong>${sinAsignar}</strong></div>
     `;
 
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
