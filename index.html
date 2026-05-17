@@ -1678,19 +1678,19 @@
         <div>
           <label for="filtroRegionalAsignacionGrupos">Regional</label>
           <select id="filtroRegionalAsignacionGrupos" onchange="cambiarFiltroRegionalAsignacionGrupos()">
-            <option value="">Todas las regionales permitidas</option>
+            <option value="">Todas las regionales</option>
           </select>
         </div>
         <div>
           <label for="filtroDistritoAsignacionGrupos">Distrito</label>
           <select id="filtroDistritoAsignacionGrupos" onchange="cambiarFiltroDistritoAsignacionGrupos()">
-            <option value="">Todos los distritos permitidos</option>
+            <option value="">Todos los distritos</option>
           </select>
         </div>
         <div>
           <label for="filtroSedeAsignacionGrupos">Centro sede</label>
           <select id="filtroSedeAsignacionGrupos" onchange="filtrosAsignacionGrupos.centroSede=this.value; cargarFacilitadoresSede()">
-            <option value="">Todas las sedes permitidas</option>
+            <option value="">Todas las sedes</option>
           </select>
         </div>
       </div>
@@ -1734,19 +1734,19 @@
         <div>
           <label for="filtroRegionalAsignacionEstudiantes">Regional</label>
           <select id="filtroRegionalAsignacionEstudiantes" onchange="cambiarFiltroRegionalAsignacionEstudiantes()">
-            <option value="">Todas las regionales permitidas</option>
+            <option value="">Todas las regionales</option>
           </select>
         </div>
         <div>
           <label for="filtroDistritoAsignacionEstudiantes">Distrito</label>
           <select id="filtroDistritoAsignacionEstudiantes" onchange="cambiarFiltroDistritoAsignacionEstudiantes()">
-            <option value="">Todos los distritos permitidos</option>
+            <option value="">Todos los distritos</option>
           </select>
         </div>
         <div>
           <label for="filtroSedeAsignacionEstudiantes">Centro sede</label>
           <select id="filtroSedeAsignacionEstudiantes" onchange="filtrosAsignacionEstudiantes.centroSede=this.value; cargarEstudiantesAsignacionGrupos()">
-            <option value="">Todas las sedes permitidas</option>
+            <option value="">Todas las sedes</option>
           </select>
         </div>
       </div>
@@ -2166,7 +2166,7 @@
 
   function cargarSedesPermitidasAsistencia() {
     const mensaje = document.getElementById("mensajeAsistencia");
-    mensaje.textContent = "Cargando regionales, distritos y sedes permitidas...";
+    mensaje.textContent = "Cargando regionales, distritos y sedes...";
     mensaje.className = "mensaje";
 
     const callbackName = "callbackSedesAsistencia_" + Date.now();
@@ -3069,7 +3069,7 @@
 
   function cargarSedesPermitidas() {
     const mensaje = document.getElementById("mensajeAcompanamiento");
-    mensaje.textContent = "Cargando regionales, distritos y sedes permitidas...";
+    mensaje.textContent = "Cargando regionales, distritos y sedes...";
     mensaje.className = "mensaje";
 
     const callbackName = "callbackSedes_" + Date.now();
@@ -3685,7 +3685,7 @@
 
   function cargarSedesPermitidasIncidencias() {
     const mensaje = document.getElementById("mensajeIncidencia");
-    mensaje.textContent = "Cargando regionales, distritos y sedes permitidas...";
+    mensaje.textContent = "Cargando regionales, distritos y sedes...";
     mensaje.className = "mensaje";
 
     const callbackName = "callbackSedesIncidencias_" + Date.now();
@@ -4782,9 +4782,9 @@
       .filter(function(f) { return !distritoSeleccionado || normalizarTexto(f.distrito) === normalizarTexto(distritoSeleccionado); })
       .map(function(f) { return f.centroSede; }));
 
-    poblarSelectFiltroAsignacion("filtroRegionalAsignacionGrupos", regionales, filtrosAsignacionGrupos.regional, "Todas las regionales permitidas");
-    poblarSelectFiltroAsignacion("filtroDistritoAsignacionGrupos", distritos, filtrosAsignacionGrupos.distrito, "Todos los distritos permitidos");
-    poblarSelectFiltroAsignacion("filtroSedeAsignacionGrupos", sedes, filtrosAsignacionGrupos.centroSede, "Todas las sedes permitidas");
+    poblarSelectFiltroAsignacion("filtroRegionalAsignacionGrupos", regionales, filtrosAsignacionGrupos.regional, "Todas las regionales");
+    poblarSelectFiltroAsignacion("filtroDistritoAsignacionGrupos", distritos, filtrosAsignacionGrupos.distrito, "Todos los distritos");
+    poblarSelectFiltroAsignacion("filtroSedeAsignacionGrupos", sedes, filtrosAsignacionGrupos.centroSede, "Todas las sedes");
   }
 
   function cambiarFiltroRegionalAsignacionGrupos() {
@@ -4823,9 +4823,9 @@
       .filter(function(f) { return !distritoSeleccionado || normalizarTexto(f.distrito) === normalizarTexto(distritoSeleccionado); })
       .map(function(f) { return f.centroSede; }));
 
-    poblarSelectFiltroAsignacion("filtroRegionalAsignacionEstudiantes", regionales, filtrosAsignacionEstudiantes.regional, "Todas las regionales permitidas");
-    poblarSelectFiltroAsignacion("filtroDistritoAsignacionEstudiantes", distritos, filtrosAsignacionEstudiantes.distrito, "Todos los distritos permitidos");
-    poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, "Todas las sedes permitidas");
+    poblarSelectFiltroAsignacion("filtroRegionalAsignacionEstudiantes", regionales, filtrosAsignacionEstudiantes.regional, "Todas las regionales");
+    poblarSelectFiltroAsignacion("filtroDistritoAsignacionEstudiantes", distritos, filtrosAsignacionEstudiantes.distrito, "Todos los distritos");
+    poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, "Todas las sedes");
   }
 
   function cambiarFiltroRegionalAsignacionEstudiantes() {
