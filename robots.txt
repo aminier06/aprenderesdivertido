@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
 
+Disallow: /404
+
 Sitemap: https://aprenderesdivertido.net/sitemap.xml
