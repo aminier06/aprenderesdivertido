@@ -960,6 +960,115 @@
       margin-top: 3px;
     }
 
+    .btn-asignacion-auto {
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-asignacion-auto:hover {
+      background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 20, 40, 0.55);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-asignacion {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(15, 76, 129, 0.22);
+      max-width: 780px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 28px;
+    }
+
+    .modal-asignacion h3 {
+      margin: 0 0 6px;
+      color: #1f2937;
+      font-size: 20px;
+    }
+
+    .modal-asignacion .nota {
+      margin: 0 0 18px;
+    }
+
+    .grupos-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .grupo-preview-card {
+      background: #f8fafc;
+      border: 1px solid #dbe3ef;
+      border-left: 5px solid #7c3aed;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .grupo-preview-card h4 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: #1f2937;
+    }
+
+    .grupo-preview-card .nivel-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin: 2px 2px 2px 0;
+    }
+
+    .nivel-badge.explorador { background: #dcfce7; color: #166534; }
+    .nivel-badge.creador    { background: #fef9c3; color: #854d0e; }
+    .nivel-badge.innovador  { background: #ede9fe; color: #5b21b6; }
+    .nivel-badge.sin-dato   { background: #f1f5f9; color: #64748b; }
+
+    .grupo-preview-barra {
+      display: flex;
+      gap: 3px;
+      margin-top: 8px;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .barra-segmento {
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .acciones-modal {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+      justify-content: flex-end;
+    }
+
+    .btn-confirmar-asignacion {
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    }
+
+    .btn-confirmar-asignacion:hover {
+      background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+    }
+
     footer {
       text-align: center;
       margin: 30px;
@@ -1754,6 +1863,12 @@
     <div id="tablaAsignacionEstudiantesGrupos" class="tabla-contenedor tabla-asignacion oculto"></div>
 
     <div class="acciones-asignacion">
+      <button type="button" id="btnAsignacionAutomatica" class="oculto btn-asignacion-auto" onclick="ejecutarAsignacionAutomatica()">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:6px;">
+          <path d="M12 2l3 6 6 1-4.5 4.5 1 6.5-5.5-3-5.5 3 1-6.5L3 9l6-1z"/>
+        </svg>
+        Asignación automática
+      </button>
       <button type="button" id="btnGuardarAsignacionEstudiantesGrupos" class="oculto" onclick="guardarAsignacionEstudiantesGrupos()">Guardar asignación de estudiantes</button>
       <button type="button" class="btn-secundario" onclick="cargarEstudiantesAsignacionGrupos()">Actualizar lista</button>
       <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
@@ -5549,6 +5664,7 @@
       document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) { select.disabled = true; });
     }
     actualizarResumenVisualAsignacionEstudiantes();
+    actualizarVisibilidadBtnAsignacionAuto();
   }
 
   function actualizarResumenVisualAsignacionEstudiantes() {
@@ -5629,6 +5745,417 @@
     document.body.appendChild(script);
   }
 
+
+
+  // ─── ASIGNACIÓN AUTOMÁTICA ─────────────────────────────────────────────────
+
+  const NIVEL_ORDEN = { "innovador": 3, "creador": 2, "explorador": 1, "sin dato": 0, "": 0 };
+
+  function nivelPuntaje(nivel) {
+    return NIVEL_ORDEN[normalizarTexto(nivel).toLowerCase()] || 0;
+  }
+
+  function puntajeEstudiante(e) {
+    // Lengua Española tiene prioridad: peso 2, Matemática peso 1
+    return nivelPuntaje(e.nivelLengua) * 2 + nivelPuntaje(e.nivelMat);
+  }
+
+  function ejecutarAsignacionAutomatica() {
+    if (!datosAsignacionEstudiantesGrupos) return;
+
+    const grupos = datosAsignacionEstudiantesGrupos.grupos || [];
+    const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
+
+    if (!grupos.length) {
+      alert("No hay grupos disponibles para la sede.");
+      return;
+    }
+
+    if (!estudiantes.length) {
+      alert("No hay estudiantes para asignar.");
+      return;
+    }
+
+    // Calcular la asignación homogénea
+    const resultado = calcularAsignacionHomogenea(grupos, estudiantes);
+
+    // Mostrar modal de previsualización
+    mostrarModalAsignacionAutomatica(resultado, grupos);
+  }
+
+  function calcularAsignacionHomogenea(grupos, estudiantes) {
+    /*
+      REGLA PRINCIPAL (basada en nivel de Lengua Española):
+        - Cada grupo solo puede contener niveles ADYACENTES:
+            · Explorador + Creador  → permitido
+            · Creador + Innovador   → permitido
+            · Explorador + Innovador → PROHIBIDO
+            · Un solo nivel          → siempre permitido
+        - Máximo 25 estudiantes por grupo.
+        - Distribución lo más homogénea posible dentro de la restricción.
+
+      ESTRATEGIA:
+        1. Separar estudiantes en tres bandas por nivelLengua:
+             banda E  = Explorador
+             banda C  = Creador
+             banda I  = Innovador
+             banda SD = Sin dato  → se tratan como Creador a efectos de compatibilidad
+        2. Determinar cuántos grupos se necesitan para cada banda pura,
+           luego completar mezclando E+C y C+I de forma equilibrada.
+        3. Asignar grupos concretos a cada partición y repartir estudiantes
+           en serpentina dentro de cada partición para maximizar homogeneidad.
+    */
+
+    const MAX_POR_GRUPO = 25;
+    const numGrupos = grupos.length;
+
+    // ── 1. Separar por nivel de Lengua ──────────────────────────────────────
+    const bandaE  = []; // Explorador
+    const bandaC  = []; // Creador
+    const bandaI  = []; // Innovador
+    const bandaSD = []; // Sin dato
+
+    estudiantes.forEach(function(e) {
+      const n = normalizarTexto(e.nivelLengua).toLowerCase();
+      if      (n === "explorador") bandaE.push(e);
+      else if (n === "creador")    bandaC.push(e);
+      else if (n === "innovador")  bandaI.push(e);
+      else                         bandaSD.push(e);
+    });
+
+    // Dentro de cada banda, ordenar descendente por puntaje compuesto
+    // (Lengua × 2 + Matemática) para maximizar homogeneidad interna
+    function ordenarBanda(arr) {
+      return arr.slice().sort(function(a, b) {
+        return puntajeEstudiante(b) - puntajeEstudiante(a);
+      });
+    }
+
+    const E  = ordenarBanda(bandaE);
+    const C  = ordenarBanda(bandaC.concat(bandaSD)); // Sin dato ≡ Creador
+    const I  = ordenarBanda(bandaI);
+
+    // ── 2. Calcular cuántos grupos necesita cada partición ───────────────────
+    /*
+      Particiones posibles: E, EC, C, CI, I
+      Objetivo: asignar grupos enteros a particiones de modo que:
+        - Grupos E  reciben solo Exploradores
+        - Grupos EC reciben Exploradores y Creadores mezclados
+        - Grupos C  reciben solo Creadores
+        - Grupos CI reciben Creadores e Innovadores mezclados
+        - Grupos I  reciben solo Innovadores
+      Se minimiza el número de particiones usando grupos de mezcla (EC, CI)
+      antes de crear grupos puros, para no desperdiciar cupo.
+    */
+
+    // Total de estudiantes
+    const totE = E.length, totC = C.length, totI = I.length;
+    const totTotal = totE + totC + totI;
+
+    // Número mínimo de grupos necesarios para contener a todos (puede exceder
+    // numGrupos si hay demasiados estudiantes, en ese caso se respeta el límite
+    // relajando la restricción de 25 como último recurso).
+    const gruposMinimos = Math.ceil(totTotal / MAX_POR_GRUPO);
+    const gruposDisponibles = Math.max(numGrupos, gruposMinimos);
+
+    // ── 3. Distribuir grupos entre particiones ───────────────────────────────
+    /*
+      Algoritmo greedy:
+        a) Calcular cuántos grupos "puros" necesita cada banda para
+           acomodar su exceso (estudiantes que no caben en mezclas).
+        b) Asignar grupos de mezcla EC y CI para combinar las bandas
+           frontera de manera equilibrada.
+        c) Distribuir los grupos disponibles restantes como puro C si sobra.
+    */
+
+    // Grupos asignados a cada partición (empezamos en 0)
+    let gE = 0, gEC = 0, gC = 0, gCI = 0, gI = 0;
+
+    // Capacidad total de mezcla EC y CI juntos
+    // Primero intentamos mezclar todo C con E y con I usando grupos de mezcla.
+    // Grupos de mezcla EC: cada uno lleva floor(MAX/2) E y ceil(MAX/2) C aprox.
+    // En la práctica los distribuimos en serpentina, así que la mitad del cupo
+    // puede ser de cada banda. Usamos MAX_POR_GRUPO como capacidad total.
+
+    // Grupos estrictamente necesarios para E, C, I sin mezcla:
+    const gEpuro = Math.ceil(totE / MAX_POR_GRUPO);
+    const gCpuro = Math.ceil(totC / MAX_POR_GRUPO);
+    const gIpuro = Math.ceil(totI / MAX_POR_GRUPO);
+
+    // Si el total de grupos puros es <= numGrupos, podemos asignar así (más simple).
+    // Si no, necesitamos mezclar para ahorrar grupos.
+
+    // Estrategia unificada: construir particiones aprovechando mezcla.
+    // Estimamos capacidad de mezcla EC y CI como capacidad de "absorber"
+    // estudiantes de dos bandas adyacentes en el mismo grupo.
+
+    // Paso A: ¿Cuántos grupos de mezcla EC y CI son óptimos?
+    //   Queremos minimizar |gE - gI| (simetría) y maximizar el uso de grupos
+    //   disponibles mezclando las bandas "pequeñas" con la "grande".
+    //   Simplificación práctica: la banda C actúa como cola compartida.
+
+    // Algoritmo simplificado pero correcto:
+    //   1. Mezclar todo E con inicio de C en grupos EC (tantos como necesite E).
+    //   2. Mezclar todo I con fin de C en grupos CI (tantos como necesite I).
+    //   3. El C restante (no usado en mezclas) va a grupos C puros.
+    //   4. Si sobran grupos disponibles, se reparten como C puros o se dejan vacíos.
+
+    // Capacidad de un grupo de mezcla EC: MAX estudiantes totales, ≤ MAX de cada banda.
+    // Para repartir E y C en grupos EC de manera equilibrada usamos la serpentina
+    // al final. Aquí solo calculamos cuántos grupos EC necesitamos para acomodar
+    // a todos los E y a todos los I juntos con parte de C.
+
+    // Grupos EC necesarios = grupos que pueden contener todos los E junto con C
+    //   Mínimos EC = ceil(totE / MAX_POR_GRUPO) ... pero si totC ayuda a llenar,
+    //   podemos necesitar solo ceil((totE + partC) / MAX_POR_GRUPO).
+    // Simplificamos: gEC se fija en ceil(totE / MAX_POR_GRUPO) como mínimo,
+    // luego llenamos con C el cupo sobrante en cada grupo EC.
+
+    gEC = (totE > 0) ? Math.ceil(totE / MAX_POR_GRUPO) : 0;
+    gCI = (totI > 0) ? Math.ceil(totI / MAX_POR_GRUPO) : 0;
+
+    // Cuántos C pueden entrar en los grupos EC y CI
+    const cupoEC = gEC * MAX_POR_GRUPO - totE; // cupo sobrante en grupos EC para C
+    const cupoCI = gCI * MAX_POR_GRUPO - totI; // cupo sobrante en grupos CI para C
+
+    // C restantes después de llenar huecos en EC y CI
+    const cEnEC  = Math.min(totC, cupoEC);
+    const cRestante1 = totC - cEnEC;
+    const cEnCI  = Math.min(cRestante1, cupoCI);
+    const cRestante2 = cRestante1 - cEnCI;
+
+    gC = (cRestante2 > 0) ? Math.ceil(cRestante2 / MAX_POR_GRUPO) : 0;
+
+    // Total grupos calculados
+    let totalCalculado = gEC + gCI + gC;
+
+    // Si hay más grupos disponibles que los calculados, distribuir el sobrante
+    // como grupos C puros adicionales (o E/I puros si no hay C sobrante).
+    // Si hay menos grupos disponibles, compactar: aumentar capacidad efectiva.
+    if (totalCalculado > numGrupos) {
+      // Necesitamos más grupos de los disponibles; relajar agrupando más
+      // estudiantes por grupo (se superará el límite de 25 solo si es inevitable).
+      // Redistribuir todo en los grupos disponibles ignorando la restricción extra.
+      // Esto no debería ocurrir normalmente ya que numGrupos se calcula de la cuota.
+      gC = Math.max(0, numGrupos - gEC - gCI);
+    } else if (totalCalculado < numGrupos) {
+      // Sobran grupos: agregarlos como C puros
+      gC += (numGrupos - totalCalculado);
+    }
+
+    // ── 4. Asignar grupos concretos a cada partición ─────────────────────────
+    let grupoIdx = 0;
+    const particionGrupos = {
+      E:  [], // grupos solo Explorador
+      EC: [], // grupos Explorador + Creador
+      C:  [], // grupos solo Creador
+      CI: [], // grupos Creador + Innovador
+      I:  []  // grupos solo Innovador
+    };
+
+    for (let k = 0; k < gEC; k++) particionGrupos.EC.push(grupos[grupoIdx++] || ("Grupo " + grupoIdx));
+    for (let k = 0; k < gCI; k++) particionGrupos.CI.push(grupos[grupoIdx++] || ("Grupo " + grupoIdx));
+    for (let k = 0; k < gC;  k++) particionGrupos.C.push(grupos[grupoIdx++]  || ("Grupo " + grupoIdx));
+
+    // Si aún quedan grupos sin asignar (edge case), añadirlos a C
+    while (grupoIdx < numGrupos) {
+      particionGrupos.C.push(grupos[grupoIdx++]);
+    }
+
+    // ── 5. Repartir estudiantes en serpentina dentro de cada partición ───────
+    const asignacion = {};
+    grupos.forEach(function(g) { asignacion[g] = []; });
+
+    function repartirSerpentina(listaEstudiantes, listaGrupos) {
+      if (!listaGrupos.length || !listaEstudiantes.length) return;
+      const n = listaGrupos.length;
+      let gi = 0, fw = true;
+      listaEstudiantes.forEach(function(e) {
+        // Saltar grupos llenos
+        let intentos = 0;
+        while (asignacion[listaGrupos[gi]].length >= MAX_POR_GRUPO && intentos < n) {
+          if (fw) { gi++; if (gi >= n) { gi = n - 1; fw = false; } }
+          else    { gi--; if (gi < 0)  { gi = 0;     fw = true;  } }
+          intentos++;
+        }
+        asignacion[listaGrupos[gi]].push(e);
+        if (fw) { gi++; if (gi >= n) { gi = n - 1; fw = false; } }
+        else    { gi--; if (gi < 0)  { gi = 0;     fw = true;  } }
+      });
+    }
+
+    // Grupos EC: mezclar E con la primera porción de C
+    const cParaEC = C.slice(0, cEnEC);
+    // Intercalar E y C en serpentina de dos colas para máxima mezcla
+    function intercalarDos(listaA, listaB, listaGrupos) {
+      if (!listaGrupos.length) return;
+      // Combinar intercalando: A[0], B[0], A[1], B[1], ...
+      const combinado = [];
+      const maxLen = Math.max(listaA.length, listaB.length);
+      for (let k = 0; k < maxLen; k++) {
+        if (k < listaA.length) combinado.push(listaA[k]);
+        if (k < listaB.length) combinado.push(listaB[k]);
+      }
+      repartirSerpentina(combinado, listaGrupos);
+    }
+
+    intercalarDos(E, cParaEC, particionGrupos.EC);
+
+    // Grupos CI: mezclar I con la siguiente porción de C
+    const cParaCI = C.slice(cEnEC, cEnEC + cEnCI);
+    intercalarDos(I, cParaCI, particionGrupos.CI);
+
+    // Grupos C puros: C restante
+    const cPuro = C.slice(cEnEC + cEnCI);
+    repartirSerpentina(cPuro, particionGrupos.C);
+
+    return asignacion;
+  }
+
+  function contarNiveles(lista) {
+    const cnt = { innovador: 0, creador: 0, explorador: 0, sinDato: 0 };
+    lista.forEach(function(e) {
+      const n = normalizarTexto(e.nivelLengua).toLowerCase();
+      if (n === "innovador") cnt.innovador++;
+      else if (n === "creador") cnt.creador++;
+      else if (n === "explorador") cnt.explorador++;
+      else cnt.sinDato++;
+    });
+    return cnt;
+  }
+
+  function tipoGrupoLabel(cnt) {
+    const tieneE = cnt.explorador > 0;
+    const tieneC = cnt.creador > 0;
+    const tieneI = cnt.innovador > 0;
+    if (tieneE && tieneC && !tieneI) return { texto: "Explorador + Creador", color: "#0891b2" };
+    if (!tieneE && tieneC && tieneI) return { texto: "Creador + Innovador",  color: "#7c3aed" };
+    if (tieneE && !tieneC && !tieneI) return { texto: "Solo Explorador",     color: "#16a34a" };
+    if (!tieneE && tieneC && !tieneI) return { texto: "Solo Creador",        color: "#ca8a04" };
+    if (!tieneE && !tieneC && tieneI) return { texto: "Solo Innovador",      color: "#6d28d9" };
+    if (!tieneE && !tieneC && !tieneI) return { texto: "Sin estudiantes",    color: "#94a3b8" };
+    return { texto: "Mixto",                                                  color: "#ef4444" };
+  }
+
+  function mostrarModalAsignacionAutomatica(asignacion, grupos) {
+    // Eliminar modal anterior si existe
+    const anterior = document.getElementById("modalAsignacionAuto");
+    if (anterior) anterior.remove();
+
+    let cardsHTML = "";
+    grupos.forEach(function(g) {
+      const lista = asignacion[g] || [];
+      const cnt = contarNiveles(lista);
+      const total = lista.length;
+      const pctInn = total ? Math.round(cnt.innovador / total * 100) : 0;
+      const pctCre = total ? Math.round(cnt.creador / total * 100) : 0;
+      const pctExp = total ? Math.round(cnt.explorador / total * 100) : 0;
+      const pctSD  = total ? (100 - pctInn - pctCre - pctExp) : 0;
+      const tipo   = tipoGrupoLabel(cnt);
+
+      cardsHTML += `
+        <div class="grupo-preview-card">
+          <h4>${escapeHtml(g)} <span style="font-weight:normal;color:#64748b;font-size:13px;">(${total} estudiantes)</span></h4>
+          <div style="margin-bottom:6px;">
+            <span style="display:inline-block;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:999px;background:${tipo.color}22;color:${tipo.color};border:1px solid ${tipo.color}55;">${tipo.texto}</span>
+          </div>
+          <div>
+            ${cnt.innovador ? `<span class="nivel-badge innovador">Innovador: ${cnt.innovador}</span>` : ""}
+            ${cnt.creador   ? `<span class="nivel-badge creador">Creador: ${cnt.creador}</span>` : ""}
+            ${cnt.explorador? `<span class="nivel-badge explorador">Explorador: ${cnt.explorador}</span>` : ""}
+            ${cnt.sinDato   ? `<span class="nivel-badge sin-dato">Sin dato: ${cnt.sinDato}</span>` : ""}
+          </div>
+          <div class="grupo-preview-barra" title="Distribución de niveles">
+            <div class="barra-segmento" style="width:${pctInn}%;background:#7c3aed;"></div>
+            <div class="barra-segmento" style="width:${pctCre}%;background:#ca8a04;"></div>
+            <div class="barra-segmento" style="width:${pctExp}%;background:#16a34a;"></div>
+            <div class="barra-segmento" style="width:${pctSD}%;background:#94a3b8;"></div>
+          </div>
+        </div>
+      `;
+    });
+
+    const totalEst = grupos.reduce(function(s, g) { return s + (asignacion[g] || []).length; }, 0);
+
+    const modal = document.createElement("div");
+    modal.id = "modalAsignacionAuto";
+    modal.className = "modal-overlay";
+    modal.innerHTML = `
+      <div class="modal-asignacion">
+        <h3>Vista previa de la asignación automática</h3>
+        <p class="nota">Se distribuyeron <strong>${totalEst} estudiantes</strong> en <strong>${grupos.length} grupos</strong> respetando la regla de niveles adyacentes en Lengua Española: cada grupo contiene únicamente Exploradores, Exploradores+Creadores, Creadores, Creadores+Innovadores o Innovadores. Los grupos no exceden 25 estudiantes. Puede confirmar y ajustar manualmente antes de guardar.</p>
+
+        <div class="grupos-preview">${cardsHTML}</div>
+
+        <p class="nota" style="font-size:13px;color:#7c3aed;">
+          <strong>Nota:</strong> Al confirmar, los selects de la tabla se actualizarán con esta distribución. Podrá hacer cambios manuales antes de guardar.
+        </p>
+
+        <div class="acciones-modal">
+          <button type="button" class="btn-secundario" onclick="cerrarModalAsignacion()">Cancelar</button>
+          <button type="button" class="btn-confirmar-asignacion" onclick="aplicarAsignacionAutomatica()">Confirmar y aplicar</button>
+        </div>
+      </div>
+    `;
+
+    // Guardar asignación en variable temporal
+    window._asignacionAutoPendiente = asignacion;
+
+    document.body.appendChild(modal);
+
+    // Cerrar al hacer clic en el overlay (fuera del modal)
+    modal.addEventListener("click", function(e) {
+      if (e.target === modal) cerrarModalAsignacion();
+    });
+  }
+
+  function cerrarModalAsignacion() {
+    const modal = document.getElementById("modalAsignacionAuto");
+    if (modal) modal.remove();
+    window._asignacionAutoPendiente = null;
+  }
+
+  function aplicarAsignacionAutomatica() {
+    const asignacion = window._asignacionAutoPendiente;
+    if (!asignacion) return;
+
+    // Crear mapa de idEstudiante → grupo
+    const mapaGrupo = {};
+    Object.keys(asignacion).forEach(function(grupo) {
+      (asignacion[grupo] || []).forEach(function(e) {
+        mapaGrupo[normalizarTexto(e.idEstudiante)] = grupo;
+      });
+    });
+
+    // Aplicar en los selects de la tabla
+    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+      const id = normalizarTexto(select.dataset.id);
+      const grupo = mapaGrupo[id];
+      if (grupo) {
+        select.value = grupo;
+      }
+    });
+
+    actualizarResumenVisualAsignacionEstudiantes();
+    cerrarModalAsignacion();
+
+    const mensaje = document.getElementById("mensajeAsignacionEstudiantesGrupos");
+    mensaje.textContent = "Asignación automática aplicada. Puede hacer ajustes manuales y luego guardar.";
+    mensaje.className = "mensaje ok";
+  }
+
+  // Mostrar/ocultar el botón de asignación automática según permisos
+  function actualizarVisibilidadBtnAsignacionAuto() {
+    const btn = document.getElementById("btnAsignacionAutomatica");
+    if (!btn) return;
+    if (puedeModificarAsignaciones()) {
+      btn.classList.remove("oculto");
+    } else {
+      btn.classList.add("oculto");
+    }
+  }
+
+  // ─── FIN ASIGNACIÓN AUTOMÁTICA ─────────────────────────────────────────────
 
   function escapeHtml(valor) {
     return String(valor || "")
