@@ -3303,7 +3303,7 @@
 
     window[callbackName] = function(respuesta) {
       if (respuesta.ok) {
-        sedesDashboard = respuesta.sedes || [];
+        sedesDashboard = filtrarSedesSegunVistaActual(respuesta.sedes || []);
         llenarSelectorRegionalesDashboard(sedesDashboard);
 
         if (sedesDashboard.length === 0) {
@@ -4572,7 +4572,7 @@
 
     window[callbackName] = function(respuesta) {
       if (respuesta.ok) {
-        sedesIncidencias = respuesta.sedes || [];
+        sedesIncidencias = filtrarSedesSegunVistaActual(respuesta.sedes || []);
         llenarSelectorRegionalesIncidencia(sedesIncidencias);
 
         if (sedesIncidencias.length === 0) {
@@ -5743,7 +5743,17 @@
     document.getElementById("moduloAsignacionGrupos").classList.remove("oculto");
 
     datosAsignacionGrupos = null;
-    filtrosAsignacionGrupos = { regional: "", distrito: "", centroSede: "" };
+
+    // Si hay una vista simulada activa, inicializar los filtros con su alcance
+    if (esAdministradorReal() && localStorage.getItem("usuarioCampamentoVista")) {
+      filtrosAsignacionGrupos = {
+        regional:   usuarioActual.regional   || "",
+        distrito:   usuarioActual.distrito   || "",
+        centroSede: usuarioActual.centroSede || ""
+      };
+    } else {
+      filtrosAsignacionGrupos = { regional: "", distrito: "", centroSede: "" };
+    }
     const bloqueFiltrosFac = document.getElementById("bloqueFiltrosAsignacionGrupos");
     if (bloqueFiltrosFac) bloqueFiltrosFac.classList.toggle("oculto", !modoConsultaAsignaciones());
     document.getElementById("resumenAsignacionGrupos").innerHTML = "";
@@ -6145,7 +6155,17 @@
     document.getElementById("moduloAsignacionEstudiantesGrupos").classList.remove("oculto");
 
     datosAsignacionEstudiantesGrupos = null;
-    filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
+
+    // Si hay una vista simulada activa, inicializar los filtros con su alcance
+    if (esAdministradorReal() && localStorage.getItem("usuarioCampamentoVista")) {
+      filtrosAsignacionEstudiantes = {
+        regional:   usuarioActual.regional   || "",
+        distrito:   usuarioActual.distrito   || "",
+        centroSede: usuarioActual.centroSede || ""
+      };
+    } else {
+      filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
+    }
     const bloqueFiltrosEst = document.getElementById("bloqueFiltrosAsignacionEstudiantes");
     if (bloqueFiltrosEst) bloqueFiltrosEst.classList.toggle("oculto", !modoConsultaAsignaciones());
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = "";
