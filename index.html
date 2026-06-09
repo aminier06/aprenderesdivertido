@@ -2752,6 +2752,7 @@
     _sedesGlobalesCache = null;
     _sedesGlobalesCargando = false;
     _sedesGlobalesCallbacks = [];
+    sedesModoAdministrador = [];
   }
 
 
@@ -3261,7 +3262,6 @@
     const selectRegional = document.getElementById("adminVistaRegional");
     if (!selectRegional) return;
 
-    const valorActual = selectRegional.value;
     selectRegional.innerHTML = '<option value="">Todas</option>';
 
     obtenerValoresUnicos(sedesModoAdministrador, "regional").forEach(function(regional) {
@@ -3271,16 +3271,14 @@
       selectRegional.appendChild(option);
     });
 
-    // Prioridad: si hay una vista activa guardada, restaurar ese valor;
-    // si no, restaurar el valor que tenía antes de recargar la lista.
+    // Solo restaurar valor si hay una vista activa en localStorage
     const vistaGuardada = localStorage.getItem("usuarioCampamentoVista");
     if (vistaGuardada) {
       const v = JSON.parse(vistaGuardada);
       if (v.regional) selectRegional.value = v.regional;
-      else if (valorActual) selectRegional.value = valorActual;
-    } else if (valorActual) {
-      selectRegional.value = valorActual;
     }
+    // Si no hay vista activa, el selector queda en "Todas" (vacío) — correcto
+
     cargarDistritosVistaAdministrador();
   }
 
@@ -3295,6 +3293,11 @@
     document.getElementById("adminVistaDistrito").disabled = !requiereDistrito;
     document.getElementById("adminVistaSede").disabled = !requiereSede;
     document.getElementById("adminVistaGrupo").disabled = !requiereGrupo;
+
+    // Si el rol requiere regional y las sedes aún no están cargadas, cargarlas
+    if (requiereRegional && (!sedesModoAdministrador || sedesModoAdministrador.length === 0)) {
+      cargarSedesModoAdministrador();
+    }
   }
 
   function cargarDistritosVistaAdministrador() {
@@ -3304,7 +3307,6 @@
 
     if (!selectDistrito || !selectSede) return;
 
-    const valorActual = selectDistrito.value;
     selectDistrito.innerHTML = '<option value="">Todos</option>';
     selectSede.innerHTML = '<option value="">Todos</option>';
 
@@ -3319,15 +3321,14 @@
       selectDistrito.appendChild(option);
     });
 
-    // Restaurar distrito desde la vista activa guardada o el valor previo
-    const _vistaD = localStorage.getItem("usuarioCampamentoVista");
-    if (_vistaD) {
-      const vd = JSON.parse(_vistaD);
+    // Solo restaurar valor si hay una vista activa en localStorage
+    const vistaGuardada = localStorage.getItem("usuarioCampamentoVista");
+    if (vistaGuardada) {
+      const vd = JSON.parse(vistaGuardada);
       if (vd.distrito) selectDistrito.value = vd.distrito;
-      else if (valorActual) selectDistrito.value = valorActual;
-    } else if (valorActual) {
-      selectDistrito.value = valorActual;
     }
+    // Si no hay vista activa, queda en "Todos" — correcto
+
     cargarSedesVistaAdministrador();
   }
 
@@ -3338,7 +3339,6 @@
 
     if (!selectSede) return;
 
-    const valorActual = selectSede.value;
     selectSede.innerHTML = '<option value="">Todos</option>';
 
     const sedesFiltradas = sedesModoAdministrador.filter(function(s) {
@@ -3354,15 +3354,13 @@
       selectSede.appendChild(option);
     });
 
-    // Restaurar sede desde la vista activa guardada o el valor previo
-    const _vistaS = localStorage.getItem("usuarioCampamentoVista");
-    if (_vistaS) {
-      const vs = JSON.parse(_vistaS);
+    // Solo restaurar valor si hay una vista activa en localStorage
+    const vistaGuardada = localStorage.getItem("usuarioCampamentoVista");
+    if (vistaGuardada) {
+      const vs = JSON.parse(vistaGuardada);
       if (vs.centroSede) selectSede.value = vs.centroSede;
-      else if (valorActual) selectSede.value = valorActual;
-    } else if (valorActual) {
-      selectSede.value = valorActual;
     }
+    // Si no hay vista activa, queda en "Todos" — correcto
 
     // Mostrar indicador de vista activa si corresponde
     if (typeof restaurarSelectoresVista === "function") restaurarSelectoresVista();
@@ -3429,6 +3427,19 @@
     invalidarCacheSedes();
     limpiarCachesModulos();
 
+    // Limpiar selectores explícitamente antes de recargar las listas
+    const rolSelect = document.getElementById("adminVistaRol");
+    const regionalSelect = document.getElementById("adminVistaRegional");
+    const distritoSelect = document.getElementById("adminVistaDistrito");
+    const sedeSelect    = document.getElementById("adminVistaSede");
+    const grupoSelect   = document.getElementById("adminVistaGrupo");
+
+    if (rolSelect)      { rolSelect.value = "Administrador"; }
+    if (regionalSelect) { regionalSelect.innerHTML = '<option value="">Todas</option>'; regionalSelect.value = ""; }
+    if (distritoSelect) { distritoSelect.innerHTML = '<option value="">Todos</option>';  distritoSelect.value = ""; }
+    if (sedeSelect)     { sedeSelect.innerHTML     = '<option value="">Todos</option>';  sedeSelect.value = ""; }
+    if (grupoSelect)    { grupoSelect.value = ""; }
+
     const mensaje = document.getElementById("mensajeVistaAdministrador");
     if (mensaje) {
       mensaje.textContent = "Vista de administrador restablecida.";
@@ -3437,11 +3448,6 @@
 
     mostrarDatosUsuario(usuarioActual);
     actualizarBarraVistaSimulada();
-
-    // Resetear los selectores al estado de administrador sin vista
-    const rolSelect = document.getElementById("adminVistaRol");
-    if (rolSelect) rolSelect.value = usuarioSesion.rol || "Administrador";
-    cambiarRolVistaAdministrador();
 
     // Limpiar botones de vista rápida activos
     document.querySelectorAll(".btn-vista-rapida").forEach(function(b) { b.classList.remove("activa"); });
