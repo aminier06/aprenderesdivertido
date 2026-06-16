@@ -7360,10 +7360,23 @@
     if (btn) btn.disabled = true;
 
     // El backend espera e.parameter.payload como JSON: { cedulaCoordinador, asignaciones }.
-    // Para no superar el límite de URL de Google Apps Script (~2 KB), enviamos
-    // las asignaciones en lotes de 20, cada uno como un payload independiente.
-    // El backend procesa cada lote y escribe fila a fila en la hoja ESTUDIANTES.
-    const LOTE = 20;
+    // Enviamos en lotes pequeños para no superar el límite de URL de Google Apps Script.
+    // Calculamos dinámicamente el tamaño de lote para que la URL no supere 1800 chars.
+    const URL_BASE_LEN = URL_SCRIPT.length + 80; // accion + callback overhead
+    const cedula = usuarioActual.cedula;
+
+    function calcularLoteSeguro() {
+      // Estimar tamaño de un ítem de asignación: ~60 chars por estudiante en JSON
+      const CHARS_POR_ITEM = 65;
+      const CHARS_CEDULA = cedula.length + 30; // overhead del campo cedulaCoordinador
+      const LIMITE_URL = 1800;
+      const disponible = LIMITE_URL - URL_BASE_LEN - CHARS_CEDULA;
+      const lote = Math.max(1, Math.floor(disponible / CHARS_ITEM));
+      return Math.min(lote, 10); // máximo 10 por seguridad
+    }
+
+    // Usamos lote fijo de 10 — cabe siempre dentro del límite
+    const LOTE = 10;
     const totalLotes = Math.max(1, Math.ceil(asignaciones.length / LOTE));
     let loteActual = 0;
 
@@ -7375,16 +7388,17 @@
         mensaje.textContent = "Guardando\u2026 (" + (loteActual + 1) + " de " + totalLotes + ")";
       }
 
-      // Reconstruimos el objeto payload exactamente como el backend lo espera
-      const payload = JSON.stringify({
-        cedulaCoordinador: usuarioActual.cedula,
+      // Construir payload exactamente como el backend lo espera:
+      // JSON.parse(e.parameter.payload) → { cedulaCoordinador, asignaciones }
+      const payloadStr = JSON.stringify({
+        cedulaCoordinador: cedula,
         asignaciones: porcion
       });
 
       llamarBackend(
         {
           accion: "guardarAsignacionEstudiantesGrupos",
-          payload: payload
+          payload: payloadStr
         },
         function(respuesta) {
           if (!respuesta.ok) {
