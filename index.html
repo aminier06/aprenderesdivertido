@@ -7359,30 +7359,54 @@
     const btn = document.getElementById("btnGuardarAsignacionEstudiantesGrupos");
     if (btn) btn.disabled = true;
 
-    llamarBackend(
-      {
-        accion: "guardarAsignacionEstudiantesGrupos",
-        payload: JSON.stringify({
-          cedulaCoordinador: usuarioActual.cedula,
-          asignaciones: asignaciones
-        })
-      },
-      function(respuesta) {
-        if (btn) btn.disabled = false;
-        if (respuesta.ok) {
-          mensaje.textContent = respuesta.mensaje || "Asignación de estudiantes guardada correctamente.";
-          mensaje.className = "mensaje ok";
-          cargarEstudiantesAsignacionGrupos();
-        } else if (respuesta.timeout) {
-          mensaje.textContent = "El servidor tardó demasiado en responder. Verifica tu conexión e intenta de nuevo.";
-          mensaje.className = "mensaje error";
-        } else {
-          mensaje.textContent = respuesta.mensaje || "No se pudo guardar la asignación de estudiantes.";
-          mensaje.className = "mensaje error";
-        }
-      },
-      { timeout: 30000 }  // 30 segundos: guardar puede tardar más que otras acciones
-    );
+    const payload = {
+      accion: "guardarAsignacionEstudiantesGrupos",
+      cedulaCoordinador: usuarioActual.cedula,
+      asignaciones: asignaciones
+    };
+
+    // Se usa fetch POST porque el payload con todos los estudiantes puede superar
+    // el límite de URL (~2 KB) que tiene Google Apps Script en peticiones GET/JSONP.
+    // El backend debe tener doPost() implementado y devolver JSON con Content-Type
+    // application/json para que no sea necesario JSONP.
+    const controller = new AbortController();
+    const timer = setTimeout(function() { controller.abort(); }, 60000); // 60 s
+
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      signal: controller.signal,
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      // Google Apps Script rechaza application/json desde páginas externas (CORS preflight).
+      // text/plain es una "simple request" y no lanza preflight, pero el backend
+      // debe leer e.postData.contents y hacer JSON.parse() manualmente.
+      body: JSON.stringify(payload)
+    })
+    .then(function(res) {
+      clearTimeout(timer);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then(function(respuesta) {
+      if (btn) btn.disabled = false;
+      if (respuesta.ok) {
+        mensaje.textContent = respuesta.mensaje || "Asignación de estudiantes guardada correctamente.";
+        mensaje.className = "mensaje ok";
+        cargarEstudiantesAsignacionGrupos();
+      } else {
+        mensaje.textContent = respuesta.mensaje || "No se pudo guardar la asignación de estudiantes.";
+        mensaje.className = "mensaje error";
+      }
+    })
+    .catch(function(err) {
+      clearTimeout(timer);
+      if (btn) btn.disabled = false;
+      if (err.name === "AbortError") {
+        mensaje.textContent = "El servidor tardó demasiado en responder. Verifica tu conexión e intenta de nuevo.";
+      } else {
+        mensaje.textContent = "Error al conectar con el servidor: " + err.message;
+      }
+      mensaje.className = "mensaje error";
+    });
   }
 
 
