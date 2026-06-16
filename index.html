@@ -1675,6 +1675,100 @@
     #bannerOffline .offline-btn:hover { background: #fbbf24; }
     body.offline-mode { padding-bottom: 58px; }
 
+    /* ── BADGE DE COLA OFFLINE ───────────────────── */
+    .badge-cola {
+      display: none;
+      width: 26px; height: 26px;
+      background: #f59e0b;
+      color: #1e293b;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.25);
+      transition: transform 0.15s;
+      position: relative;
+    }
+    .badge-cola.visible { display: flex; }
+    .badge-cola:hover { transform: scale(1.1); }
+
+    /* Pulso animado */
+    .badge-cola::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid #f59e0b;
+      animation: pulsoBadge 1.8s ease-out infinite;
+    }
+    @keyframes pulsoBadge {
+      0%   { opacity: 0.7; transform: scale(1); }
+      100% { opacity: 0;   transform: scale(1.7); }
+    }
+
+    /* ── NOTIFICACIÓN DE SINCRONIZACIÓN ──────────── */
+    .notif-cola {
+      display: none;
+      position: fixed;
+      top: 70px; right: 16px;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 10px 16px;
+      border-radius: var(--r-lg);
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 8000;
+      box-shadow: var(--s-lg);
+      border-left: 3px solid #22c55e;
+      max-width: 300px;
+      animation: slideInNotif 0.25s ease;
+    }
+    .notif-cola.visible { display: block; }
+    @keyframes slideInNotif {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── MODAL DE COLA OFFLINE ───────────────────── */
+    .modal-cola {
+      background: var(--blanco);
+      border-radius: var(--r-xl);
+      box-shadow: var(--s-lg);
+      max-width: 480px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+      animation: modalIn 0.2s ease;
+    }
+    .modal-cola h3 { margin: 0 0 6px; font-size: 17px; }
+    .modal-cola .nota { margin: 0 0 16px; }
+    .item-cola {
+      background: var(--fondo-2);
+      border: 1px solid var(--borde);
+      border-radius: var(--r);
+      padding: 10px 13px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .item-cola-tipo {
+      flex: 1;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--texto);
+    }
+    .item-cola-fecha {
+      font-size: 11.5px;
+      color: var(--texto-3);
+      white-space: nowrap;
+    }
+    .item-cola-icono { font-size: 18px; flex-shrink: 0; }
+
     /* ══════════════════════════════════════════════
        RESPONSIVE MÓVIL – MEJORAS COMPLETAS
     ══════════════════════════════════════════════ */
@@ -1871,7 +1965,12 @@
     <h1 class="titulo-header">Campamento Aprender es Divertido</h1>
   </div>
   <div id="usuarioFlotante" class="oculto"></div>
+  <!-- Badge de cola offline -->
+  <div id="badgeCola" class="badge-cola" title="Registros pendientes de sincronizar" onclick="mostrarDetalleCola()"></div>
 </header>
+
+<!-- Notificación de sincronización (aparece arriba) -->
+<div id="notifCola" class="notif-cola"></div>
 
 <div id="barraVistaSimulada" class="oculto">
   <span class="barra-vista-icono">👁</span>
@@ -2679,22 +2778,184 @@
 <script>
   const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyTUdiPedOjrd6dYq3uYq_cEf6GMsEr0ysptFGHyLhPs7zakdTUhBNBdFMbPJggEVMWGQ/exec";
 
-  // ═══ HELPER: LLAMADA AL BACKEND ════════════════════════════════════════════
-  // Reemplaza el patrón JSONP repetido 18 veces. Uso:
-  //   llamarBackend({ accion: "login", cedula: "...", ... }, function(resp){ ... });
-  function llamarBackend(params, callback) {
-    const callbackName = "_cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    window[callbackName] = function(respuesta) {
+  // ═══ HELPER: LLAMADA AL BACKEND (con timeout) ══════════════════════════════
+  // Uso: llamarBackend({ accion: "login", ... }, callback, { timeout: 14000 });
+  // Si el backend no responde en `timeout` ms, llama callback({ ok: false, timeout: true }).
+  var TIMEOUT_BACKEND = 14000; // 14 segundos
+
+  function llamarBackend(params, callback, opciones) {
+    var opts = opciones || {};
+    var timeout = opts.timeout || TIMEOUT_BACKEND;
+    var callbackName = "_cb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    var timer = null;
+    var terminado = false;
+
+    function limpiar() {
+      clearTimeout(timer);
       delete window[callbackName];
-      script.remove();
+      if (script && script.parentNode) script.remove();
+    }
+
+    window[callbackName] = function(respuesta) {
+      if (terminado) return;
+      terminado = true;
+      limpiar();
       callback(respuesta);
     };
-    const qs = Object.keys(params)
+
+    // Timeout: si el script no responde a tiempo
+    timer = setTimeout(function() {
+      if (terminado) return;
+      terminado = true;
+      limpiar();
+      callback({ ok: false, timeout: true, mensaje: "El servidor tardó demasiado en responder. Verifica tu conexión e intenta de nuevo." });
+    }, timeout);
+
+    var qs = Object.keys(params)
       .map(function(k) { return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); })
       .join("&");
-    const script = document.createElement("script");
+    var script = document.createElement("script");
+    script.onerror = function() {
+      if (terminado) return;
+      terminado = true;
+      limpiar();
+      callback({ ok: false, timeout: true, mensaje: "No se pudo conectar con el servidor. Verifica tu conexión a internet." });
+    };
     script.src = URL_SCRIPT + "?" + qs + "&callback=" + callbackName;
     document.body.appendChild(script);
+  }
+
+  // ═══ COLA DE ENVÍOS OFFLINE ════════════════════════════════════════════════
+  // Los guardados de asistencia, acompañamientos e incidencias fallidos por
+  // falta de conexión se encolan en localStorage y se reenvían automáticamente
+  // en cuanto regresa internet.
+  var COLA_KEY = "aed_cola_offline";
+
+  function colaObtener() {
+    try { return JSON.parse(localStorage.getItem(COLA_KEY) || "[]"); } catch(e) { return []; }
+  }
+
+  function colaGuardar(lista) {
+    try { localStorage.setItem(COLA_KEY, JSON.stringify(lista)); } catch(e) {}
+  }
+
+  function colaAgregar(entrada) {
+    var lista = colaObtener();
+    entrada.id    = Date.now() + "_" + Math.random().toString(36).slice(2);
+    entrada.ts    = Date.now();
+    entrada.intentos = 0;
+    lista.push(entrada);
+    colaGuardar(lista);
+    actualizarIndicadorCola();
+    console.log("[Cola] Entrada agregada:", entrada.accion, entrada.id);
+  }
+
+  function colaEliminar(id) {
+    var lista = colaObtener().filter(function(e) { return e.id !== id; });
+    colaGuardar(lista);
+    actualizarIndicadorCola();
+  }
+
+  // Procesar la cola: reenviar cada entrada pendiente
+  var _colaEnProceso = false;
+  function procesarCola() {
+    if (_colaEnProceso || !navigator.onLine) return;
+    var lista = colaObtener();
+    if (!lista.length) return;
+    _colaEnProceso = true;
+    console.log("[Cola] Procesando", lista.length, "entrada(s) pendiente(s)...");
+
+    var notif = document.getElementById("notifCola");
+    if (notif) {
+      notif.textContent = "Enviando " + lista.length + " registro(s) pendiente(s)...";
+      notif.classList.add("visible");
+    }
+
+    var pendientes = lista.slice(); // copia
+    var ok = 0; var errores = 0;
+
+    function procesarSiguiente(i) {
+      if (i >= pendientes.length) {
+        _colaEnProceso = false;
+        var restantes = colaObtener().length;
+        if (notif) {
+          notif.textContent = ok + " registro(s) sincronizado(s)" + (errores ? ", " + errores + " con error." : ".");
+          setTimeout(function() { notif.classList.remove("visible"); }, 4000);
+        }
+        actualizarIndicadorCola();
+        return;
+      }
+      var entrada = pendientes[i];
+      var params = Object.assign({ accion: entrada.accion }, entrada.params || {});
+      if (entrada.payload) params.payload = JSON.stringify(entrada.payload);
+
+      llamarBackend(params, function(resp) {
+        if (resp && resp.ok) {
+          colaEliminar(entrada.id);
+          ok++;
+          console.log("[Cola] ✓ Sincronizado:", entrada.accion);
+        } else if (resp && resp.timeout) {
+          // Fallo de red: dejar en cola para el próximo intento
+          errores++;
+          console.warn("[Cola] Sin conexión, se reintentará:", entrada.accion);
+        } else {
+          // Error del servidor (dato inválido, etc.): marcar como fallido pero eliminar
+          // para no reenviar indefinidamente datos que el servidor rechaza
+          var lista2 = colaObtener();
+          var idx = lista2.findIndex ? lista2.findIndex(function(e){ return e.id === entrada.id; }) : -1;
+          if (idx >= 0) {
+            lista2[idx].errorServidor = (resp && resp.mensaje) || "Error desconocido";
+            lista2[idx].intentos = (lista2[idx].intentos || 0) + 1;
+            if (lista2[idx].intentos >= 3) {
+              lista2.splice(idx, 1); // descartar tras 3 intentos fallidos
+              console.warn("[Cola] Descartado tras 3 intentos:", entrada.accion);
+            }
+            colaGuardar(lista2);
+          }
+          errores++;
+        }
+        procesarSiguiente(i + 1);
+      }, { timeout: 18000 });
+    }
+
+    procesarSiguiente(0);
+  }
+
+  // Disparar procesarCola cuando regresa la conexión
+  window.addEventListener("online", function() {
+    setTimeout(procesarCola, 1500); // pequeña pausa para estabilización
+  });
+
+  // También revisar al cargar la página (por si quedaron entradas de sesiones anteriores)
+  window.addEventListener("load", function() {
+    setTimeout(function() {
+      if (navigator.onLine) procesarCola();
+    }, 3000);
+  });
+
+  // Indicador visual de cola pendiente en el header
+  function actualizarIndicadorCola() {
+    var lista = colaObtener();
+    var badge = document.getElementById("badgeCola");
+    if (!badge) return;
+    if (lista.length > 0) {
+      badge.textContent = lista.length;
+      badge.classList.add("visible");
+      badge.title = lista.length + " registro(s) pendiente(s) de sincronizar";
+    } else {
+      badge.classList.remove("visible");
+    }
+  }
+
+  // Etiqueta legible de la acción para mensajes al usuario
+  function etiquetaAccion(accion) {
+    var map = {
+      guardarAsistencia: "Pase de lista",
+      guardarAcompanamientoCoordinador: "Acompañamiento al coordinador",
+      guardarAcompanamientoFacilitador: "Acompañamiento al facilitador",
+      guardarIncidencia: "Incidencia"
+    };
+    return map[accion] || accion;
   }
 
   // ═══ HELPER: MOSTRAR MÓDULO ════════════════════════════════════════════════
@@ -5052,31 +5313,26 @@
       }
     }
 
-    mensaje.textContent = "Guardando acompañamiento...";
+    mensaje.innerHTML = '<span class="spinner"></span>&nbsp;Guardando acompañamiento...';
 
-    const callbackName = "callbackGuardarAcomp_" + Date.now();
-
-    window[callbackName] = function(respuesta) {
-      if (respuesta.ok) {
-        mensaje.textContent = respuesta.mensaje + " Código: " + (respuesta.idAcompanamiento || "");
-        mensaje.classList.add("ok");
-        document.getElementById("btnGuardarAcompanamiento").classList.add("oculto");
-      } else {
-        mensaje.textContent = respuesta.mensaje || "No se pudo guardar el acompañamiento.";
-        mensaje.classList.add("error");
+    llamarBackend(
+      { accion: accion, payload: JSON.stringify(payload) },
+      function(respuesta) {
+        if (respuesta && respuesta.ok) {
+          mensaje.textContent = "✓ " + respuesta.mensaje + " Código: " + (respuesta.idAcompanamiento || "");
+          mensaje.classList.add("ok");
+          document.getElementById("btnGuardarAcompanamiento").classList.add("oculto");
+        } else if (respuesta && respuesta.timeout) {
+          colaAgregar({ accion: accion, payload: payload });
+          mensaje.textContent = "⚠️ Sin conexión. El acompañamiento se guardó localmente y se enviará cuando recuperes internet.";
+          mensaje.className = "mensaje ok";
+          document.getElementById("btnGuardarAcompanamiento").classList.add("oculto");
+        } else {
+          mensaje.textContent = (respuesta && respuesta.mensaje) || "No se pudo guardar el acompañamiento.";
+          mensaje.classList.add("error");
+        }
       }
-
-      delete window[callbackName];
-      script.remove();
-    };
-
-    const script = document.createElement("script");
-    script.src = URL_SCRIPT
-      + "?accion=" + encodeURIComponent(accion)
-      + "&payload=" + encodeURIComponent(JSON.stringify(payload))
-      + "&callback=" + callbackName;
-
-    document.body.appendChild(script);
+    );
   }
 
 
@@ -5416,33 +5672,27 @@
       observacionesSeguimiento: document.getElementById("observacionesSeguimientoIncidencia").value.trim()
     };
 
-    mensaje.textContent = "Guardando incidencia...";
+    mensaje.innerHTML = '<span class="spinner"></span>&nbsp;Guardando incidencia...';
 
-    const callbackName = "callbackGuardarIncidencia_" + Date.now();
-
-    window[callbackName] = function(respuesta) {
-      if (respuesta.ok) {
-        mensaje.textContent = (respuesta.mensaje || "Incidencia guardada correctamente.") + " Código: " + (respuesta.idIncidencia || "");
-        mensaje.classList.add("ok");
-        limpiarFormularioIncidencia(false);
-        document.getElementById("fechaIncidencia").value = new Date().toISOString().split("T")[0];
-        mostrarVistaIncidencia("consulta");
-      } else {
-        mensaje.textContent = respuesta.mensaje || "No se pudo guardar la incidencia.";
-        mensaje.classList.add("error");
+    llamarBackend(
+      { accion: "guardarIncidencia", payload: JSON.stringify(payload) },
+      function(respuesta) {
+        if (respuesta && respuesta.ok) {
+          mensaje.textContent = "✓ " + (respuesta.mensaje || "Incidencia guardada correctamente.") + " Código: " + (respuesta.idIncidencia || "");
+          mensaje.classList.add("ok");
+          limpiarFormularioIncidencia(false);
+          document.getElementById("fechaIncidencia").value = new Date().toISOString().split("T")[0];
+          mostrarVistaIncidencia("consulta");
+        } else if (respuesta && respuesta.timeout) {
+          colaAgregar({ accion: "guardarIncidencia", payload: payload });
+          mensaje.textContent = "⚠️ Sin conexión. La incidencia se guardó localmente y se enviará cuando recuperes internet.";
+          mensaje.className = "mensaje ok";
+        } else {
+          mensaje.textContent = (respuesta && respuesta.mensaje) || "No se pudo guardar la incidencia.";
+          mensaje.classList.add("error");
+        }
       }
-
-      delete window[callbackName];
-      script.remove();
-    };
-
-    const script = document.createElement("script");
-    script.src = URL_SCRIPT
-      + "?accion=guardarIncidencia"
-      + "&payload=" + encodeURIComponent(JSON.stringify(payload))
-      + "&callback=" + callbackName;
-
-    document.body.appendChild(script);
+    );
   }
 
   function consultarIncidencias(permiteActualizar) {
@@ -6069,31 +6319,26 @@
       registros: registros
     };
 
-    mensaje.textContent = "Guardando asistencia...";
+    mensaje.innerHTML = '<span class="spinner"></span>&nbsp;Guardando asistencia...';
 
-    const callbackName = "callbackGuardar_" + Date.now();
-
-    window[callbackName] = function(respuesta) {
-      if (respuesta.ok) {
-        mensaje.textContent = respuesta.mensaje + " Registros guardados: " + respuesta.cantidad;
-        mensaje.classList.add("ok");
-        document.getElementById("btnGuardarAsistencia").disabled = true;
-      } else {
-        mensaje.textContent = respuesta.mensaje || "No se pudo guardar la asistencia.";
-        mensaje.classList.add("error");
+    llamarBackend(
+      { accion: "guardarAsistencia", payload: JSON.stringify(payload) },
+      function(respuesta) {
+        if (respuesta && respuesta.ok) {
+          mensaje.textContent = "✓ " + respuesta.mensaje + " Registros guardados: " + respuesta.cantidad;
+          mensaje.classList.add("ok");
+          document.getElementById("btnGuardarAsistencia").disabled = true;
+        } else if (respuesta && respuesta.timeout) {
+          colaAgregar({ accion: "guardarAsistencia", payload: payload });
+          mensaje.textContent = "⚠️ Sin conexión. El pase de lista se guardó localmente y se enviará cuando recuperes internet.";
+          mensaje.className = "mensaje ok";
+          document.getElementById("btnGuardarAsistencia").disabled = true;
+        } else {
+          mensaje.textContent = (respuesta && respuesta.mensaje) || "No se pudo guardar la asistencia.";
+          mensaje.classList.add("error");
+        }
       }
-
-      delete window[callbackName];
-      script.remove();
-    };
-
-    const script = document.createElement("script");
-    script.src = URL_SCRIPT
-      + "?accion=guardarAsistencia"
-      + "&payload=" + encodeURIComponent(JSON.stringify(payload))
-      + "&callback=" + callbackName;
-
-    document.body.appendChild(script);
+    );
   }
 
   function consultarAsistenciaGrupo() {
@@ -7538,6 +7783,7 @@
     window.addEventListener("online",  actualizarEstadoConexion);
     window.addEventListener("offline", actualizarEstadoConexion);
     actualizarEstadoConexion(); // Verificar estado inicial
+    actualizarIndicadorCola();  // Mostrar badge si hay pendientes de sesiones anteriores
 
     window.intentarReconexion = function() {
       // Intentar hacer un ping silencioso al backend
@@ -7547,6 +7793,50 @@
       img.src = "https://www.google.com/favicon.ico?_=" + Date.now();
     };
   })();
+
+  // Modal que muestra los ítems pendientes en la cola
+  function mostrarDetalleCola() {
+    var lista = colaObtener();
+    var anterior = document.getElementById("modalColaPendiente");
+    if (anterior) anterior.remove();
+
+    var iconosAccion = {
+      guardarAsistencia: "📋",
+      guardarAcompanamientoCoordinador: "🔍",
+      guardarAcompanamientoFacilitador: "🔍",
+      guardarIncidencia: "⚠️"
+    };
+
+    var itemsHTML = lista.map(function(e) {
+      var fecha = e.ts ? new Date(e.ts).toLocaleString("es-DO", { dateStyle: "short", timeStyle: "short" }) : "";
+      var icono = iconosAccion[e.accion] || "📄";
+      var tipo  = etiquetaAccion(e.accion);
+      var sede  = (e.payload && e.payload.centroSede) ? (" · " + e.payload.centroSede) : "";
+      return '<div class="item-cola">'
+        + '<span class="item-cola-icono">' + icono + '</span>'
+        + '<span class="item-cola-tipo">' + tipo + sede + '</span>'
+        + '<span class="item-cola-fecha">' + fecha + '</span>'
+        + '</div>';
+    }).join("");
+
+    var modal = document.createElement("div");
+    modal.id = "modalColaPendiente";
+    modal.className = "modal-overlay";
+    modal.innerHTML = '<div class="modal-cola">'
+      + '<h3>📦 Registros pendientes (' + lista.length + ')</h3>'
+      + '<p class="nota">Estos registros se enviarán automáticamente cuando recuperes conexión a internet.</p>'
+      + itemsHTML
+      + '<div class="acciones-modal" style="margin-top:16px;">'
+      + (navigator.onLine ? '<button type="button" onclick="procesarCola();document.getElementById(\'modalColaPendiente\').remove();">Enviar ahora</button>' : '')
+      + '<button type="button" class="btn-secundario" onclick="document.getElementById(\'modalColaPendiente\').remove();">Cerrar</button>'
+      + '</div>'
+      + '</div>';
+
+    modal.addEventListener("click", function(e) {
+      if (e.target === modal) modal.remove();
+    });
+    document.body.appendChild(modal);
+  }
 
   // ═══════════════════════════════════════════════════════════════════════
   // SERVICE WORKER – Caché de recursos estáticos
