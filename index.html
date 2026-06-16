@@ -7517,27 +7517,24 @@
   function ejecutarAsignacionAutomatica() {
     if (!datosAsignacionEstudiantesGrupos) return;
 
-    const grupos = datosAsignacionEstudiantesGrupos.grupos || [];
-    const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
+    const gruposBackend = datosAsignacionEstudiantesGrupos.grupos || [];
+    const estudiantes   = datosAsignacionEstudiantesGrupos.estudiantes || [];
 
-    if (!grupos.length) {
+    if (!gruposBackend.length) {
       alert("No hay grupos disponibles para la sede.");
       return;
     }
-
     if (!estudiantes.length) {
       alert("No hay estudiantes para asignar.");
       return;
     }
 
-    // Calcular la asignación homogénea (devuelve asignacion con nombres semánticos)
+    // Convertir los nombres del backend ("Grupo 1", "Grupo 2"...) a nombres semánticos
+    // ANTES de pasarlos a calcularAsignacionHomogenea, para que trabaje con ellos directamente.
+    const grupos = construirGruposOperativos(gruposBackend.length);
+
     const resultado = calcularAsignacionHomogenea(grupos, estudiantes);
-
-    // Usar los grupos con nombres semánticos generados por la función
-    const gruposNombrados = resultado.__gruposNombrados || grupos;
-
-    // Mostrar modal de previsualización
-    mostrarModalAsignacionAutomatica(resultado, gruposNombrados);
+    mostrarModalAsignacionAutomatica(resultado, grupos);
   }
 
   function calcularAsignacionHomogenea(grupos, estudiantes) {
@@ -7675,12 +7672,10 @@
     }
 
     // ── 5. Asignar grupos concretos a cada partición ─────────────────────────
-    // Generamos exactamente numGrupos nombres semánticos, uno por grupo del backend,
-    // respetando la categoría dominante y el límite estricto de grupos disponibles.
-    // Si la lógica de partición necesita más grupos que los disponibles, comprimimos.
-
-    // Calcular cuántos grupos reales asignar a cada categoría (respetando numGrupos)
-    const totalCalculado = gEpuroFinal + gEC + gCpuroFinal + gCI + gIpuroFinal;
+    // Los grupos ya vienen con nombres semánticos desde construirGruposOperativos.
+    // Los distribuimos en el orden E → EC → C → CI → I.
+    // Si la partición calcula más grupos de los disponibles, comprimir eliminando
+    // primero grupos extra de C, luego mezclas, para respetar numGrupos exacto.
 
     let nE  = gEpuroFinal;
     let nEC = gEC;
@@ -7688,59 +7683,30 @@
     let nCI = gCI;
     let nI  = gIpuroFinal;
 
-    // Si calculamos más grupos de los disponibles, comprimir proporcionalmente
-    // quitando primero de las mezclas, luego de C, luego lo que haga falta
+    const totalCalculado = nE + nEC + nC + nCI + nI;
     if (totalCalculado > numGrupos) {
       let exceso = totalCalculado - numGrupos;
-      // Quitar del excedente de C primero
-      const quitarC = Math.min(gCExtra, exceso); nC -= quitarC; exceso -= quitarC;
-      // Luego de mezclas CI
-      const quitarCI = Math.min(nCI, exceso); nCI -= quitarCI; exceso -= quitarCI;
-      // Luego de mezclas EC
-      const quitarEC = Math.min(nEC, exceso); nEC -= quitarEC; exceso -= quitarEC;
-      // Luego de C puro
-      const quitarCpuro = Math.min(nC, exceso); nC -= quitarCpuro; exceso -= quitarCpuro;
-      // Finalmente de I o E
-      const quitarI = Math.min(nI, exceso); nI -= quitarI; exceso -= quitarI;
-      const quitarE = Math.min(nE, exceso); nE -= quitarE;
+      const qC  = Math.min(gCExtra, exceso); nC  -= qC;  exceso -= qC;
+      const qCI = Math.min(nCI,     exceso); nCI -= qCI; exceso -= qCI;
+      const qEC = Math.min(nEC,     exceso); nEC -= qEC; exceso -= qEC;
+      const qCp = Math.min(nC,      exceso); nC  -= qCp; exceso -= qCp;
+      const qI  = Math.min(nI,      exceso); nI  -= qI;  exceso -= qI;
+      const qE  = Math.min(nE,      exceso); nE  -= qE;
     }
-
-    // Asegurar que la suma sea exactamente numGrupos (puede haber diferencia por redondeos)
-    let suma = nE + nEC + nC + nCI + nI;
+    const suma = nE + nEC + nC + nCI + nI;
     if (suma < numGrupos) nC += (numGrupos - suma);
 
-    // Generar nombres semánticos con sufijo solo cuando hay más de 1 del mismo tipo
-    const totalPorBase = {
-      "Exploradores": nE + nEC,
-      "Creadores":    nC,
-      "Innovadores":  nCI + nI
-    };
-    const contadorNombre = {};
-
-    function siguienteNombreGrupo(base) {
-      if (!contadorNombre[base]) contadorNombre[base] = 0;
-      contadorNombre[base]++;
-      return totalPorBase[base] === 1 ? base : base + "-" + contadorNombre[base];
-    }
-
     const particionGrupos = { E: [], EC: [], C: [], CI: [], I: [] };
-    for (let k = 0; k < nE;  k++) particionGrupos.E.push(siguienteNombreGrupo("Exploradores"));
-    for (let k = 0; k < nEC; k++) particionGrupos.EC.push(siguienteNombreGrupo("Exploradores"));
-    for (let k = 0; k < nC;  k++) particionGrupos.C.push(siguienteNombreGrupo("Creadores"));
-    for (let k = 0; k < nCI; k++) particionGrupos.CI.push(siguienteNombreGrupo("Innovadores"));
-    for (let k = 0; k < nI;  k++) particionGrupos.I.push(siguienteNombreGrupo("Innovadores"));
-
-    // Lista plana de grupos con nombres semánticos — siempre exactamente numGrupos elementos
-    const gruposNombrados = []
-      .concat(particionGrupos.E)
-      .concat(particionGrupos.EC)
-      .concat(particionGrupos.C)
-      .concat(particionGrupos.CI)
-      .concat(particionGrupos.I);
+    let gi = 0;
+    for (let k = 0; k < nE;  k++) particionGrupos.E.push(grupos[gi++]);
+    for (let k = 0; k < nEC; k++) particionGrupos.EC.push(grupos[gi++]);
+    for (let k = 0; k < nC;  k++) particionGrupos.C.push(grupos[gi++]);
+    for (let k = 0; k < nCI; k++) particionGrupos.CI.push(grupos[gi++]);
+    for (let k = 0; k < nI;  k++) particionGrupos.I.push(grupos[gi++]);
 
     // ── 6. Repartir estudiantes en serpentina ────────────────────────────────
     const asignacion = {};
-    gruposNombrados.forEach(function(g) { asignacion[g] = []; });
+    grupos.forEach(function(g) { asignacion[g] = []; });
 
     function repartirSerpentina(listaEstudiantes, listaGrupos) {
       if (!listaGrupos.length || !listaEstudiantes.length) return;
@@ -7792,8 +7758,17 @@
     const cParaCIArr = C.slice(cTotalPuro + cParaEC, cTotalPuro + cParaEC + cParaCI);
     intercalarDos(iSobrante, cParaCIArr, particionGrupos.CI);
 
-    // Devolver también la lista de grupos con nombres semánticos para que la UI los use
-    asignacion.__gruposNombrados = gruposNombrados;
+    // ── Rescate: estudiantes que quedaron sin asignar por compresión de particiones.
+    // Se distribuyen en serpentina entre todos los grupos disponibles.
+    const asignados = new Set();
+    grupos.forEach(function(g) {
+      (asignacion[g] || []).forEach(function(e) { asignados.add(e.idEstudiante); });
+    });
+    const sinAsignar = estudiantes.filter(function(e) { return !asignados.has(e.idEstudiante); });
+    if (sinAsignar.length > 0) {
+      repartirSerpentina(sinAsignar, grupos);
+    }
+
     return asignacion;
   }
 
@@ -7904,27 +7879,23 @@
     const asignacion = window._asignacionAutoPendiente;
     if (!asignacion) return;
 
-    // Obtener la lista de grupos con nombres semánticos (excluir la clave interna)
-    const gruposNombrados = asignacion.__gruposNombrados || [];
+    // Los grupos ya tienen nombres semánticos (son las claves del objeto asignacion)
+    const grupos = Object.keys(asignacion);
 
-    // Crear mapa de idEstudiante → grupo semántico
+    // Crear mapa de idEstudiante → nombre de grupo
     const mapaGrupo = {};
-    Object.keys(asignacion).forEach(function(grupo) {
-      if (grupo === "__gruposNombrados") return; // saltar la clave interna
+    grupos.forEach(function(grupo) {
       (asignacion[grupo] || []).forEach(function(e) {
         mapaGrupo[normalizarTexto(e.idEstudiante)] = grupo;
       });
     });
 
-    // Actualizar las opciones de cada select de estudiante con los nuevos nombres
-    // antes de asignar los valores, para que select.value funcione correctamente.
+    // Asegurar que cada select tenga las opciones semánticas antes de asignar
     document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
-      // Construir el conjunto de opciones actuales (sin la opción vacía)
       const opcionesActuales = new Set(
         Array.from(select.options).map(function(op) { return op.value; }).filter(Boolean)
       );
-      // Añadir las opciones semánticas que falten
-      gruposNombrados.forEach(function(g) {
+      grupos.forEach(function(g) {
         if (!opcionesActuales.has(g)) {
           const opt = document.createElement("option");
           opt.value = g;
@@ -7938,9 +7909,7 @@
     document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
       const id = normalizarTexto(select.dataset.id);
       const grupo = mapaGrupo[id];
-      if (grupo) {
-        select.value = grupo;
-      }
+      if (grupo) select.value = grupo;
     });
 
     actualizarResumenVisualAsignacionEstudiantes();
