@@ -3279,6 +3279,15 @@
   let filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
   // Mapa de nombre semántico → nombre del backend para traducir al guardar
   let mapaGrupoSemanticoABackend = {};
+  // Mapa de nombre del backend → nombre semántico para mostrar al usuario
+  let mapaGrupoBackendASemantico = {};
+
+  // Devuelve el nombre visible (semántico) de un grupo dado su nombre del backend.
+  // Si no hay traducción registrada, devuelve el valor original.
+  function grupoLegible(grupoBackend) {
+    if (!grupoBackend) return "";
+    return mapaGrupoBackendASemantico[normalizarTexto(grupoBackend)] || grupoBackend;
+  }
 
   const itemsCoordinador = [
     ["item01", "Llega puntualmente y organiza la jornada junto al equipo docente."],
@@ -4065,7 +4074,7 @@
       <strong>Regional:</strong> ${usuarioActual.regional || ""}<br>
       <strong>Distrito:</strong> ${usuarioActual.distrito || ""}<br>
       <strong>Centro sede:</strong> ${usuarioActual.centroSede || ""}<br>
-      <strong>Grupo:</strong> ${usuarioActual.grupo || ""}
+      <strong>Grupo:</strong> ${grupoLegible(usuarioActual.grupo)}
     `;
 
     const hoy = new Date().toISOString().split("T")[0];
@@ -4277,7 +4286,7 @@
       <strong>Regional:</strong> ${usuarioActual.regional || ""}<br>
       <strong>Distrito:</strong> ${usuarioActual.distrito || ""}<br>
       <strong>Centro sede:</strong> ${usuarioActual.centroSede || ""}<br>
-      <strong>Grupo:</strong> ${usuarioActual.grupo || ""}
+      <strong>Grupo:</strong> ${grupoLegible(usuarioActual.grupo)}
     `;
 
     dashboardActual = "";
@@ -4900,7 +4909,7 @@
       html += `<td>${i.regional || ""}</td>`;
       html += `<td>${i.distrito || ""}</td>`;
       html += `<td>${i.centroSede || ""}</td>`;
-      html += `<td>${i.grupo || ""}</td>`;
+      html += `<td>${grupoLegible(i.grupo) || ""}</td>`;
       html += `<td>${i.categoria || ""}</td>`;
       html += `<td>${i.gravedad || ""}</td>`;
       html += `<td>${i.estado || ""}</td>`;
@@ -4922,7 +4931,7 @@
       <strong>Regional:</strong> ${usuarioActual.regional || ""}<br>
       <strong>Distrito:</strong> ${usuarioActual.distrito || ""}<br>
       <strong>Centro sede:</strong> ${usuarioActual.centroSede || ""}<br>
-      <strong>Grupo:</strong> ${usuarioActual.grupo || ""}
+      <strong>Grupo:</strong> ${grupoLegible(usuarioActual.grupo)}
     `;
 
     document.getElementById("mensajeAcompanamiento").textContent = "";
@@ -5474,7 +5483,7 @@
       <strong>Regional:</strong> ${usuarioActual.regional || ""}<br>
       <strong>Distrito:</strong> ${usuarioActual.distrito || ""}<br>
       <strong>Centro sede:</strong> ${usuarioActual.centroSede || ""}<br>
-      <strong>Grupo:</strong> ${usuarioActual.grupo || ""}
+      <strong>Grupo:</strong> ${grupoLegible(usuarioActual.grupo)}
     `;
 
     limpiarFormularioIncidencia();
@@ -5937,7 +5946,7 @@
       html += `<td>${id}</td>`;
       html += `<td>${incidencia.fechaIncidencia || incidencia.FechaIncidencia || incidencia.fecha || ""}</td>`;
       html += `<td>${incidencia.centroSede || incidencia.CentroSede || ""}</td>`;
-      html += `<td>${incidencia.grupo || incidencia.Grupo || ""}</td>`;
+      html += `<td>${grupoLegible(incidencia.grupo || incidencia.Grupo) || ""}</td>`;
       html += `<td>${incidencia.categoria || incidencia.Categoria || ""}</td>`;
       html += `<td><span class="badge-gravedad ${claseGravedad(gravedad)}">${gravedad}</span></td>`;
       html += `<td><span class="badge-estado">${estado}</span></td>`;
@@ -6229,7 +6238,7 @@
     datos.forEach(function(e) {
       html += "<tr>";
       html += `<td>${e.nombre || ""}</td>`;
-      html += `<td>${e.grupo || ""}</td>`;
+      html += `<td>${grupoLegible(e.grupo) || ""}</td>`;
       html += `<td>${e.ausencias || 0}</td>`;
       html += `<td>${e.tardanzas || 0}</td>`;
       html += `<td>${e.excusas || 0}</td>`;
@@ -6873,7 +6882,7 @@
           <td>${escapeHtml(f.regional || "")}</td>
           <td>${escapeHtml(f.distrito || "")}</td>
           <td>${escapeHtml(f.centroSede || "")}</td>
-          <td>${escapeHtml(f.grupoActual || "Sin asignar")}</td>
+          <td>${escapeHtml(grupoLegible(f.grupoActual) || "Sin asignar")}</td>
           <td>${escapeHtml(f.nombre || "")}</td>
           <td>${escapeHtml(f.cedula || "")}</td>
         </tr>
@@ -7290,7 +7299,7 @@
           <td>${escapeHtml(e.grado || "")}</td>
           <td><span class="nivel-estudiante">${escapeHtml(e.nivelLengua || "Sin dato")}</span></td>
           <td><span class="nivel-estudiante">${escapeHtml(e.nivelMat || "Sin dato")}</span></td>
-          <td>${escapeHtml(e.grupo || "Sin asignar")}</td>
+          <td>${escapeHtml(grupoLegible(e.grupo) || "Sin asignar")}</td>
         </tr>
       `;
     });
@@ -7303,23 +7312,62 @@
   function renderizarTablaAsignacionEstudiantes(grupos, estudiantes) {
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
 
-    // Convertir los nombres de grupo del backend a nombres semánticos
-    const gruposSemanticos = construirGruposOperativos(grupos.length);
-
-    // Mapa de nombre original (backend) → nombre semántico, para preseleccionar
-    // valores existentes de estudiantes ya asignados
-    const mapaSemantico = {};
-    grupos.forEach(function(g, i) {
-      mapaSemantico[normalizarTexto(g)] = gruposSemanticos[i] || gruposSemanticos[gruposSemanticos.length - 1];
+    // ── Calcular el nombre semántico de cada grupo por moda real de sus estudiantes ──
+    // Agrupar estudiantes asignados por su grupo del backend
+    const estudiantesPorGrupo = {};
+    grupos.forEach(function(g) { estudiantesPorGrupo[normalizarTexto(g)] = []; });
+    estudiantes.forEach(function(e) {
+      const k = normalizarTexto(e.grupo);
+      if (k && estudiantesPorGrupo[k] !== undefined) estudiantesPorGrupo[k].push(e);
     });
 
-    // Guardar el inverso (semántico → backend) para traducir al guardar
-    mapaGrupoSemanticoABackend = {};
-    grupos.forEach(function(g, i) {
-      const sem = gruposSemanticos[i] || gruposSemanticos[gruposSemanticos.length - 1];
-      mapaGrupoSemanticoABackend[normalizarTexto(sem)] = g;
+    // Calcular moda por grupo (misma lógica que en ejecutarAsignacionAutomatica)
+    const NIVEL_JERARQUIA_R = { innovador: 3, creador: 2, explorador: 1 };
+    const NOMBRE_CATEGORIA_R = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
+
+    function modaGrupoR(lista) {
+      const cnt = { explorador: 0, creador: 0, innovador: 0 };
+      lista.forEach(function(e) {
+        const n = normalizarTexto(e.nivelLengua).toLowerCase();
+        if (cnt[n] !== undefined) cnt[n]++; else cnt.creador++;
+      });
+      return ["innovador", "creador", "explorador"].sort(function(a, b) {
+        if (cnt[b] !== cnt[a]) return cnt[b] - cnt[a];
+        return NIVEL_JERARQUIA_R[b] - NIVEL_JERARQUIA_R[a];
+      })[0];
+    }
+
+    // Contar cuántas veces aparece cada nombre base para asignar sufijos
+    const cuentaBaseR = {};
+    grupos.forEach(function(g) {
+      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
+      // Si no hay estudiantes asignados aún, usar posición como fallback
+      const base = lista.length > 0
+        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
+        : construirGruposOperativos(grupos.length)[grupos.indexOf(g)] || "Creadores";
+      cuentaBaseR[base] = (cuentaBaseR[base] || 0) + 1;
     });
 
+    const contadorBaseR = {};
+    const mapaSemantico = {};    // backend → semántico (para preseleccionar selects)
+    mapaGrupoSemanticoABackend = {}; // semántico → backend (para guardar)
+
+    grupos.forEach(function(g) {
+      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
+      const idx = grupos.indexOf(g);
+      const base = lista.length > 0
+        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
+        : (construirGruposOperativos(grupos.length)[idx] || "Creadores");
+      contadorBaseR[base] = (contadorBaseR[base] || 0) + 1;
+      const nombreSem = cuentaBaseR[base] === 1 ? base : base + "-" + contadorBaseR[base];
+      mapaSemantico[normalizarTexto(g)] = nombreSem;
+      mapaGrupoSemanticoABackend[normalizarTexto(nombreSem)] = g;
+      mapaGrupoBackendASemantico[normalizarTexto(g)] = nombreSem;
+    });
+
+    // Opciones del select usando los nombres semánticos calculados
+    const gruposSemanticos = grupos.map(function(g) { return mapaSemantico[normalizarTexto(g)]; });
+    // Deduplicar por si el usuario tiene grupos con el mismo nombre semántico desde el backend
     const opcionesGrupo = gruposSemanticos.map(function(g) {
       return `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`;
     }).join("");
@@ -7603,9 +7651,11 @@
     // gruposProvisionales[i] → mapaRenombrado[gProv] = nombreFinal
     // gruposBackend[i] = nombre original que acepta el backend
     mapaGrupoSemanticoABackend = {};
+    mapaGrupoBackendASemantico = {};
     gruposProvisionales.forEach(function(gProv, i) {
       const nombreFinal = mapaRenombrado[gProv];
       mapaGrupoSemanticoABackend[normalizarTexto(nombreFinal)] = gruposBackend[i];
+      mapaGrupoBackendASemantico[normalizarTexto(gruposBackend[i])] = nombreFinal;
     });
 
     mostrarModalAsignacionAutomatica(resultado, grupos, mapaGrupoSemanticoABackend);
