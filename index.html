@@ -7675,43 +7675,68 @@
     }
 
     // ── 5. Asignar grupos concretos a cada partición ─────────────────────────
-    // Generamos nombres semánticos basados en la categoría de cada grupo.
-    // Contamos cuántos grupos habrá de cada nombre base para saber si necesitan sufijo.
-    const cuentaBase = {
-      "Exploradores": gEpuroFinal + gEC,
-      "Creadores":    gCpuroFinal + gCExtra,
-      "Innovadores":  gCI + gIpuroFinal
+    // Generamos exactamente numGrupos nombres semánticos, uno por grupo del backend,
+    // respetando la categoría dominante y el límite estricto de grupos disponibles.
+    // Si la lógica de partición necesita más grupos que los disponibles, comprimimos.
+
+    // Calcular cuántos grupos reales asignar a cada categoría (respetando numGrupos)
+    const totalCalculado = gEpuroFinal + gEC + gCpuroFinal + gCI + gIpuroFinal;
+
+    let nE  = gEpuroFinal;
+    let nEC = gEC;
+    let nC  = gCpuroFinal + gCExtra;
+    let nCI = gCI;
+    let nI  = gIpuroFinal;
+
+    // Si calculamos más grupos de los disponibles, comprimir proporcionalmente
+    // quitando primero de las mezclas, luego de C, luego lo que haga falta
+    if (totalCalculado > numGrupos) {
+      let exceso = totalCalculado - numGrupos;
+      // Quitar del excedente de C primero
+      const quitarC = Math.min(gCExtra, exceso); nC -= quitarC; exceso -= quitarC;
+      // Luego de mezclas CI
+      const quitarCI = Math.min(nCI, exceso); nCI -= quitarCI; exceso -= quitarCI;
+      // Luego de mezclas EC
+      const quitarEC = Math.min(nEC, exceso); nEC -= quitarEC; exceso -= quitarEC;
+      // Luego de C puro
+      const quitarCpuro = Math.min(nC, exceso); nC -= quitarCpuro; exceso -= quitarCpuro;
+      // Finalmente de I o E
+      const quitarI = Math.min(nI, exceso); nI -= quitarI; exceso -= quitarI;
+      const quitarE = Math.min(nE, exceso); nE -= quitarE;
+    }
+
+    // Asegurar que la suma sea exactamente numGrupos (puede haber diferencia por redondeos)
+    let suma = nE + nEC + nC + nCI + nI;
+    if (suma < numGrupos) nC += (numGrupos - suma);
+
+    // Generar nombres semánticos con sufijo solo cuando hay más de 1 del mismo tipo
+    const totalPorBase = {
+      "Exploradores": nE + nEC,
+      "Creadores":    nC,
+      "Innovadores":  nCI + nI
     };
     const contadorNombre = {};
 
     function siguienteNombreGrupo(base) {
       if (!contadorNombre[base]) contadorNombre[base] = 0;
       contadorNombre[base]++;
-      return cuentaBase[base] === 1 ? base : base + "-" + contadorNombre[base];
+      return totalPorBase[base] === 1 ? base : base + "-" + contadorNombre[base];
     }
 
     const particionGrupos = { E: [], EC: [], C: [], CI: [], I: [] };
+    for (let k = 0; k < nE;  k++) particionGrupos.E.push(siguienteNombreGrupo("Exploradores"));
+    for (let k = 0; k < nEC; k++) particionGrupos.EC.push(siguienteNombreGrupo("Exploradores"));
+    for (let k = 0; k < nC;  k++) particionGrupos.C.push(siguienteNombreGrupo("Creadores"));
+    for (let k = 0; k < nCI; k++) particionGrupos.CI.push(siguienteNombreGrupo("Innovadores"));
+    for (let k = 0; k < nI;  k++) particionGrupos.I.push(siguienteNombreGrupo("Innovadores"));
 
-    // Orden: E puros → EC mezcla → C puros → CI mezcla → I puros
-    for (let k = 0; k < gEpuroFinal;            k++) particionGrupos.E.push(siguienteNombreGrupo("Exploradores"));
-    for (let k = 0; k < gEC;                    k++) particionGrupos.EC.push(siguienteNombreGrupo("Exploradores"));
-    for (let k = 0; k < gCpuroFinal + gCExtra;  k++) particionGrupos.C.push(siguienteNombreGrupo("Creadores"));
-    for (let k = 0; k < gCI;                    k++) particionGrupos.CI.push(siguienteNombreGrupo("Innovadores"));
-    for (let k = 0; k < gIpuroFinal;            k++) particionGrupos.I.push(siguienteNombreGrupo("Innovadores"));
-
-    // Lista plana de grupos con nombres semánticos (en el mismo orden de la partición)
+    // Lista plana de grupos con nombres semánticos — siempre exactamente numGrupos elementos
     const gruposNombrados = []
       .concat(particionGrupos.E)
       .concat(particionGrupos.EC)
       .concat(particionGrupos.C)
       .concat(particionGrupos.CI)
       .concat(particionGrupos.I);
-
-    // Si quedan posiciones sin asignar (diferencias de cálculo), añadir como Creadores extra
-    while (gruposNombrados.length < numGrupos) {
-      gruposNombrados.push(siguienteNombreGrupo("Creadores"));
-      particionGrupos.C.push(gruposNombrados[gruposNombrados.length - 1]);
-    }
 
     // ── 6. Repartir estudiantes en serpentina ────────────────────────────────
     const asignacion = {};
