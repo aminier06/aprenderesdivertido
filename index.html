@@ -2154,9 +2154,9 @@
             <label for="adminVistaGrupo">Grupo</label>
             <select id="adminVistaGrupo">
               <option value="">Todos</option>
-              <option value="EXPLORADORES">EXPLORADORES</option>
-              <option value="CREADORES">CREADORES</option>
-              <option value="INNOVADORES">INNOVADORES</option>
+              <option value="Exploradores">Exploradores</option>
+              <option value="Creadores">Creadores</option>
+              <option value="Innovadores">Innovadores</option>
             </select>
           </div>
         </div>
@@ -2274,14 +2274,14 @@
     <label for="grupoAsistencia">Grupo</label>
     <select id="grupoAsistencia" onchange="cargarEstudiantes()">
       <option value="">Seleccione un grupo</option>
-      <option value="Grupo 1">Grupo 1</option>
-      <option value="Grupo 2">Grupo 2</option>
-      <option value="Grupo 3">Grupo 3</option>
-      <option value="Grupo 4">Grupo 4</option>
-      <option value="Grupo 5">Grupo 5</option>
-      <option value="Grupo 6">Grupo 6</option>
-      <option value="Grupo 7">Grupo 7</option>
-      <option value="Grupo 8">Grupo 8</option>
+      <option value="Exploradores">Exploradores</option>
+      <option value="Exploradores-2">Exploradores-2</option>
+      <option value="Exploradores-3">Exploradores-3</option>
+      <option value="Creadores">Creadores</option>
+      <option value="Creadores-2">Creadores-2</option>
+      <option value="Creadores-3">Creadores-3</option>
+      <option value="Innovadores">Innovadores</option>
+      <option value="Innovadores-2">Innovadores-2</option>
     </select>
 
     <button onclick="guardarAsistencia()" id="btnGuardarAsistencia" class="oculto">Guardar asistencia</button>
@@ -2329,14 +2329,14 @@
           <label for="grupoDashboard">Grupo</label>
           <select id="grupoDashboard">
             <option value="">Todos los grupos</option>
-            <option value="Grupo 1">Grupo 1</option>
-            <option value="Grupo 2">Grupo 2</option>
-            <option value="Grupo 3">Grupo 3</option>
-            <option value="Grupo 4">Grupo 4</option>
-            <option value="Grupo 5">Grupo 5</option>
-            <option value="Grupo 6">Grupo 6</option>
-            <option value="Grupo 7">Grupo 7</option>
-            <option value="Grupo 8">Grupo 8</option>
+            <option value="Exploradores">Exploradores</option>
+            <option value="Exploradores-2">Exploradores-2</option>
+            <option value="Exploradores-3">Exploradores-3</option>
+            <option value="Creadores">Creadores</option>
+            <option value="Creadores-2">Creadores-2</option>
+            <option value="Creadores-3">Creadores-3</option>
+            <option value="Innovadores">Innovadores</option>
+            <option value="Innovadores-2">Innovadores-2</option>
           </select>
         </div>
         <div class="db-filtro-item">
@@ -2577,14 +2577,14 @@
           <label for="grupoIncidencia">Grupo</label>
           <select id="grupoIncidencia">
             <option value="">No aplica / todos los grupos</option>
-            <option value="Grupo 1">Grupo 1</option>
-            <option value="Grupo 2">Grupo 2</option>
-            <option value="Grupo 3">Grupo 3</option>
-            <option value="Grupo 4">Grupo 4</option>
-            <option value="Grupo 5">Grupo 5</option>
-            <option value="Grupo 6">Grupo 6</option>
-            <option value="Grupo 7">Grupo 7</option>
-            <option value="Grupo 8">Grupo 8</option>
+            <option value="Exploradores">Exploradores</option>
+            <option value="Exploradores-2">Exploradores-2</option>
+            <option value="Exploradores-3">Exploradores-3</option>
+            <option value="Creadores">Creadores</option>
+            <option value="Creadores-2">Creadores-2</option>
+            <option value="Creadores-3">Creadores-3</option>
+            <option value="Innovadores">Innovadores</option>
+            <option value="Innovadores-2">Innovadores-2</option>
           </select>
         </div>
       </div>
@@ -3412,11 +3412,67 @@
 
   function construirGruposOperativos(cantidad) {
     const total = Math.max(0, Number(cantidad || 0));
+    // Nombres base según categorías de desempeño (en orden ascendente)
+    const NOMBRES_BASE = ["Exploradores", "Creadores", "Innovadores"];
     const grupos = [];
-    for (let i = 1; i <= total; i++) {
-      grupos.push("Grupo " + i);
+    // Llenar primero con los tres nombres base (uno de cada categoría)
+    for (let i = 0; i < Math.min(total, NOMBRES_BASE.length); i++) {
+      grupos.push(NOMBRES_BASE[i]);
+    }
+    // Si hay más grupos que nombres base, repetir con sufijo numérico
+    if (total > NOMBRES_BASE.length) {
+      // Segunda vuelta: Exploradores-2, Creadores-2, Innovadores-2, ...
+      let vuelta = 2;
+      let idx = 0;
+      while (grupos.length < total) {
+        grupos.push(NOMBRES_BASE[idx % NOMBRES_BASE.length] + "-" + vuelta);
+        idx++;
+        if (idx % NOMBRES_BASE.length === 0) vuelta++;
+      }
     }
     return grupos;
+  }
+
+  // Genera nombres semánticos para grupos en la asignación automática,
+  // respetando la categoría dominante de cada partición.
+  function construirNombresGruposPorCategoria(particiones) {
+    // particiones: { E: [indices], EC: [indices], C: [indices], CI: [indices], I: [indices] }
+    // Retorna un arreglo de nombres en el mismo orden que los grupos originales.
+    const contadores = {};
+    const nombresPorIndice = {};
+
+    function nombreBase(tipo) {
+      if (tipo === "E")  return "Exploradores";
+      if (tipo === "EC") return "Exploradores";
+      if (tipo === "C")  return "Creadores";
+      if (tipo === "CI") return "Innovadores";
+      if (tipo === "I")  return "Innovadores";
+      return "Creadores";
+    }
+
+    // Determinar cuántos grupos hay por nombre base
+    const totalPorBase = {};
+    ["E","EC","C","CI","I"].forEach(function(tipo) {
+      const base = nombreBase(tipo);
+      totalPorBase[base] = (totalPorBase[base] || 0) + (particiones[tipo] ? particiones[tipo].length : 0);
+    });
+
+    // Asignar nombres
+    ["E","EC","C","CI","I"].forEach(function(tipo) {
+      const base = nombreBase(tipo);
+      (particiones[tipo] || []).forEach(function(gi) {
+        if (!contadores[base]) contadores[base] = 0;
+        contadores[base]++;
+        const total = totalPorBase[base];
+        if (total === 1) {
+          nombresPorIndice[gi] = base;
+        } else {
+          nombresPorIndice[gi] = base + "-" + contadores[base];
+        }
+      });
+    });
+
+    return nombresPorIndice;
   }
 
   function obtenerGruposDeSedeAcompanamiento() {
@@ -7455,11 +7511,14 @@
       return;
     }
 
-    // Calcular la asignación homogénea
+    // Calcular la asignación homogénea (devuelve asignacion con nombres semánticos)
     const resultado = calcularAsignacionHomogenea(grupos, estudiantes);
 
+    // Usar los grupos con nombres semánticos generados por la función
+    const gruposNombrados = resultado.__gruposNombrados || grupos;
+
     // Mostrar modal de previsualización
-    mostrarModalAsignacionAutomatica(resultado, grupos);
+    mostrarModalAsignacionAutomatica(resultado, gruposNombrados);
   }
 
   function calcularAsignacionHomogenea(grupos, estudiantes) {
@@ -7597,22 +7656,47 @@
     }
 
     // ── 5. Asignar grupos concretos a cada partición ─────────────────────────
+    // Generamos nombres semánticos basados en la categoría de cada grupo.
+    // Contamos cuántos grupos habrá de cada nombre base para saber si necesitan sufijo.
+    const cuentaBase = {
+      "Exploradores": gEpuroFinal + gEC,
+      "Creadores":    gCpuroFinal + gCExtra,
+      "Innovadores":  gCI + gIpuroFinal
+    };
+    const contadorNombre = {};
+
+    function siguienteNombreGrupo(base) {
+      if (!contadorNombre[base]) contadorNombre[base] = 0;
+      contadorNombre[base]++;
+      return cuentaBase[base] === 1 ? base : base + "-" + contadorNombre[base];
+    }
+
     const particionGrupos = { E: [], EC: [], C: [], CI: [], I: [] };
-    let gi = 0;
 
     // Orden: E puros → EC mezcla → C puros → CI mezcla → I puros
-    for (let k = 0; k < gEpuroFinal;       k++) particionGrupos.E.push(grupos[gi++]  || ("Grupo " + (gi)));
-    for (let k = 0; k < gEC;               k++) particionGrupos.EC.push(grupos[gi++] || ("Grupo " + (gi)));
-    for (let k = 0; k < gCpuroFinal + gCExtra; k++) particionGrupos.C.push(grupos[gi++] || ("Grupo " + (gi)));
-    for (let k = 0; k < gCI;               k++) particionGrupos.CI.push(grupos[gi++] || ("Grupo " + (gi)));
-    for (let k = 0; k < gIpuroFinal;       k++) particionGrupos.I.push(grupos[gi++]  || ("Grupo " + (gi)));
+    for (let k = 0; k < gEpuroFinal;            k++) particionGrupos.E.push(siguienteNombreGrupo("Exploradores"));
+    for (let k = 0; k < gEC;                    k++) particionGrupos.EC.push(siguienteNombreGrupo("Exploradores"));
+    for (let k = 0; k < gCpuroFinal + gCExtra;  k++) particionGrupos.C.push(siguienteNombreGrupo("Creadores"));
+    for (let k = 0; k < gCI;                    k++) particionGrupos.CI.push(siguienteNombreGrupo("Innovadores"));
+    for (let k = 0; k < gIpuroFinal;            k++) particionGrupos.I.push(siguienteNombreGrupo("Innovadores"));
 
-    // Si quedan grupos sin asignar (por diferencias de cálculo), añadir a C
-    while (gi < numGrupos) { particionGrupos.C.push(grupos[gi++]); }
+    // Lista plana de grupos con nombres semánticos (en el mismo orden de la partición)
+    const gruposNombrados = []
+      .concat(particionGrupos.E)
+      .concat(particionGrupos.EC)
+      .concat(particionGrupos.C)
+      .concat(particionGrupos.CI)
+      .concat(particionGrupos.I);
+
+    // Si quedan posiciones sin asignar (diferencias de cálculo), añadir como Creadores extra
+    while (gruposNombrados.length < numGrupos) {
+      gruposNombrados.push(siguienteNombreGrupo("Creadores"));
+      particionGrupos.C.push(gruposNombrados[gruposNombrados.length - 1]);
+    }
 
     // ── 6. Repartir estudiantes en serpentina ────────────────────────────────
     const asignacion = {};
-    grupos.forEach(function(g) { asignacion[g] = []; });
+    gruposNombrados.forEach(function(g) { asignacion[g] = []; });
 
     function repartirSerpentina(listaEstudiantes, listaGrupos) {
       if (!listaGrupos.length || !listaEstudiantes.length) return;
@@ -7664,6 +7748,8 @@
     const cParaCIArr = C.slice(cTotalPuro + cParaEC, cTotalPuro + cParaEC + cParaCI);
     intercalarDos(iSobrante, cParaCIArr, particionGrupos.CI);
 
+    // Devolver también la lista de grupos con nombres semánticos para que la UI los use
+    asignacion.__gruposNombrados = gruposNombrados;
     return asignacion;
   }
 
@@ -7738,7 +7824,7 @@
     modal.innerHTML = `
       <div class="modal-asignacion">
         <h3>Vista previa de la asignación automática</h3>
-        <p class="nota">Se distribuyeron <strong>${totalEst} estudiantes</strong> en <strong>${grupos.length} grupos</strong> respetando la regla de niveles adyacentes en Lengua Española: cada grupo contiene únicamente Exploradores, Exploradores+Creadores, Creadores, Creadores+Innovadores o Innovadores. Los grupos no exceden 25 estudiantes. Puede confirmar y ajustar manualmente antes de guardar.</p>
+        <p class="nota">Se distribuyeron <strong>${totalEst} estudiantes</strong> en <strong>${gruposNombrados.length} grupos</strong> respetando la regla de niveles adyacentes en Lengua Española: cada grupo contiene únicamente Exploradores, Exploradores+Creadores, Creadores, Creadores+Innovadores o Innovadores. Los grupos no exceden 25 estudiantes. Puede confirmar y ajustar manualmente antes de guardar.</p>
 
         <div class="grupos-preview">${cardsHTML}</div>
 
