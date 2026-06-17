@@ -3544,6 +3544,10 @@
     const select = document.getElementById("grupoAcompanamiento");
     if (!select) return;
 
+    // Cargar el mapa de la sede activa
+    const centroSede = sedeSeleccionadaAcompanamiento && sedeSeleccionadaAcompanamiento.centroSede;
+    if (centroSede) cargarMapaGruposSede(centroSede);
+
     const grupos = [];
     obtenerGruposDeSedeAcompanamiento().forEach(function(g) {
       if (g && grupos.indexOf(g) === -1) grupos.push(g);
@@ -3562,8 +3566,8 @@
     select.innerHTML = '<option value="">Seleccione un grupo</option>';
     grupos.forEach(function(grupo) {
       const option = document.createElement("option");
-      option.value = grupo;
-      option.textContent = grupo;
+      option.value = grupo;                      // valor backend para guardar
+      option.textContent = grupoLegible(grupo);  // nombre semántico para el usuario
       select.appendChild(option);
     });
   }
@@ -4996,6 +5000,9 @@
 
     mostrarModulo("moduloAcompanamientos");
 
+    // Cargar el mapa de grupos de la sede del usuario (para facilitadores y coordinadores)
+    if (usuarioActual.centroSede) cargarMapaGruposSede(usuarioActual.centroSede);
+
     document.getElementById("datosUsuarioAcompanamientos").innerHTML = `
       <strong>Usuario:</strong> ${usuarioActual.nombre || ""}<br>
       <strong>Rol:</strong> ${usuarioActual.rol || ""}<br>
@@ -5310,7 +5317,7 @@
       const option = document.createElement("option");
       option.value = persona.cedula;
       option.textContent = persona.grupo
-        ? `${persona.nombre} | ${persona.rol} | ${persona.grupo}`
+        ? `${persona.nombre} | ${persona.rol} | ${grupoLegible(persona.grupo)}`
         : `${persona.nombre} | ${persona.rol}`;
       select.appendChild(option);
     });
@@ -5331,9 +5338,27 @@
 
     if (tipo === "Facilitador") {
       if (personaSeleccionadaAcompanamiento.grupo) {
-        asegurarOpcionGrupo(document.getElementById("grupoAcompanamiento"), personaSeleccionadaAcompanamiento.grupo);
+        const grupoFac = personaSeleccionadaAcompanamiento.grupo;
+        const selectGrupoAcomp = document.getElementById("grupoAcompanamiento");
+        // Asegurar que la opción exista con el nombre semántico visible
+        const yaExiste = Array.from(selectGrupoAcomp.options).some(function(op) {
+          return normalizarTexto(op.value) === normalizarTexto(grupoFac);
+        });
+        if (!yaExiste) {
+          const opt = document.createElement("option");
+          opt.value = grupoFac;
+          opt.textContent = grupoLegible(grupoFac) || grupoFac;
+          selectGrupoAcomp.appendChild(opt);
+        } else {
+          // Actualizar el texto de la opción existente por si no tenía el nombre semántico
+          Array.from(selectGrupoAcomp.options).forEach(function(op) {
+            if (normalizarTexto(op.value) === normalizarTexto(grupoFac)) {
+              op.textContent = grupoLegible(grupoFac) || grupoFac;
+            }
+          });
+        }
+        selectGrupoAcomp.value = grupoFac;
       }
-      document.getElementById("grupoAcompanamiento").value = personaSeleccionadaAcompanamiento.grupo || "";
       construirInstrumentoFacilitador();
     }
 
@@ -5548,6 +5573,9 @@
 
     mostrarModulo("moduloIncidencias");
 
+    // Cargar el mapa de grupos de la sede del usuario
+    if (usuarioActual.centroSede) cargarMapaGruposSede(usuarioActual.centroSede);
+
     document.getElementById("datosUsuarioIncidencias").innerHTML = `
       <strong>Usuario:</strong> ${usuarioActual.nombre || ""}<br>
       <strong>Rol:</strong> ${usuarioActual.rol || ""}<br>
@@ -5642,9 +5670,20 @@
     document.getElementById("observacionesSeguimientoIncidencia").value = "";
 
     if (esFacilitador()) {
-      const grupoUsuario = normalizarTexto(usuarioActual.grupo);
-      document.getElementById("grupoIncidencia").value = grupoUsuario;
-      document.getElementById("grupoIncidencia").disabled = true;
+      const grupoUsuario = usuarioActual.grupo || "";
+      const selectGrupoInc = document.getElementById("grupoIncidencia");
+      // Reconstruir opciones con nombre semántico si hay mapa disponible
+      if (Object.keys(mapaGrupoBackendASemantico).length > 0) {
+        selectGrupoInc.innerHTML = '<option value="">No aplica / todos los grupos</option>';
+        const optFac = document.createElement("option");
+        optFac.value = grupoUsuario;
+        optFac.textContent = grupoLegible(grupoUsuario) || grupoUsuario;
+        selectGrupoInc.appendChild(optFac);
+      } else {
+        asegurarOpcionGrupo(selectGrupoInc, grupoUsuario);
+      }
+      selectGrupoInc.value = grupoUsuario;
+      selectGrupoInc.disabled = true;
     }
   }
 
@@ -5778,6 +5817,25 @@
       document.getElementById("datosSedeIncidencia").innerHTML = "";
       return;
     }
+
+    // Cargar el mapa de grupos de esta sede
+    cargarMapaGruposSede(centro);
+
+    // Poblar el select de grupo con nombres semánticos (valor = backend, texto = semántico)
+    const selectGrupo = document.getElementById("grupoIncidencia");
+    const gruposBackendSede = sedeSeleccionadaIncidencia.grupos || construirGruposOperativos(
+      Number(sedeSeleccionadaIncidencia.gruposEsperados || 0) ||
+      Math.ceil(Number(sedeSeleccionadaIncidencia.cuota || 0) / 25)
+    );
+
+    // Preservar la opción "No aplica" y reconstruir las de grupos
+    selectGrupo.innerHTML = '<option value="">No aplica / todos los grupos</option>';
+    gruposBackendSede.forEach(function(gBackend) {
+      const opt = document.createElement("option");
+      opt.value = gBackend;
+      opt.textContent = grupoLegible(gBackend);
+      selectGrupo.appendChild(opt);
+    });
 
     document.getElementById("datosSedeIncidencia").classList.remove("oculto");
     document.getElementById("datosSedeIncidencia").innerHTML = `
