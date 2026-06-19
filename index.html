@@ -618,6 +618,69 @@
     .modulo-asignacion      .modulo-acento { background: #7c3aed; }
     .modulo-asignacion      .icono-modulo  { color: #7c3aed; background: #f3eeff; }
 
+    .modulo-usuarios        .modulo-acento { background: #be185d; }
+    .modulo-usuarios        .icono-modulo  { color: #be185d; background: #fce7f3; }
+
+    .modulo-sedes           .modulo-acento { background: #0f766e; }
+    .modulo-sedes           .icono-modulo  { color: #0f766e; background: #ccfbf1; }
+
+    /* ── GESTIÓN DE USUARIOS ────────────────────── */
+    .usuarios-admin-toolbar {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 16px 0 10px;
+    }
+
+    .usuarios-admin-toolbar .campo-busqueda {
+      flex: 1 1 260px;
+    }
+
+    .usuarios-admin-toolbar .acciones-usuarios {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .usuarios-admin-toolbar button { margin-top: 0; }
+
+    .estado-usuario-activo,
+    .estado-usuario-inactivo,
+    .estado-sede-activa,
+    .estado-sede-inactiva {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .estado-usuario-activo, .estado-sede-activa { background: #d1fae5; color: #065f46; }
+    .estado-usuario-inactivo, .estado-sede-inactiva { background: #fee2e2; color: #991b1b; }
+
+    .tabla-usuarios-admin td,
+    .tabla-usuarios-admin th,
+    .tabla-sedes-admin td,
+    .tabla-sedes-admin th {
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .tabla-usuarios-admin .acciones-tabla,
+    .tabla-sedes-admin .acciones-tabla {
+      justify-content: flex-start;
+      min-width: 210px;
+    }
+
+    .ayuda-formulario {
+      font-size: 12.5px;
+      color: var(--texto-3);
+      line-height: 1.45;
+      margin-top: 6px;
+    }
+
     /* ── PANEL ADMINISTRADOR ─────────────────────── */
     #panelAdministrador {
       background: var(--fondo-2);
@@ -2007,6 +2070,284 @@
       .avatar-usuario { width: 30px; height: 30px; }
       #usuarioFlotante { padding: 5px 8px 5px 5px; gap: 5px; }
     }
+
+    /* ── EVALUACIONES INTEGRADAS ───────────────────── */
+    #moduloEvaluaciones .eval-integrado {
+      margin-top: 18px;
+    }
+
+    #moduloEvaluaciones .pantalla-inicio,
+    #moduloEvaluaciones .encabezado,
+    #moduloEvaluaciones .seccion {
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: var(--r-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--s-sm);
+    }
+
+    #moduloEvaluaciones .pantalla-inicio {
+      max-width: 760px;
+      margin: 24px auto;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(rgba(255,255,255,.86), rgba(255,255,255,.92)), url("Foto campamento.png") center top/cover no-repeat;
+    }
+
+    #moduloEvaluaciones .cabecera-inicio,
+    #moduloEvaluaciones .encabezado-con-logo {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    #moduloEvaluaciones .cabecera-inicio-texto,
+    #moduloEvaluaciones .encabezado-texto {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    #moduloEvaluaciones .logo-inicio {
+      width: 118px;
+      height: 118px;
+      object-fit: cover;
+      border-radius: var(--r-lg);
+      border: 2px solid #ffffff;
+      box-shadow: var(--s);
+      background: var(--blanco);
+    }
+
+    #moduloEvaluaciones .logo-esquina {
+      width: 82px;
+      height: 82px;
+      object-fit: cover;
+      border-radius: var(--r);
+      border: 1px solid var(--borde);
+      background: var(--blanco);
+      box-shadow: var(--s-sm);
+    }
+
+    #moduloEvaluaciones .grid-info,
+    #moduloEvaluaciones .dos-columnas,
+    #moduloEvaluaciones .tabla-bloques {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    #moduloEvaluaciones .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    #moduloEvaluaciones .grupo-opciones {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #moduloEvaluaciones .opcion-prueba,
+    #moduloEvaluaciones .item,
+    #moduloEvaluaciones .caja-palabra {
+      border: 1px solid var(--borde);
+      border-radius: var(--r);
+      padding: 14px;
+      background: var(--fondo-2);
+      margin: 10px 0;
+    }
+
+    #moduloEvaluaciones .opcion-prueba {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--blanco);
+      cursor: pointer;
+    }
+
+    #moduloEvaluaciones .ayuda {
+      background: var(--azul-xclaro);
+      border-left: 4px solid var(--azul);
+      padding: 10px 12px;
+      border-radius: var(--r);
+      margin: 10px 0 16px;
+      color: var(--texto-2);
+    }
+
+    /* Opciones de selección de evaluaciones: corrige la desalineación
+       causada por los estilos globales de input de la plataforma. */
+    #moduloEvaluaciones input[type="radio"] {
+      width: 17px !important;
+      height: 17px !important;
+      min-width: 17px !important;
+      flex: 0 0 17px;
+      padding: 0 !important;
+      margin: 2px 0 0 !important;
+      border: 1px solid var(--borde-2) !important;
+      border-radius: 50% !important;
+      background: var(--blanco) !important;
+      box-shadow: none !important;
+      cursor: pointer;
+      accent-color: var(--azul);
+      vertical-align: top;
+    }
+
+    #moduloEvaluaciones input[type="radio"]:focus {
+      box-shadow: 0 0 0 3px rgba(33,118,255,0.12) !important;
+    }
+
+    #moduloEvaluaciones .opciones {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    #moduloEvaluaciones .opciones label,
+    #moduloEvaluaciones .opcion-prueba {
+      display: grid;
+      grid-template-columns: 17px minmax(0, 1fr);
+      align-items: start;
+      column-gap: 10px;
+      width: 100%;
+      margin: 0;
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--texto-2);
+      cursor: pointer;
+      line-height: 1.35;
+    }
+
+    #moduloEvaluaciones .opciones label {
+      padding: 9px 11px;
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: var(--r-sm);
+      transition: border-color var(--t), background var(--t);
+    }
+
+    #moduloEvaluaciones .opciones label:hover,
+    #moduloEvaluaciones .opcion-prueba:hover {
+      border-color: var(--azul-med);
+      background: var(--azul-xclaro);
+    }
+
+    #moduloEvaluaciones .opciones label:has(input[type="radio"]:checked),
+    #moduloEvaluaciones .opcion-prueba:has(input[type="radio"]:checked) {
+      border-color: var(--azul-med);
+      background: var(--azul-xclaro);
+      color: var(--azul);
+      font-weight: 700;
+    }
+
+    #moduloEvaluaciones .linea-respuesta {
+      margin-top: 10px;
+      font-size: 13.5px;
+      font-weight: 700;
+      min-height: 20px;
+    }
+
+    #moduloEvaluaciones .correcta,
+    #moduloEvaluaciones .satisfactorio { color: #167d4a; }
+    #moduloEvaluaciones .incorrecta,
+    #moduloEvaluaciones .elemental { color: #c0392b; }
+    #moduloEvaluaciones .aceptable { color: #b45309; }
+    #moduloEvaluaciones .neutra { color: var(--texto-3); }
+
+    #moduloEvaluaciones .fila-palabras,
+    #moduloEvaluaciones .ops-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin: 10px 0;
+    }
+
+    #moduloEvaluaciones .enunciado-hueco {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      margin: 8px 0;
+    }
+
+    #moduloEvaluaciones .enunciado-hueco input,
+    #moduloEvaluaciones .small-input {
+      max-width: 110px;
+      display: inline-block;
+      margin: 0 6px;
+      text-align: center;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    #moduloEvaluaciones .controles {
+      position: sticky;
+      bottom: 0;
+      background: rgba(238,242,247,.96);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--borde);
+      padding: 14px 0 0;
+      margin-top: 12px;
+      z-index: 20;
+    }
+
+    #moduloEvaluaciones .barra {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 0 0 12px;
+    }
+
+    #moduloEvaluaciones .btn-principal { background: var(--azul); color: white; }
+    #moduloEvaluaciones .btn-exito { background: #167d4a; color: white; }
+
+    #moduloEvaluaciones .resultado-global {
+      margin-left: auto;
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: var(--r);
+      padding: 10px 14px;
+      min-width: 220px;
+      font-weight: 700;
+    }
+
+    #moduloEvaluaciones .modal-fondo {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,18,35,.60);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    #moduloEvaluaciones .modal {
+      width: min(560px, 100%);
+      background: var(--blanco);
+      border-radius: var(--r-xl);
+      padding: 24px;
+      box-shadow: var(--s-lg);
+    }
+
+    #moduloEvaluaciones .acciones-modal {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 700px) {
+      #moduloEvaluaciones .resultado-global {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+
   </style>
   <!-- PWA: manifest, íconos y pantalla completa -->
   <link rel="manifest" href="/manifest.json">
@@ -2228,6 +2569,26 @@
         <span class="modulo-flecha">›</span>
       </div>
 
+      <div id="tileGestionUsuarios" class="modulo modulo-usuarios oculto" onclick="abrirModulo('gestionUsuarios')">
+        <div class="modulo-acento"></div>
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6"></path><path d="M22 11h-6"></path></svg>
+        </div>
+        <h3>Gestión de usuarios</h3>
+        <p>Crear, editar y activar accesos</p>
+        <span class="modulo-flecha">›</span>
+      </div>
+
+      <div id="tileGestionSedes" class="modulo modulo-sedes oculto" onclick="abrirModulo('gestionSedes')">
+        <div class="modulo-acento"></div>
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 21h18"></path><path d="M5 21V7l8-4 6 3v15"></path><path d="M9 9h1"></path><path d="M9 13h1"></path><path d="M9 17h1"></path><path d="M14 11h1"></path><path d="M14 15h1"></path></svg>
+        </div>
+        <h3>Gestión de sedes</h3>
+        <p>Añadir, editar o inactivar sedes</p>
+        <span class="modulo-flecha">›</span>
+      </div>
+
       <div id="tileAsignacionGrupos" class="modulo modulo-asignacion oculto" onclick="abrirModulo('asignacionGrupos')">
         <div class="modulo-acento"></div>
         <div class="icono-modulo" aria-hidden="true">
@@ -2247,7 +2608,212 @@
         <p>Grupos según niveles</p>
         <span class="modulo-flecha">›</span>
       </div>
+
+      <div id="tileInscripcion" class="modulo modulo-asignacion oculto" onclick="abrirModulo('inscripcion')">
+        <div class="modulo-acento"></div>
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path><path d="M3 21v-1a5 5 0 0 1 5-5h2"></path><path d="M16 11h6"></path><path d="M19 8v6"></path></svg>
+        </div>
+        <h3>Inscripción de estudiantes</h3>
+        <p>Inscribe niños desde el catálogo por su ID</p>
+        <span class="modulo-flecha">›</span>
+      </div>
     </div>
+  </section>
+
+  <section id="moduloGestionUsuarios" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Gestión de usuarios</h2>
+        <p class="nota">Módulo exclusivo para administradores reales. Permite crear usuarios, editar su alcance y activar o inactivar accesos.</p>
+      </div>
+      <div class="acciones-modulo">
+        <button class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+      </div>
+    </div>
+
+    <div class="bloque-formulario">
+      <h3 id="tituloFormularioUsuarioAdmin">Crear usuario</h3>
+      <input type="hidden" id="usuarioAdminCedulaOriginal">
+
+      <div class="form-grid-3">
+        <div>
+          <label for="usuarioAdminCedula">Cédula</label>
+          <input type="text" id="usuarioAdminCedula" placeholder="Sin guiones o como aparece en la BD">
+        </div>
+        <div>
+          <label for="usuarioAdminNombre">Nombre completo</label>
+          <input type="text" id="usuarioAdminNombre" placeholder="Nombre y apellido">
+        </div>
+        <div>
+          <label for="usuarioAdminRol">Rol</label>
+          <select id="usuarioAdminRol" onchange="actualizarAlcanceFormularioUsuarioAdmin()">
+            <option value="">Seleccione un rol</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Director nacional">Director nacional</option>
+            <option value="Técnico nacional">Técnico nacional</option>
+            <option value="Técnico regional">Técnico regional</option>
+            <option value="Técnico distrital">Técnico distrital</option>
+            <option value="Coordinador sede">Coordinador sede</option>
+            <option value="Facilitador">Facilitador</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div>
+          <label for="usuarioAdminRegional">Regional</label>
+          <select id="usuarioAdminRegional" onchange="cargarDistritosUsuarioAdmin()">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div>
+          <label for="usuarioAdminDistrito">Distrito</label>
+          <select id="usuarioAdminDistrito" onchange="cargarSedesUsuarioAdmin()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div>
+          <label for="usuarioAdminCentroSede">Centro sede</label>
+          <select id="usuarioAdminCentroSede">
+            <option value="">Todas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div>
+          <label for="usuarioAdminGrupo">Grupo</label>
+          <select id="usuarioAdminGrupo">
+            <option value="">Todos</option>
+            <option value="Grupo 1">Grupo 1</option>
+            <option value="Grupo 2">Grupo 2</option>
+            <option value="Grupo 3">Grupo 3</option>
+            <option value="Grupo 4">Grupo 4</option>
+            <option value="Grupo 5">Grupo 5</option>
+            <option value="Grupo 6">Grupo 6</option>
+            <option value="Grupo 7">Grupo 7</option>
+            <option value="Grupo 8">Grupo 8</option>
+          </select>
+        </div>
+        <div>
+          <label for="usuarioAdminEstado">Estado</label>
+          <select id="usuarioAdminEstado">
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div>
+          <label for="usuarioAdminPassword">Contraseña inicial / nueva</label>
+          <input type="text" id="usuarioAdminPassword" placeholder="Déjalo vacío para no cambiarla">
+          <div class="ayuda-formulario">Al crear un usuario, si se deja vacío, se usará la cédula como contraseña inicial.</div>
+        </div>
+      </div>
+
+      <div class="acciones-modulo" style="margin-top: 14px;">
+        <button type="button" onclick="guardarUsuarioAdmin()">Guardar usuario</button>
+        <button type="button" class="btn-secundario" onclick="limpiarFormularioUsuarioAdmin()">Limpiar</button>
+      </div>
+      <div id="mensajeUsuarioAdmin" class="mensaje"></div>
+    </div>
+
+    <div class="usuarios-admin-toolbar">
+      <div class="campo-busqueda">
+        <label for="filtroUsuariosAdmin">Buscar usuarios</label>
+        <input type="search" id="filtroUsuariosAdmin" placeholder="Buscar por cédula, nombre, rol, regional, distrito o sede" oninput="renderizarTablaUsuariosAdmin()">
+      </div>
+      <div class="acciones-usuarios">
+        <button type="button" onclick="listarUsuariosAdmin()">Actualizar listado</button>
+        <button type="button" class="btn-secundario" onclick="reactivarUsuariosInactivosFiltradosAdmin()">Reactivar inactivos filtrados</button>
+      </div>
+    </div>
+
+    <div id="resumenUsuariosAdmin" class="nota"></div>
+    <div id="tablaUsuariosAdmin" class="tabla-contenedor oculto"></div>
+  </section>
+
+  <section id="moduloGestionSedes" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Gestión de sedes</h2>
+        <p class="nota">Módulo exclusivo para administradores reales. Permite añadir sedes, modificar sus datos, ajustar la cuota e inactivar sedes que no deban aparecer en los selectores.</p>
+      </div>
+      <div class="acciones-modulo">
+        <button class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+      </div>
+    </div>
+
+    <div class="bloque-formulario">
+      <h3 id="tituloFormularioSedeAdmin">Crear sede</h3>
+      <input type="hidden" id="sedeAdminCentroOriginal">
+
+      <div class="form-grid-3">
+        <div>
+          <label for="sedeAdminRegional">Regional</label>
+          <input type="text" id="sedeAdminRegional" list="listaRegionalesSedesAdmin" placeholder="Ej.: 01 - BARAHONA">
+          <datalist id="listaRegionalesSedesAdmin"></datalist>
+        </div>
+        <div>
+          <label for="sedeAdminDistrito">Distrito</label>
+          <input type="text" id="sedeAdminDistrito" list="listaDistritosSedesAdmin" placeholder="Ej.: 0101 - PEDERNALES">
+          <datalist id="listaDistritosSedesAdmin"></datalist>
+        </div>
+        <div>
+          <label for="sedeAdminCodigo">Código sede</label>
+          <input type="text" id="sedeAdminCodigo" placeholder="Código del centro sede">
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div>
+          <label for="sedeAdminCentro">Centro sede</label>
+          <input type="text" id="sedeAdminCentro" placeholder="Nombre del centro sede">
+          <div class="ayuda-formulario">Este texto se usa para relacionar usuarios, estudiantes y registros de la sede.</div>
+        </div>
+        <div>
+          <label for="sedeAdminCuota">Cuota de estudiantes</label>
+          <input type="number" id="sedeAdminCuota" min="0" step="1" placeholder="Ej.: 75">
+          <div class="ayuda-formulario">Los grupos disponibles se calculan como cuota ÷ 25, redondeando hacia arriba.</div>
+        </div>
+        <div>
+          <label for="sedeAdminEstado">Estado</label>
+          <select id="sedeAdminEstado">
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div>
+          <label for="sedeAdminCoordinador">Coordinador</label>
+          <input type="text" id="sedeAdminCoordinador" placeholder="Nombre del coordinador de sede">
+        </div>
+        <div>
+          <label for="sedeAdminTelefono">Teléfono</label>
+          <input type="text" id="sedeAdminTelefono" placeholder="Teléfono de contacto">
+        </div>
+      </div>
+
+      <div class="acciones-modulo" style="margin-top: 14px;">
+        <button type="button" onclick="guardarSedeAdmin()">Guardar sede</button>
+        <button type="button" class="btn-secundario" onclick="limpiarFormularioSedeAdmin()">Limpiar</button>
+      </div>
+      <div id="mensajeSedeAdmin" class="mensaje"></div>
+    </div>
+
+    <div class="usuarios-admin-toolbar">
+      <div class="campo-busqueda">
+        <label for="filtroSedesAdmin">Buscar sedes</label>
+        <input type="search" id="filtroSedesAdmin" placeholder="Buscar por regional, distrito, código, centro sede o coordinador" oninput="renderizarTablaSedesAdmin()">
+      </div>
+      <div class="acciones-usuarios">
+        <button type="button" onclick="listarSedesAdmin()">Actualizar listado</button>
+      </div>
+    </div>
+
+    <div id="resumenSedesAdmin" class="nota"></div>
+    <div id="tablaSedesAdmin" class="tabla-contenedor oculto"></div>
   </section>
 
   <section id="moduloAsistencia" class="tarjeta oculto">
@@ -2837,6 +3403,552 @@
   </section>
 
 
+
+  <section id="moduloInscripcion" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Inscripción de estudiantes</h2>
+        <p class="nota">Digite el ID del estudiante para buscarlo en el catálogo. Si existe, confirme el centro sede y complete la inscripción.</p>
+      </div>
+    </div>
+
+    <div class="bloque-formulario">
+      <h3>Buscar en el catálogo</h3>
+      <div class="form-grid-3">
+        <div>
+          <label for="inscID">ID del estudiante</label>
+          <input type="text" id="inscID" placeholder="Ej. 33578410" autocomplete="off">
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" onclick="buscarEstudianteInscripcion()">Buscar estudiante</button>
+        </div>
+      </div>
+      <div id="mensajeBusquedaInscripcion" class="mensaje"></div>
+    </div>
+
+    <div id="bloqueDatosInscripcion" class="bloque-formulario oculto">
+      <h3>Datos del estudiante</h3>
+      <div class="form-grid-3">
+        <div>
+          <label for="inscNombre">Nombre</label>
+          <input type="text" id="inscNombre" readonly>
+        </div>
+        <div>
+          <label for="inscGrado">Grado</label>
+          <input type="text" id="inscGrado" readonly>
+        </div>
+        <div>
+          <label for="inscRegional">Regional</label>
+          <input type="text" id="inscRegional" readonly>
+        </div>
+        <div>
+          <label for="inscDistrito">Distrito</label>
+          <input type="text" id="inscDistrito" readonly>
+        </div>
+        <div>
+          <label for="inscNacionalidad">Nacionalidad</label>
+          <input type="text" id="inscNacionalidad" readonly>
+        </div>
+        <div>
+          <label for="inscSexo">Sexo</label>
+          <input type="text" id="inscSexo" readonly>
+        </div>
+      </div>
+
+      <h3 style="margin-top:18px;">Centro sede de inscripción</h3>
+      <p class="nota">Elija el centro sede donde quedará inscrito el estudiante.</p>
+      <div class="form-grid-3">
+        <div>
+          <label for="inscCentro">Centro sede</label>
+          <select id="inscCentro">
+            <option value="">Seleccione el centro sede</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="acciones-asignacion" style="margin-top:18px;">
+        <button type="button" id="btnConfirmarInscripcion" onclick="confirmarInscripcion()">Confirmar inscripción</button>
+        <button type="button" class="btn-secundario" onclick="limpiarInscripcion()">Limpiar</button>
+        <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+      </div>
+    </div>
+
+    <div id="mensajeInscripcion" class="mensaje"></div>
+  </section>
+
+
+
+  <section id="moduloEvaluaciones" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Evaluaciones de estudiantes</h2>
+        <p class="nota">Registro integrado de pruebas de Lengua Española y Matemática. Los resultados se guardan directamente en Supabase.</p>
+      </div>
+      <div class="acciones-modulo">
+        <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+      </div>
+    </div>
+
+    <div class="eval-integrado">
+<div id="pantallaInicio" class="pantalla-inicio">
+    <div class="cabecera-inicio">
+      <img src="Foto campamento.png" alt="Logo del campamento" class="logo-inicio">
+      <div class="cabecera-inicio-texto">
+        <h1>Registro de pruebas</h1>
+        <p class="nota">Digite el ID para autocompletar el nombre del estudiante.</p>
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="inicioID">ID del estudiante</label>
+      <input type="text" id="inicioID" placeholder="Escriba el ID del estudiante">
+      <button class="btn-secundario" type="button" onclick="buscarEstudiante()">Buscar estudiante</button>
+      <div class="linea-respuesta neutra" id="mensajeBusqueda"></div>
+    </div>
+
+    <div class="campo">
+      <label for="inicioNombre">Nombre del estudiante</label>
+      <input type="text" id="inicioNombre" placeholder="Se completará al buscar el ID" readonly>
+    </div>
+
+    <div class="campo">
+      <label for="inicioRegional">Regional</label>
+      <input type="text" id="inicioRegional" readonly>
+    </div>
+
+    <div class="campo">
+      <label for="inicioDistrito">Distrito</label>
+      <input type="text" id="inicioDistrito" readonly>
+    </div>
+
+    <div class="campo">
+      <label for="inicioCentro">Centro sede</label>
+      <select id="inicioCentro">
+        <option value="">Seleccione el centro sede</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label>Seleccione la prueba</label>
+      <div class="grupo-opciones">
+        <label class="opcion-prueba">
+          <input type="radio" name="tipoPrueba" value="lengua">
+          <span><strong>Lengua Española</strong></span>
+        </label>
+
+        <label class="opcion-prueba">
+          <input type="radio" name="tipoPrueba" value="matematica">
+          <span><strong>Matemática</strong></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-principal" onclick="iniciarProceso()">Continuar</button>
+  </div>
+
+  <!-- LENGUA -->
+  <div id="pantallaLengua" class="oculto">
+    <div class="contenedor">
+      <div class="encabezado">
+        <div class="encabezado-con-logo">
+          <img src="Foto campamento.png" alt="Imagen de apoyo" class="logo-esquina">
+          <div class="encabezado-texto">
+            <h1>Prueba de Lengua Española</h1>
+            <div class="grid-info">
+              <div class="campo">
+                <label for="nombre">Nombre completo del estudiante</label>
+                <input type="text" id="nombre" readonly>
+              </div>
+              <div class="campo">
+                <label for="idEstudiante">ID del estudiante</label>
+                <input type="text" id="idEstudiante" readonly>
+              </div>
+              <div class="campo">
+                <label for="regional">Regional</label>
+                <input type="text" id="regional" readonly>
+              </div>
+              <div class="campo">
+                <label for="distrito">Distrito</label>
+                <input type="text" id="distrito" readonly>
+              </div>
+              <div class="campo">
+                <label for="centro">Centro sede</label>
+                <input type="text" id="centro" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>1. Escucha y selecciona la palabra correcta</h2>
+
+        <div class="item">
+          <p>1. Selecciona la opción correcta.</p>
+          <div class="opciones">
+            <label><input type="radio" name="p1" value="a"> a) abejas</label>
+            <label><input type="radio" name="p1" value="b"> b) almejas</label>
+            <label><input type="radio" name="p1" value="c"> c) manejas</label>
+            <label><input type="radio" name="p1" value="d"> d) arvejas</label>
+          </div>
+          <div class="linea-respuesta" id="r-p1"></div>
+        </div>
+
+        <div class="item">
+          <p>2. Selecciona la opción correcta.</p>
+          <div class="opciones">
+            <label><input type="radio" name="p2" value="a"> a) piel</label>
+            <label><input type="radio" name="p2" value="b"> b) fiel</label>
+            <label><input type="radio" name="p2" value="c"> c) miel</label>
+            <label><input type="radio" name="p2" value="d"> d) riel</label>
+          </div>
+          <div class="linea-respuesta" id="r-p2"></div>
+        </div>
+
+        <div class="item">
+          <p>3. Selecciona la opción correcta.</p>
+          <div class="opciones">
+            <label><input type="radio" name="p3" value="a"> a) ciruela</label>
+            <label><input type="radio" name="p3" value="b"> b) muela</label>
+            <label><input type="radio" name="p3" value="c"> c) abuela</label>
+            <label><input type="radio" name="p3" value="d"> d) escuela</label>
+          </div>
+          <div class="linea-respuesta" id="r-p3"></div>
+        </div>
+
+        <div class="ayuda">Ahora escucharás palabras que no tienen significado. Presta mucha atención.</div>
+
+        <div class="item">
+          <p>4. Selecciona la opción correcta.</p>
+          <div class="opciones">
+            <label><input type="radio" name="p4" value="a"> a) Lomipe</label>
+            <label><input type="radio" name="p4" value="b"> b) Lapimo</label>
+            <label><input type="radio" name="p4" value="c"> c) Lemipo</label>
+            <label><input type="radio" name="p4" value="d"> d) lopame</label>
+          </div>
+          <div class="linea-respuesta" id="r-p4"></div>
+        </div>
+
+        <div class="item">
+          <p>5. Selecciona la opción correcta.</p>
+          <div class="opciones">
+            <label><input type="radio" name="p5" value="a"> a) trusal</label>
+            <label><input type="radio" name="p5" value="b"> b) trisa</label>
+            <label><input type="radio" name="p5" value="c"> c) tursal</label>
+            <label><input type="radio" name="p5" value="d"> d) turusa</label>
+          </div>
+          <div class="linea-respuesta" id="r-p5"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>2. Completa los nombres de las palabras</h2>
+        <div class="ayuda">Escribe la letra que falta en cada palabra.</div>
+
+        <div class="dos-columnas">
+          <div class="item">
+            <p class="enunciado-hueco">1. <input type="text" id="p6" maxlength="2" class="small-input">asa</p>
+            <div class="linea-respuesta" id="r-p6"></div>
+          </div>
+          <div class="item">
+            <p class="enunciado-hueco">2. ti<input type="text" id="p7" maxlength="2" class="small-input">re</p>
+            <div class="linea-respuesta" id="r-p7"></div>
+          </div>
+          <div class="item">
+            <p class="enunciado-hueco">3. e<input type="text" id="p8" maxlength="2" class="small-input">cuela</p>
+            <div class="linea-respuesta" id="r-p8"></div>
+          </div>
+          <div class="item">
+            <p class="enunciado-hueco">4. pa<input type="text" id="p9" maxlength="2" class="small-input">oma</p>
+            <div class="linea-respuesta" id="r-p9"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>3. Organiza correctamente las sílabas</h2>
+        <div class="fila-palabras">
+          <div class="caja-palabra">
+            <strong>1. tra - es - ma</strong>
+            <p class="enunciado-hueco"><input type="text" id="p10"></p>
+            <div class="linea-respuesta" id="r-p10"></div>
+          </div>
+          <div class="caja-palabra">
+            <strong>2. bri - lla - som</strong>
+            <p class="enunciado-hueco"><input type="text" id="p11"></p>
+            <div class="linea-respuesta" id="r-p11"></div>
+          </div>
+          <div class="caja-palabra">
+            <strong>3. co - bar</strong>
+            <p class="enunciado-hueco"><input type="text" id="p12"></p>
+            <div class="linea-respuesta" id="r-p12"></div>
+          </div>
+          <div class="caja-palabra">
+            <strong>4. po - ri - ma - sa</strong>
+            <p class="enunciado-hueco"><input type="text" id="p13"></p>
+            <div class="linea-respuesta" id="r-p13"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>4. Lee el texto y responde</h2>
+        <div class="ayuda">
+          Texto base: <strong>El gato y los ratones</strong>. Responde según la lectura aplicada en la prueba.
+        </div>
+
+        <div class="item">
+          <p>1. ¿Cuál es el nombre del gato?</p>
+          <div class="opciones">
+            <label><input type="radio" name="p14" value="a"> a) Ronald</label>
+            <label><input type="radio" name="p14" value="b"> b) Rodilardo</label>
+            <label><input type="radio" name="p14" value="c"> c) Rolando</label>
+          </div>
+          <div class="linea-respuesta" id="r-p14"></div>
+        </div>
+
+        <div class="item">
+          <p>2. ¿Quiénes estaban asustados por la presencia del gato?</p>
+          <div class="opciones">
+            <label><input type="radio" name="p15" value="a"> a) Solo las ratas</label>
+            <label><input type="radio" name="p15" value="b"> b) Solo los ratones</label>
+            <label><input type="radio" name="p15" value="c"> c) Las ratas y los ratones</label>
+          </div>
+          <div class="linea-respuesta" id="r-p15"></div>
+        </div>
+
+        <div class="item">
+          <p>3. ¿Por qué nadie quiso ponerle el cascabel al gato?</p>
+          <div class="opciones">
+            <label><input type="radio" name="p16" value="a"> a) Porque tenían miedo de ser atrapados por el gato</label>
+            <label><input type="radio" name="p16" value="b"> b) Porque no sabían dónde estaba el cascabel</label>
+            <label><input type="radio" name="p16" value="c"> c) Porque el gato estaba dormido todo el tiempo</label>
+          </div>
+          <div class="linea-respuesta" id="r-p16"></div>
+        </div>
+
+        <div class="item">
+          <p>4. ¿Qué cualidad necesitaría el ratón para ponerle el cascabel al gato?</p>
+          <div class="opciones">
+            <label><input type="radio" name="p17b" value="a"> a) valentía</label>
+            <label><input type="radio" name="p17b" value="b"> b) belleza</label>
+            <label><input type="radio" name="p17b" value="c"> c) miedo</label>
+          </div>
+          <div class="linea-respuesta" id="r-p17b"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>5. Completa cada idea utilizando las palabras del recuadro</h2>
+        <div class="ayuda">solución / cascabel / madrigueras / astuto</div>
+
+        <div class="item">
+          <p class="enunciado-hueco">1. El gato es muy <input type="text" id="p17">.</p>
+          <div class="linea-respuesta" id="r-p17"></div>
+        </div>
+        <div class="item">
+          <p class="enunciado-hueco">2. El gato se dedicaba a vigilar las <input type="text" id="p18">.</p>
+          <div class="linea-respuesta" id="r-p18"></div>
+        </div>
+        <div class="item">
+          <p class="enunciado-hueco">3. ¿Quién le pondría el <input type="text" id="p19"> al gato?</p>
+          <div class="linea-respuesta" id="r-p19"></div>
+        </div>
+        <div class="item">
+          <p class="enunciado-hueco">4. Los ratones y ratas se reunieron para buscar una <input type="text" id="p20">.</p>
+          <div class="linea-respuesta" id="r-p20"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>Resultado de la evaluación</h2>
+        <div class="item">
+          <p><strong>Clasificación global del estudiante</strong></p>
+          <div class="linea-respuesta neutra" id="clasificacionGlobal"></div>
+          <div class="nota" id="detalleClasificacion"></div>
+        </div>
+
+        <div class="tabla-bloques">
+          <div class="item"><p><strong>Indicador 1. Discrimina sonidos con correspondencia</strong></p><div class="linea-respuesta neutra" id="bloque1"></div></div>
+          <div class="item"><p><strong>Indicador 2. Completa palabras con fonemas adecuados</strong></p><div class="linea-respuesta neutra" id="bloque2"></div></div>
+          <div class="item"><p><strong>Indicador 3. Organiza sílabas para formar palabras</strong></p><div class="linea-respuesta neutra" id="bloque3"></div></div>
+          <div class="item"><p><strong>Indicador 4. Comprende información explícita e implícita</strong></p><div class="linea-respuesta neutra" id="bloque4"></div></div>
+          <div class="item"><p><strong>Indicador 5. Completa ideas con vocabulario pertinente</strong></p><div class="linea-respuesta neutra" id="bloque5"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controles">
+      <div class="barra">
+        <button class="btn-principal" onclick="revisarPruebaLengua()">Enviar y guardar</button>
+        <button class="btn-secundario" onclick="volverInicio()">Volver al inicio</button>
+        <button class="btn-secundario" onclick="reiniciarLengua()">Reiniciar esta prueba</button>
+        <div class="resultado-global" id="resultadoGlobalLengua">Puntuación: 0 / 21</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATEMATICA -->
+  <div id="pantallaMatematica" class="oculto">
+    <div class="contenedor">
+      <div class="encabezado">
+        <div class="encabezado-con-logo">
+          <img src="Foto campamento.png" alt="Imagen de apoyo" class="logo-esquina">
+          <div class="encabezado-texto">
+            <h1>Prueba de Matemática</h1>
+            <div class="grid-info">
+              <div class="campo"><label for="nombreMa">Nombre completo del estudiante</label><input type="text" id="nombreMa" readonly></div>
+              <div class="campo"><label for="idEstudianteMa">ID del estudiante</label><input type="text" id="idEstudianteMa" readonly></div>
+              <div class="campo"><label for="regionalMa">Regional</label><input type="text" id="regionalMa" readonly></div>
+              <div class="campo"><label for="distritoMa">Distrito</label><input type="text" id="distritoMa" readonly></div>
+              <div class="campo"><label for="centroMa">Centro sede</label><input type="text" id="centroMa" readonly></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>I. Lee detenidamente cada situación y realiza los cálculos necesarios en cada ejercicio</h2>
+
+        <div class="item">
+          <p>1. El número 708 se lee:</p>
+          <div class="opciones">
+            <label><input type="radio" name="ma1" value="a"> A) Setenta y ocho</label>
+            <label><input type="radio" name="ma1" value="b"> B) Setecientos ocho</label>
+            <label><input type="radio" name="ma1" value="c"> C) Setecientos ochenta</label>
+            <label><input type="radio" name="ma1" value="d"> D) Siete mil ocho</label>
+          </div>
+          <div class="linea-respuesta" id="r-ma1"></div>
+        </div>
+
+        <div class="item">
+          <p>2. “Mil ochocientos cuarenta y cuatro” es:</p>
+          <div class="opciones">
+            <label><input type="radio" name="ma2" value="a"> A) 1,844</label>
+            <label><input type="radio" name="ma2" value="b"> B) 1,484</label>
+            <label><input type="radio" name="ma2" value="c"> C) 8,144</label>
+            <label><input type="radio" name="ma2" value="d"> D) 8,414</label>
+          </div>
+          <div class="linea-respuesta" id="r-ma2"></div>
+        </div>
+
+        <div class="item">
+          <p>3. El número 679 se escribe en palabras como:</p>
+          <div class="opciones">
+            <label><input type="radio" name="ma3" value="a"> A) Seiscientos setenta y nueve</label>
+            <label><input type="radio" name="ma3" value="b"> B) Seiscientos setenta y nueve mil</label>
+            <label><input type="radio" name="ma3" value="c"> C) Seiscientos diecisiete y nueve</label>
+            <label><input type="radio" name="ma3" value="d"> D) Setecientos sesenta y nueve</label>
+          </div>
+          <div class="linea-respuesta" id="r-ma3"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>II. Valor posicional</h2>
+        <div class="item">
+          <p>4. En el número 352, el valor del 5 es:</p>
+          <div class="opciones">
+            <label><input type="radio" name="ma4" value="a"> A) 5</label>
+            <label><input type="radio" name="ma4" value="b"> B) 50</label>
+            <label><input type="radio" name="ma4" value="c"> C) 500</label>
+            <label><input type="radio" name="ma4" value="d"> D) 5,000</label>
+          </div>
+          <div class="linea-respuesta" id="r-ma4"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>III. Comparación y ordenamiento</h2>
+        <div class="item">
+          <p>5. ¿Cuál es el número mayor?</p>
+          <div class="opciones">
+            <label><input type="radio" name="ma5" value="a"> A) 2735</label>
+            <label><input type="radio" name="ma5" value="b"> B) 2537</label>
+            <label><input type="radio" name="ma5" value="c"> C) 2573</label>
+            <label><input type="radio" name="ma5" value="d"> D) 2753</label>
+          </div>
+          <div class="linea-respuesta" id="r-ma5"></div>
+        </div>
+
+        <div class="item">
+          <p>6. En una frutería se venden frutas con los siguientes precios:</p>
+          <div class="ayuda">Fresa: RD$155 · Sandía: RD$150 · Piña: RD$140 · Manzana: RD$160 · Guineo: RD$145</div>
+          <p>¿Cuál es el orden de menor a mayor?</p>
+          <div class="opciones">
+            <label><input type="radio" name="ma6" value="a"> A) 140, 145, 150, 155, 160</label>
+            <label><input type="radio" name="ma6" value="b"> B) 140, 150, 145, 155, 160</label>
+            <label><input type="radio" name="ma6" value="c"> C) 160, 155, 150, 145, 140</label>
+            <label><input type="radio" name="ma6" value="d"> D) 145, 140, 150, 155, 160</label>
+          </div>
+          <div class="linea-respuesta" id="r-ma6"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>IV. Patrones</h2>
+        <div class="item">
+          <p class="enunciado-hueco">7. Completa: 5, 10, 15, 20, <input type="text" id="ma7" class="small-input"></p>
+          <div class="linea-respuesta" id="r-ma7"></div>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <h2>V. Resuelve estas operaciones</h2>
+        <div class="item"><p class="enunciado-hueco">8. 63 – 25 = <input type="text" id="ma8" class="small-input"></p><div class="linea-respuesta" id="r-ma8"></div></div>
+        <div class="item"><p class="enunciado-hueco">9. 575 + 360 = <input type="text" id="ma9" class="small-input"></p><div class="linea-respuesta" id="r-ma9"></div></div>
+        <div class="item"><p class="enunciado-hueco">10. 36 ÷ 6 = <input type="text" id="ma10" class="small-input"></p><div class="linea-respuesta" id="r-ma10"></div></div>
+      </div>
+
+      <div class="seccion">
+        <h2>VI. Resolución de problemas</h2>
+        <div class="item"><p class="enunciado-hueco">11. Manuel tenía 75 canicas y regaló 34. ¿Cuántas le quedan? <input type="text" id="ma11" class="small-input"></p><div class="linea-respuesta" id="r-ma11"></div></div>
+        <div class="item"><p class="enunciado-hueco">12. En un restaurante hay 42 mesas con 6 platos cada una. ¿Cuántos platos hay en total? <input type="text" id="ma12" class="small-input"></p><div class="linea-respuesta" id="r-ma12"></div></div>
+      </div>
+
+      <div class="seccion">
+        <h2>Resultado de la evaluación</h2>
+        <div class="item">
+          <p><strong>Clasificación global del estudiante</strong></p>
+          <div class="linea-respuesta neutra" id="clasificacionGlobalMa"></div>
+          <div class="nota" id="detalleClasificacionMa"></div>
+        </div>
+        <div class="tabla-bloques">
+          <div class="item"><p><strong>Indicador 1. Lee y escribe números en diferentes representaciones</strong></p><div class="linea-respuesta neutra" id="maInd1"></div></div>
+          <div class="item"><p><strong>Indicador 2. Identifica el valor posicional de las cifras</strong></p><div class="linea-respuesta neutra" id="maInd2"></div></div>
+          <div class="item"><p><strong>Indicador 3. Compara y ordena números</strong></p><div class="linea-respuesta neutra" id="maInd3"></div></div>
+          <div class="item"><p><strong>Indicador 4. Identifica y continúa patrones numéricos</strong></p><div class="linea-respuesta neutra" id="maInd4"></div></div>
+          <div class="item"><p><strong>Indicador 5. Aplica operaciones básicas</strong></p><div class="linea-respuesta neutra" id="maInd5"></div></div>
+          <div class="item"><p><strong>Indicador 6. Resuelve problemas en contexto</strong></p><div class="linea-respuesta neutra" id="maInd6"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controles">
+      <div class="barra">
+        <button class="btn-principal" onclick="revisarPruebaMatematica()">Enviar y guardar</button>
+        <button class="btn-secundario" onclick="volverInicio()">Volver al inicio</button>
+        <button class="btn-secundario" onclick="reiniciarMatematica()">Reiniciar esta prueba</button>
+        <div class="resultado-global" id="resultadoGlobalMatematica">Puntuación: 0 / 12</div>
+      </div>
+    </div>
+  </div>
+
+    <div id="modalFinal" class="modal-fondo oculto">
+    <div class="modal">
+      <h3>Proceso completado</h3>
+      <p id="mensajeModal"></p>
+      <p class="nota">¿Qué desea hacer ahora?</p>
+      <div class="acciones-modal">
+        <button class="btn-principal" onclick="digitarOtraPrueba()">Digitar otra prueba</button>
+        <button class="btn-exito" onclick="digitarOtroEstudiante()">Digitar otro estudiante</button>
+        <button class="btn-secundario" onclick="cerrarModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+    </div>
+  </section>
+
 </div>
 
 <footer>
@@ -2844,7 +3956,10 @@
 </footer>
 
 <script>
-  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyJDZsp8hnG3GSt2Z0S5SRMb4REgWWgM0-yoP2VN37UHosWmP_KBqjdA8ihm5U9k5_UyQ/exec";
+  // ▼ MIGRADO A SUPABASE. Reemplaza TU_PROYECTO por el ref de tu proyecto.
+  //   La Edge Function "api" acepta los mismos parámetros y soporta JSONP (?callback=),
+  //   así que el resto del código sigue funcionando sin cambios.
+  const URL_SCRIPT = "https://tjtwncyzuphlixbmtsld.supabase.co/functions/v1/api";
 
   // ═══ HELPER: LLAMADA AL BACKEND (con timeout) ══════════════════════════════
   // Uso: llamarBackend({ accion: "login", ... }, callback, { timeout: 14000 });
@@ -2879,8 +3994,11 @@
       callback({ ok: false, timeout: true, mensaje: "El servidor tardó demasiado en responder. Verifica tu conexión e intenta de nuevo." });
     }, timeout);
 
-    var qs = Object.keys(params)
-      .map(function(k) { return encodeURIComponent(k) + "=" + encodeURIComponent(params[k]); })
+    var v = (typeof datosVistaSimulada === "function") ? datosVistaSimulada() : null;
+    var paramsFinales = v ? Object.assign({}, params, v) : params;
+
+    var qs = Object.keys(paramsFinales)
+      .map(function(k) { return encodeURIComponent(k) + "=" + encodeURIComponent(paramsFinales[k]); })
       .join("&");
     var script = document.createElement("script");
     script.onerror = function() {
@@ -2891,6 +4009,44 @@
     };
     script.src = URL_SCRIPT + "?" + qs + "&callback=" + callbackName;
     document.body.appendChild(script);
+  }
+
+
+
+  function llamarBackendPost(params, callback, opciones) {
+    var opts = opciones || {};
+    var timeout = opts.timeout || 30000;
+    var terminado = false;
+    var controller = new AbortController();
+    var timer = setTimeout(function() {
+      if (terminado) return;
+      terminado = true;
+      controller.abort();
+      callback({ ok: false, timeout: true, mensaje: "El servidor tardó demasiado en responder. Verifica tu conexión e intenta de nuevo." });
+    }, timeout);
+
+    var v = (typeof datosVistaSimulada === "function") ? datosVistaSimulada() : null;
+    var paramsFinales = v ? Object.assign({}, params, v) : params;
+
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(paramsFinales),
+      signal: controller.signal
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(respuesta) {
+        if (terminado) return;
+        terminado = true;
+        clearTimeout(timer);
+        callback(respuesta);
+      })
+      .catch(function(error) {
+        if (terminado) return;
+        terminado = true;
+        clearTimeout(timer);
+        callback({ ok: false, mensaje: "No se pudo conectar con el servidor: " + (error && error.message ? error.message : error) });
+      });
   }
 
   // ═══ COLA DE ENVÍOS OFFLINE ════════════════════════════════════════════════
@@ -3032,7 +4188,7 @@
     "panel", "moduloAsistencia", "moduloDashboard",
     "moduloAcompanamientos", "moduloIncidencias",
     "moduloAsignacionGrupos", "moduloAsignacionEstudiantesGrupos",
-    "login", "cambioPassword"
+    "moduloGestionUsuarios", "moduloGestionSedes", "moduloInscripcion", "moduloEvaluaciones", "login", "cambioPassword"
   ];
 
   function mostrarModulo(id) {
@@ -3054,7 +4210,11 @@
     moduloAcompanamientos: "Acompañamientos",
     moduloIncidencias: "Incidencias",
     moduloAsignacionGrupos: "Asignación de facilitadores",
-    moduloAsignacionEstudiantesGrupos: "Asignación de estudiantes"
+    moduloAsignacionEstudiantesGrupos: "Asignación de estudiantes",
+    moduloGestionUsuarios: "Gestión de usuarios",
+    moduloGestionSedes: "Gestión de sedes",
+    moduloInscripcion: "Inscripción de estudiantes",
+    moduloEvaluaciones: "Evaluaciones"
   };
 
   function actualizarBreadcrumb(moduloId) {
@@ -3217,7 +4377,7 @@
     datosAsignacionEstudiantesGrupos = null;
     // Cerrar todos los módulos
     ["moduloAsistencia","moduloDashboard","moduloAcompanamientos","moduloIncidencias",
-     "moduloAsignacionGrupos","moduloAsignacionEstudiantesGrupos"].forEach(function(id) {
+     "moduloAsignacionGrupos","moduloAsignacionEstudiantesGrupos","moduloGestionUsuarios","moduloGestionSedes","moduloInscripcion"].forEach(function(id) {
       const el = document.getElementById(id);
       if (el) el.classList.add("oculto");
     });
@@ -3255,6 +4415,9 @@
     _sedesGlobalesCargando = false;
     _sedesGlobalesCallbacks = [];
     sedesModoAdministrador = [];
+    sedesGestionUsuarios = [];
+    sedesGestionAdminCache = [];
+    sedesInscripcion = [];
   }
 
 
@@ -3730,6 +4893,8 @@
 
     tarjetaUsuario.classList.remove("oculto");
     actualizarVisibilidadAsignacionGrupos(usuario);
+    actualizarVisibilidadGestionUsuarios();
+    actualizarVisibilidadGestionSedes();
     actualizarPanelAdministrador();
     actualizarBarraVistaSimulada();
   }
@@ -3748,6 +4913,34 @@
       if (puedeVer) tileEstudiantes.classList.remove("oculto");
       else tileEstudiantes.classList.add("oculto");
     }
+
+    // Inscripción: Administrador (real o en vista) y Técnico regional.
+    // Se basa en el rol real para que el administrador no pierda el acceso
+    // al asumir vistas de coordinador o facilitador.
+    const tileInscripcion = document.getElementById("tileInscripcion");
+    if (tileInscripcion) {
+      const rolVista = normalizarTexto(usuario && usuario.rol).toLowerCase();
+      const rolReal = normalizarRol(usuarioSesion && usuarioSesion.rol);
+      const puedeInscribir = esAdministradorReal() ||
+        rolReal === "tecnico regional" ||
+        rolVista === "administrador" || rolVista === "técnico regional" || rolVista === "tecnico regional";
+      if (puedeInscribir) tileInscripcion.classList.remove("oculto");
+      else tileInscripcion.classList.add("oculto");
+    }
+  }
+
+  function actualizarVisibilidadGestionUsuarios() {
+    const tile = document.getElementById("tileGestionUsuarios");
+    if (!tile) return;
+    if (esAdministradorReal()) tile.classList.remove("oculto");
+    else tile.classList.add("oculto");
+  }
+
+  function actualizarVisibilidadGestionSedes() {
+    const tile = document.getElementById("tileGestionSedes");
+    if (!tile) return;
+    if (esAdministradorReal()) tile.classList.remove("oculto");
+    else tile.classList.add("oculto");
   }
 
   function puedeConsultarAsignaciones(usuario) {
@@ -4095,8 +5288,23 @@
       return;
     }
 
+    if (modulo === "gestionUsuarios") {
+      abrirModuloGestionUsuarios();
+      return;
+    }
+
+    if (modulo === "gestionSedes") {
+      abrirModuloGestionSedes();
+      return;
+    }
+
     if (modulo === "evaluaciones") {
-      window.open("https://aminier06.github.io/evaluacioncampamento/", "_blank");
+      abrirModuloEvaluaciones();
+      return;
+    }
+
+    if (modulo === "inscripcion") {
+      abrirModuloInscripcion();
       return;
     }
 
@@ -4644,6 +5852,16 @@
       return;
     }
 
+    if (dashboardActual === "evaluaciones") {
+      cargarDashboardEvaluaciones();
+      return;
+    }
+
+    if (dashboardActual === "acompanamientos") {
+      cargarDashboardAcompanamientos();
+      return;
+    }
+
     mostrarMatrizDashboardBasica(dashboardActual);
   }
 
@@ -4871,6 +6089,306 @@
     };
 
     return nombres[tipo] || "Dashboard";
+  }
+
+  function parametrosDashboardComoQuery() {
+    return "&cedula=" + encodeURIComponent(usuarioActual.cedula)
+      + "&regional=" + encodeURIComponent(document.getElementById("regionalDashboard").value)
+      + "&distrito=" + encodeURIComponent(document.getElementById("distritoDashboard").value)
+      + "&centroSede=" + encodeURIComponent(document.getElementById("sedeDashboard").value)
+      + "&grupo=" + encodeURIComponent(document.getElementById("grupoDashboard").value)
+      + "&fechaInicio=" + encodeURIComponent(document.getElementById("fechaInicioDashboard").value)
+      + "&fechaFin=" + encodeURIComponent(document.getElementById("fechaFinDashboard").value)
+      + (typeof vistaQueryString === "function" ? vistaQueryString() : "");
+  }
+
+  function cargarDashboardEvaluaciones() {
+    const mensaje = document.getElementById("mensajeDashboard");
+    mensaje.textContent = "";
+    mensaje.className = "mensaje";
+    limpiarResultadosDashboard();
+
+    if (!usuarioActual) {
+      mensaje.textContent = "Debe iniciar sesión.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    mostrarSpinner("mensajeDashboard", "Cargando evaluaciones...");
+    const callbackName = "callbackDashboardEvaluaciones_" + Date.now();
+
+    window[callbackName] = function(respuesta) {
+      mensaje.textContent = "";
+      mensaje.className = "mensaje";
+
+      if (respuesta.ok) {
+        mostrarDashboardEvaluaciones(respuesta.evaluaciones || []);
+      } else {
+        mensaje.textContent = respuesta.mensaje || "No se pudo cargar el dashboard de evaluaciones.";
+        mensaje.classList.add("error");
+      }
+
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const script = document.createElement("script");
+    script.src = URL_SCRIPT
+      + "?accion=dashboardEvaluaciones"
+      + parametrosDashboardComoQuery()
+      + "&callback=" + callbackName;
+
+    document.body.appendChild(script);
+  }
+
+  function mostrarDashboardEvaluaciones(evaluaciones) {
+    const total = evaluaciones.length;
+    const porTipo = contarPorCampoDashboard(evaluaciones, "tipoPrueba");
+    const porResultado = contarPorCampoDashboard(evaluaciones, "grupoResultado");
+    const porFecha = contarPorCampoDashboard(evaluaciones, "fechaEvaluacion");
+    const porSede = ordenarConteoDashboard(contarPorCampoDashboard(evaluaciones, "centroSede"), 10);
+    const fechas = Object.keys(porFecha).sort();
+
+    const lengua = porTipo.LENGUA || porTipo.Lengua || porTipo["Lengua Española"] || 0;
+    const matematica = porTipo.MATEMATICA || porTipo.Matemática || porTipo.Matematica || 0;
+    const exploradores = porResultado.Explorador || porResultado.Exploradores || 0;
+    const creadores = porResultado.Creador || porResultado.Creadores || 0;
+    const innovadores = porResultado.Innovador || porResultado.Innovadores || 0;
+
+    const kpis = [
+      { icono: "📝", label: "Evaluaciones", valor: total, color: "#059669" },
+      { icono: "📘", label: "Lengua", valor: lengua, color: "#2563eb" },
+      { icono: "➗", label: "Matemática", valor: matematica, color: "#7c3aed" },
+      { icono: "🧭", label: "Exploradores", valor: exploradores, color: "#d97706" },
+      { icono: "🛠️", label: "Creadores", valor: creadores, color: "#0891b2" },
+      { icono: "🚀", label: "Innovadores", valor: innovadores, color: "#16a34a" }
+    ];
+
+    document.getElementById("resumenDashboard").innerHTML = kpis.map(function(k) {
+      return `<div class="db-kpi-card" style="border-left:5px solid ${k.color}">
+        <span class="db-kpi-icono">${k.icono}</span>
+        <div>
+          <div class="db-kpi-label">${k.label}</div>
+          <div class="db-kpi-valor" style="color:${k.color}">${k.valor}</div>
+        </div>
+      </div>`;
+    }).join("");
+
+    mostrarBloqueGraficosDashboard();
+    configurarTitulosGraficosDashboard("evaluaciones");
+
+    crearGraficoDashboard(
+      "graficoDashboard1",
+      "bar",
+      Object.keys(porResultado),
+      [{ label: "Evaluaciones", data: Object.values(porResultado), backgroundColor: "#059669", borderRadius: 6 }]
+    );
+
+    crearGraficoDashboard(
+      "graficoDashboard2",
+      "bar",
+      Object.keys(porTipo),
+      [{ label: "Evaluaciones", data: Object.values(porTipo), backgroundColor: "#2563eb", borderRadius: 6 }]
+    );
+
+    crearGraficoDashboard(
+      "graficoDashboard3",
+      "line",
+      fechas,
+      [{ label: "Evaluaciones", data: fechas.map(function(f) { return porFecha[f]; }), borderColor: "#059669", backgroundColor: "rgba(5,150,105,0.14)", fill: true, tension: 0.35 }]
+    );
+
+    crearGraficoDashboard(
+      "graficoDashboard4",
+      "bar",
+      porSede.map(function(item) { return item.etiqueta; }),
+      [{ label: "Evaluaciones", data: porSede.map(function(item) { return item.valor; }), backgroundColor: "#7c3aed", borderRadius: 6 }],
+      { indexAxis: "y", scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    );
+
+    const matriz = document.getElementById("dashboardMatrizResultados");
+    matriz.classList.remove("oculto");
+
+    if (!evaluaciones || evaluaciones.length === 0) {
+      matriz.innerHTML = "<p>No hay evaluaciones para los filtros seleccionados.</p>";
+      return;
+    }
+
+    let html = "<table>";
+    html += "<thead><tr>";
+    html += "<th>Fecha</th><th>Tipo</th><th>Estudiante</th><th>Centro sede</th><th>Grupo operativo</th><th>Resultado</th><th>Satisfactorios</th><th>Puntuación</th>";
+    html += "</tr></thead><tbody>";
+
+    evaluaciones.slice(0, 300).forEach(function(e) {
+      html += "<tr>";
+      html += `<td>${e.fechaEvaluacion || ""}</td>`;
+      html += `<td>${e.tipoPrueba || ""}</td>`;
+      html += `<td>${e.nombreEstudiante || ""}<span class="texto-pequeno">${e.idEstudiante || ""}</span></td>`;
+      html += `<td>${e.centroSede || ""}</td>`;
+      html += `<td>${grupoLegible(e.grupo) || ""}</td>`;
+      html += `<td>${e.grupoResultado || ""}</td>`;
+      html += `<td>${e.cantidadSatisfactorios ?? ""}</td>`;
+      html += `<td>${e.puntuacionTotal || ""}</td>`;
+      html += "</tr>";
+    });
+
+    html += "</tbody></table>";
+    if (evaluaciones.length > 300) html += `<p class="nota">Se muestran los primeros 300 registros de ${evaluaciones.length} encontrados.</p>`;
+    matriz.innerHTML = html;
+  }
+
+  function cargarDashboardAcompanamientos() {
+    const mensaje = document.getElementById("mensajeDashboard");
+    mensaje.textContent = "";
+    mensaje.className = "mensaje";
+    limpiarResultadosDashboard();
+
+    if (!usuarioActual) {
+      mensaje.textContent = "Debe iniciar sesión.";
+      mensaje.classList.add("error");
+      return;
+    }
+
+    mostrarSpinner("mensajeDashboard", "Cargando acompañamientos...");
+    const callbackName = "callbackDashboardAcompanamientos_" + Date.now();
+
+    window[callbackName] = function(respuesta) {
+      mensaje.textContent = "";
+      mensaje.className = "mensaje";
+
+      if (respuesta.ok) {
+        mostrarDashboardAcompanamientos(respuesta.acompanamientos || []);
+      } else {
+        mensaje.textContent = respuesta.mensaje || "No se pudo cargar el dashboard de acompañamientos.";
+        mensaje.classList.add("error");
+      }
+
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const script = document.createElement("script");
+    script.src = URL_SCRIPT
+      + "?accion=dashboardAcompanamientos"
+      + parametrosDashboardComoQuery()
+      + "&callback=" + callbackName;
+
+    document.body.appendChild(script);
+  }
+
+  function clasificarCumplimientoDashboard(valor) {
+    const n = Number(valor || 0);
+    if (n >= 80) return "Alto (80%-100%)";
+    if (n >= 60) return "Medio (60%-79%)";
+    if (n > 0) return "Bajo (<60%)";
+    return "Sin dato";
+  }
+
+  function mostrarDashboardAcompanamientos(acompanamientos) {
+    const total = acompanamientos.length;
+    const porTipo = contarPorCampoDashboard(acompanamientos, "tipoAcompanamiento");
+    const porSeguimiento = contarPorCampoDashboard(acompanamientos, "estadoSeguimiento");
+    const porSede = ordenarConteoDashboard(contarPorCampoDashboard(acompanamientos, "centroSede"), 10);
+    const porCumplimiento = {};
+    let sumaCumplimiento = 0;
+    let conCumplimiento = 0;
+    let requiereSeguimiento = 0;
+
+    acompanamientos.forEach(function(a) {
+      const bucket = clasificarCumplimientoDashboard(a.porcentajeCumplimiento);
+      porCumplimiento[bucket] = (porCumplimiento[bucket] || 0) + 1;
+      const pct = Number(a.porcentajeCumplimiento || 0);
+      if (pct > 0) {
+        sumaCumplimiento += pct;
+        conCumplimiento++;
+      }
+      const req = normalizarTexto(a.requiereSeguimiento).toLowerCase();
+      if (req === "sí" || req === "si") requiereSeguimiento++;
+    });
+
+    const promedio = conCumplimiento > 0 ? Math.round(sumaCumplimiento / conCumplimiento) : 0;
+    const coord = porTipo["Coordinador de sede"] || porTipo.Coordinador || 0;
+    const fac = porTipo.Facilitador || 0;
+
+    const kpis = [
+      { icono: "🔍", label: "Acompañamientos", valor: total, color: "#0891b2" },
+      { icono: "🧑‍🏫", label: "A facilitadores", valor: fac, color: "#2563eb" },
+      { icono: "🏫", label: "A coordinadores", valor: coord, color: "#7c3aed" },
+      { icono: "⚠️", label: "Requieren seguimiento", valor: requiereSeguimiento, color: "#d97706" },
+      { icono: "✅", label: "Cumplimiento promedio", valor: promedio + "%", color: "#16a34a" }
+    ];
+
+    document.getElementById("resumenDashboard").innerHTML = kpis.map(function(k) {
+      return `<div class="db-kpi-card" style="border-left:5px solid ${k.color}">
+        <span class="db-kpi-icono">${k.icono}</span>
+        <div>
+          <div class="db-kpi-label">${k.label}</div>
+          <div class="db-kpi-valor" style="color:${k.color}">${k.valor}</div>
+        </div>
+      </div>`;
+    }).join("");
+
+    mostrarBloqueGraficosDashboard();
+    configurarTitulosGraficosDashboard("acompanamientos");
+
+    crearGraficoDashboard(
+      "graficoDashboard1",
+      "bar",
+      Object.keys(porTipo),
+      [{ label: "Acompañamientos", data: Object.values(porTipo), backgroundColor: "#0891b2", borderRadius: 6 }]
+    );
+
+    crearGraficoDashboard(
+      "graficoDashboard2",
+      "bar",
+      Object.keys(porSeguimiento),
+      [{ label: "Registros", data: Object.values(porSeguimiento), backgroundColor: "#d97706", borderRadius: 6 }]
+    );
+
+    crearGraficoDashboard(
+      "graficoDashboard3",
+      "bar",
+      Object.keys(porCumplimiento),
+      [{ label: "Acompañamientos", data: Object.values(porCumplimiento), backgroundColor: "#16a34a", borderRadius: 6 }]
+    );
+
+    crearGraficoDashboard(
+      "graficoDashboard4",
+      "bar",
+      porSede.map(function(item) { return item.etiqueta; }),
+      [{ label: "Acompañamientos", data: porSede.map(function(item) { return item.valor; }), backgroundColor: "#7c3aed", borderRadius: 6 }],
+      { indexAxis: "y", scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    );
+
+    const matriz = document.getElementById("dashboardMatrizResultados");
+    matriz.classList.remove("oculto");
+
+    if (!acompanamientos || acompanamientos.length === 0) {
+      matriz.innerHTML = "<p>No hay acompañamientos para los filtros seleccionados.</p>";
+      return;
+    }
+
+    let html = "<table>";
+    html += "<thead><tr>";
+    html += "<th>Fecha</th><th>Tipo</th><th>Persona acompañada</th><th>Centro sede</th><th>Grupo</th><th>% cumplimiento</th><th>Seguimiento</th><th>Estado</th>";
+    html += "</tr></thead><tbody>";
+
+    acompanamientos.slice(0, 300).forEach(function(a) {
+      html += "<tr>";
+      html += `<td>${a.fechaAcompanamiento || ""}</td>`;
+      html += `<td>${a.tipoAcompanamiento || ""}</td>`;
+      html += `<td>${a.personaAcompanada || ""}<span class="texto-pequeno">${a.cargoPersonaAcompanada || ""}</span></td>`;
+      html += `<td>${a.centroSede || ""}</td>`;
+      html += `<td>${grupoLegible(a.grupo) || ""}</td>`;
+      html += `<td>${a.porcentajeCumplimiento || 0}%</td>`;
+      html += `<td>${a.requiereSeguimiento || ""}</td>`;
+      html += `<td>${a.estadoSeguimiento || ""}</td>`;
+      html += "</tr>";
+    });
+
+    html += "</tbody></table>";
+    if (acompanamientos.length > 300) html += `<p class="nota">Se muestran los primeros 300 registros de ${acompanamientos.length} encontrados.</p>`;
+    matriz.innerHTML = html;
   }
 
   function cargarDashboardIncidencias() {
@@ -6793,6 +8311,31 @@
     return esAdministradorReal() && !!localStorage.getItem("usuarioCampamentoVista") && !esAdministrador();
   }
 
+  // ── VISTA SIMULADA → BACKEND ──────────────────────────────────────────────
+  // Cuando el administrador "asume" otro rol, eso antes solo vivía en el
+  // navegador: el backend siempre resolvía el usuario real por cédula y, para
+  // un administrador, eso significaba "ver todo el país" en vez de "ver como
+  // este coordinador". Esto rompía módulos como asignación de estudiantes y de
+  // grupos, donde el comportamiento depende del rol y la sede EXACTOS.
+  // Estas funciones envían la vista simulada al backend para que la respete,
+  // igual que ya la respeta esta pantalla.
+  function datosVistaSimulada() {
+    if (!esModoVistaSimulada() || !usuarioActual) return null;
+    return {
+      vistaRol: usuarioActual.rol || "",
+      vistaRegional: usuarioActual.regional || "",
+      vistaDistrito: usuarioActual.distrito || "",
+      vistaCentroSede: usuarioActual.centroSede || "",
+      vistaGrupo: usuarioActual.grupo || ""
+    };
+  }
+
+  function vistaQueryString() {
+    var v = datosVistaSimulada();
+    if (!v) return "";
+    return Object.keys(v).map(function(k) { return "&" + k + "=" + encodeURIComponent(v[k]); }).join("");
+  }
+
   function modoConsultaAsignaciones() {
     return (puedeConsultarAsignaciones(usuarioActual) && !puedeModificarAsignaciones()) || esModoVistaSimulada();
   }
@@ -6971,7 +8514,8 @@
     const script = document.createElement("script");
     let url = URL_SCRIPT
       + "?accion=facilitadoresSede"
-      + "&cedula=" + encodeURIComponent(usuarioActual.cedula);
+      + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
+      + vistaQueryString();
 
     if (modoConsultaAsignaciones()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionGrupos.regional || "")
@@ -7322,6 +8866,7 @@
     script.src = URL_SCRIPT
       + "?accion=guardarAsignacionGrupos"
       + "&payload=" + encodeURIComponent(JSON.stringify(payload))
+      + vistaQueryString()
       + "&callback=" + callbackName;
 
     document.body.appendChild(script);
@@ -7390,7 +8935,8 @@
     const script = document.createElement("script");
     let url = URL_SCRIPT
       + "?accion=estudiantesAsignacionGrupos"
-      + "&cedula=" + encodeURIComponent(usuarioActual.cedula);
+      + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
+      + vistaQueryString();
 
     if (modoConsultaAsignaciones()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionEstudiantes.regional || "")
@@ -7415,6 +8961,13 @@
     const sede = datosAsignacionEstudiantesGrupos.sede || {};
     const grupos = datosAsignacionEstudiantesGrupos.grupos || [];
     const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
+    const cuotaAsignacion = Number(datosAsignacionEstudiantesGrupos.cuota || 0);
+    const gruposDisponiblesCantidad = Number(
+      datosAsignacionEstudiantesGrupos.gruposDisponiblesCantidad ||
+      datosAsignacionEstudiantesGrupos.gruposEsperados ||
+      grupos.length ||
+      0
+    );
 
     const total = estudiantes.length;
     const sinAsignar = estudiantes.filter(function(e) { return !normalizarTexto(e.grupo); }).length;
@@ -7424,11 +8977,13 @@
       <div class="dato-asignacion"><span>Regional</span><strong>${escapeHtml(sede.regional || usuarioActual.regional || "")}</strong></div>
       <div class="dato-asignacion"><span>Distrito</span><strong>${escapeHtml(sede.distrito || usuarioActual.distrito || "")}</strong></div>
       <div class="dato-asignacion"><span>Centro sede</span><strong>${escapeHtml(sede.centroSede || usuarioActual.centroSede || "")}</strong></div>
-      <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${escapeHtml(construirGruposOperativos(grupos.length).join(", ")) || "No definidos"}</strong></div>
+      <div class="dato-asignacion"><span>Cuota estudiantes</span><strong>${cuotaAsignacion > 0 ? cuotaAsignacion : "No definida"}</strong></div>
+      <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${gruposDisponiblesCantidad}</strong></div>
       <div class="dato-asignacion"><span>Estudiantes</span><strong>${total}</strong></div>
       <div class="dato-asignacion"><span>Asignados</span><strong id="totalEstudiantesAsignados">${asignados}</strong></div>
       <div class="dato-asignacion"><span>Sin asignar</span><strong id="totalEstudiantesSinAsignar">${sinAsignar}</strong></div>
     `;
+
 
     if (!grupos.length) {
       const alerta = document.getElementById("alertaAsignacionEstudiantesGrupos");
@@ -7462,7 +9017,17 @@
     document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
     document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
 
+    const cuotaConsulta = Number(datosAsignacionEstudiantesGrupos.cuota || 0);
+    const gruposConsulta = Number(
+      datosAsignacionEstudiantesGrupos.gruposDisponiblesCantidad ||
+      datosAsignacionEstudiantesGrupos.gruposEsperados ||
+      (datosAsignacionEstudiantesGrupos.grupos || []).length ||
+      0
+    );
+
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = `
+      <div class="dato-asignacion"><span>Cuota estudiantes</span><strong>${cuotaConsulta > 0 ? cuotaConsulta : "No definida"}</strong></div>
+      <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${gruposConsulta}</strong></div>
       <div class="dato-asignacion"><span>Total de estudiantes</span><strong>${total}</strong></div>
       <div class="dato-asignacion"><span>Asignados</span><strong>${asignados}</strong></div>
       <div class="dato-asignacion"><span>Pendientes</span><strong>${sinAsignar}</strong></div>
@@ -7518,70 +9083,31 @@
   function renderizarTablaAsignacionEstudiantes(grupos, estudiantes) {
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
 
-    // ── Calcular el nombre semántico de cada grupo por moda real de sus estudiantes ──
-    // Agrupar estudiantes asignados por su grupo del backend
-    const estudiantesPorGrupo = {};
-    grupos.forEach(function(g) { estudiantesPorGrupo[normalizarTexto(g)] = []; });
-    estudiantes.forEach(function(e) {
-      const k = normalizarTexto(e.grupo);
-      if (k && estudiantesPorGrupo[k] !== undefined) estudiantesPorGrupo[k].push(e);
+    // Los grupos que recibe y muestra este módulo ya deben ser semánticos:
+    // Exploradores, Creadores, Innovadores, Exploradores-1, etc.
+    // No se presentan al usuario nombres como "Grupo 1".
+    mapaGrupoSemanticoABackend = {};
+    mapaGrupoBackendASemantico = {};
+
+    const gruposUnicos = [];
+    const vistos = {};
+    (grupos || []).forEach(function(g) {
+      const limpio = normalizarTexto(g);
+      if (!limpio) return;
+      const key = limpio.toLowerCase();
+      if (vistos[key]) return;
+      vistos[key] = true;
+      gruposUnicos.push(limpio);
+      mapaGrupoSemanticoABackend[normalizarTexto(limpio)] = limpio;
+      mapaGrupoBackendASemantico[normalizarTexto(limpio)] = limpio;
     });
 
-    // Calcular moda por grupo (misma lógica que en ejecutarAsignacionAutomatica)
-    const NIVEL_JERARQUIA_R = { innovador: 3, creador: 2, explorador: 1 };
-    const NOMBRE_CATEGORIA_R = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
-
-    function modaGrupoR(lista) {
-      const cnt = { explorador: 0, creador: 0, innovador: 0 };
-      lista.forEach(function(e) {
-        const n = normalizarTexto(e.nivelLengua).toLowerCase();
-        if (cnt[n] !== undefined) cnt[n]++; else cnt.creador++;
-      });
-      return ["innovador", "creador", "explorador"].sort(function(a, b) {
-        if (cnt[b] !== cnt[a]) return cnt[b] - cnt[a];
-        return NIVEL_JERARQUIA_R[b] - NIVEL_JERARQUIA_R[a];
-      })[0];
-    }
-
-    // Contar cuántas veces aparece cada nombre base para asignar sufijos
-    const cuentaBaseR = {};
-    grupos.forEach(function(g) {
-      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
-      // Si no hay estudiantes asignados aún, usar posición como fallback
-      const base = lista.length > 0
-        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
-        : construirGruposOperativos(grupos.length)[grupos.indexOf(g)] || "Creadores";
-      cuentaBaseR[base] = (cuentaBaseR[base] || 0) + 1;
-    });
-
-    const contadorBaseR = {};
-    const mapaSemantico = {};    // backend → semántico (para preseleccionar selects)
-    mapaGrupoSemanticoABackend = {}; // semántico → backend (para guardar)
-
-    grupos.forEach(function(g) {
-      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
-      const idx = grupos.indexOf(g);
-      const base = lista.length > 0
-        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
-        : (construirGruposOperativos(grupos.length)[idx] || "Creadores");
-      contadorBaseR[base] = (contadorBaseR[base] || 0) + 1;
-      const nombreSem = cuentaBaseR[base] === 1 ? base : base + "-" + contadorBaseR[base];
-      mapaSemantico[normalizarTexto(g)] = nombreSem;
-      mapaGrupoSemanticoABackend[normalizarTexto(nombreSem)] = g;
-      mapaGrupoBackendASemantico[normalizarTexto(g)] = nombreSem;
-    });
-
-    // Persistir el mapa para que otros módulos lo usen sin depender de si el usuario
-    // visitó este módulo en la misma sesión
     const centroSede = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.sede)
       ? datosAsignacionEstudiantesGrupos.sede.centroSede
       : (usuarioActual && usuarioActual.centroSede);
     if (centroSede) guardarMapaGruposSede(centroSede);
 
-    // Opciones del select usando los nombres semánticos calculados
-    const gruposSemanticos = grupos.map(function(g) { return mapaSemantico[normalizarTexto(g)]; });
-    // Deduplicar por si el usuario tiene grupos con el mismo nombre semántico desde el backend
-    const opcionesGrupo = gruposSemanticos.map(function(g) {
+    const opcionesGrupo = gruposUnicos.map(function(g) {
       return `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`;
     }).join("");
 
@@ -7628,16 +9154,16 @@
       const id = normalizarTexto(select.dataset.id);
       const estudiante = estudiantes.find(function(e) { return normalizarTexto(e.idEstudiante) === id; });
       if (estudiante && estudiante.grupo) {
-        // Traducir el nombre del backend al nombre semántico si corresponde
-        const nombreSemantico = mapaSemantico[normalizarTexto(estudiante.grupo)] || estudiante.grupo;
-        // Si el nombre semántico no está como opción (ej. nombre personalizado del backend), añadirlo
-        if (nombreSemantico && !Array.from(select.options).some(function(op) { return op.value === nombreSemantico; })) {
+        const nombreGrupo = normalizarTexto(estudiante.grupo);
+        if (nombreGrupo && !Array.from(select.options).some(function(op) { return op.value === nombreGrupo; })) {
           const opt = document.createElement("option");
-          opt.value = nombreSemantico;
-          opt.textContent = nombreSemantico;
+          opt.value = nombreGrupo;
+          opt.textContent = nombreGrupo;
           select.appendChild(opt);
+          mapaGrupoSemanticoABackend[normalizarTexto(nombreGrupo)] = nombreGrupo;
+          mapaGrupoBackendASemantico[normalizarTexto(nombreGrupo)] = nombreGrupo;
         }
-        select.value = nombreSemantico;
+        select.value = nombreGrupo;
       }
       select.addEventListener("change", actualizarResumenVisualAsignacionEstudiantes);
     });
@@ -7664,6 +9190,42 @@
     if (indicadorSinAsignar) indicadorSinAsignar.textContent = sinAsignar;
   }
 
+  function validarReglasAsignacionEstudiantesActual() {
+    const estudiantes = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantes) || [];
+    const porId = {};
+    estudiantes.forEach(function(e) { porId[normalizarTexto(e.idEstudiante)] = e; });
+
+    const grupos = {};
+    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+      const grupo = normalizarTexto(select.value);
+      if (!grupo) return;
+      if (!grupos[grupo]) grupos[grupo] = [];
+      const id = normalizarTexto(select.dataset.id);
+      grupos[grupo].push(porId[id] || { idEstudiante: id, nivelLengua: "" });
+    });
+
+    const disponibles = Number(
+      (datosAsignacionEstudiantesGrupos && (datosAsignacionEstudiantesGrupos.gruposDisponiblesCantidad || datosAsignacionEstudiantesGrupos.gruposEsperados)) || 0
+    );
+    const nombres = Object.keys(grupos);
+    if (disponibles > 0 && nombres.length > disponibles) {
+      return { ok: false, mensaje: "Está usando " + nombres.length + " grupos, pero la sede solo tiene " + disponibles + " grupos disponibles por cuota." };
+    }
+
+    for (const grupo of nombres) {
+      const lista = grupos[grupo];
+      if (lista.length > 25) {
+        return { ok: false, mensaje: "El grupo " + grupo + " tiene " + lista.length + " estudiantes. El máximo permitido es 25." };
+      }
+      const tieneExplorador = lista.some(function(e) { return normalizarNivelAsignacion(e.nivelLengua) === "explorador"; });
+      const tieneInnovador = lista.some(function(e) { return normalizarNivelAsignacion(e.nivelLengua) === "innovador"; });
+      if (tieneExplorador && tieneInnovador) {
+        return { ok: false, mensaje: "El grupo " + grupo + " mezcla estudiantes Exploradores con Innovadores. Esa combinación no está permitida." };
+      }
+    }
+    return { ok: true };
+  }
+
   function guardarAsignacionEstudiantesGrupos() {
     const mensaje = document.getElementById("mensajeAsignacionEstudiantesGrupos");
     if (!puedeModificarAsignaciones()) {
@@ -7680,21 +9242,22 @@
       return;
     }
 
+    const validacion = validarReglasAsignacionEstudiantesActual();
+    if (!validacion.ok) {
+      mensaje.textContent = validacion.mensaje;
+      mensaje.className = "mensaje error";
+      return;
+    }
+
     const asignaciones = [];
     let sinAsignar = 0;
 
     document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
       const valorSelect = normalizarTexto(select.value);
-      if (!valorSelect) {
-        sinAsignar++;
-        asignaciones.push({ idEstudiante: normalizarTexto(select.dataset.id), grupo: "" });
-        return;
-      }
-      // Traducir el nombre semántico al nombre que acepta el backend
-      const grupoBackend = mapaGrupoSemanticoABackend[valorSelect] || select.value;
+      if (!valorSelect) sinAsignar++;
       asignaciones.push({
         idEstudiante: normalizarTexto(select.dataset.id),
-        grupo: grupoBackend
+        grupo: valorSelect
       });
     });
 
@@ -7706,583 +9269,33 @@
     mensaje.textContent = "Guardando asignación de estudiantes...";
     mensaje.className = "mensaje";
 
-    // Deshabilitar el botón mientras se guarda para evitar doble envío
     const btn = document.getElementById("btnGuardarAsignacionEstudiantesGrupos");
     if (btn) btn.disabled = true;
 
-    // El backend espera e.parameter.payload como JSON: { cedulaCoordinador, asignaciones }.
-    // Enviamos en lotes pequeños para no superar el límite de URL de Google Apps Script.
-    // Calculamos dinámicamente el tamaño de lote para que la URL no supere 1800 chars.
-    const URL_BASE_LEN = URL_SCRIPT.length + 80; // accion + callback overhead
-    const cedula = usuarioActual.cedula;
+    const payload = {
+      cedulaCoordinador: usuarioActual.cedula,
+      centroSede: datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede
+        ? datosAsignacionEstudiantesGrupos.sede.centroSede
+        : (usuarioActual.centroSede || ""),
+      asignaciones: asignaciones
+    };
 
-    function calcularLoteSeguro() {
-      // Estimar tamaño de un ítem de asignación: ~60 chars por estudiante en JSON
-      const CHARS_POR_ITEM = 65;
-      const CHARS_CEDULA = cedula.length + 30; // overhead del campo cedulaCoordinador
-      const LIMITE_URL = 1800;
-      const disponible = LIMITE_URL - URL_BASE_LEN - CHARS_CEDULA;
-      const lote = Math.max(1, Math.floor(disponible / CHARS_ITEM));
-      return Math.min(lote, 10); // máximo 10 por seguridad
-    }
-
-    // Usamos lote fijo de 10 — cabe siempre dentro del límite
-    const LOTE = 10;
-    const totalLotes = Math.max(1, Math.ceil(asignaciones.length / LOTE));
-    let loteActual = 0;
-
-    function enviarLote() {
-      const porcion = asignaciones.slice(loteActual * LOTE, (loteActual + 1) * LOTE);
-      const esUltimo = (loteActual === totalLotes - 1);
-
-      if (totalLotes > 1) {
-        mensaje.textContent = "Guardando\u2026 (" + (loteActual + 1) + " de " + totalLotes + ")";
+    llamarBackendPost({
+      accion: "guardarAsignacionEstudiantesGrupos",
+      payload: JSON.stringify(payload)
+    }, function(respuesta) {
+      if (btn) btn.disabled = false;
+      if (!respuesta.ok) {
+        mensaje.textContent = respuesta.mensaje || "No se pudo guardar la asignación.";
+        mensaje.className = "mensaje error";
+        return;
       }
-
-      // Construir payload exactamente como el backend lo espera:
-      // JSON.parse(e.parameter.payload) → { cedulaCoordinador, asignaciones }
-      const payloadStr = JSON.stringify({
-        cedulaCoordinador: cedula,
-        asignaciones: porcion
-      });
-
-      llamarBackend(
-        {
-          accion: "guardarAsignacionEstudiantesGrupos",
-          payload: payloadStr
-        },
-        function(respuesta) {
-          if (!respuesta.ok) {
-            if (btn) btn.disabled = false;
-            mensaje.textContent = respuesta.mensaje || "No se pudo guardar la asignación de estudiantes.";
-            mensaje.className = "mensaje error";
-            return;
-          }
-          if (esUltimo) {
-            if (btn) btn.disabled = false;
-            mensaje.textContent = respuesta.mensaje || "Asignación de estudiantes guardada correctamente.";
-            mensaje.className = "mensaje ok";
-            cargarEstudiantesAsignacionGrupos();
-          } else {
-            loteActual++;
-            enviarLote();
-          }
-        },
-        { timeout: 30000 }
-      );
-    }
-
-    enviarLote();
+      mensaje.textContent = respuesta.mensaje || "Asignación guardada correctamente.";
+      mensaje.className = "mensaje ok";
+      cargarAsignacionEstudiantesGrupos();
+    }, { timeout: 45000 });
   }
 
-
-
-  // ─── ASIGNACIÓN AUTOMÁTICA ─────────────────────────────────────────────────
-
-  const NIVEL_ORDEN = { "innovador": 3, "creador": 2, "explorador": 1, "sin dato": 0, "": 0 };
-
-  function nivelPuntaje(nivel) {
-    return NIVEL_ORDEN[normalizarTexto(nivel).toLowerCase()] || 0;
-  }
-
-  function puntajeEstudiante(e) {
-    // Lengua Española tiene prioridad: peso 2, Matemática peso 1
-    return nivelPuntaje(e.nivelLengua) * 2 + nivelPuntaje(e.nivelMat);
-  }
-
-  function ejecutarAsignacionAutomatica() {
-    if (!datosAsignacionEstudiantesGrupos) return;
-
-    const gruposBackend = datosAsignacionEstudiantesGrupos.grupos || [];
-    const estudiantes   = datosAsignacionEstudiantesGrupos.estudiantes || [];
-
-    if (!gruposBackend.length) {
-      alert("No hay grupos disponibles para la sede.");
-      return;
-    }
-    if (!estudiantes.length) {
-      alert("No hay estudiantes para asignar.");
-      return;
-    }
-
-    // Paso 1: calcular con nombres provisionales (Exploradores, Creadores, Innovadores...)
-    const gruposProvisionales = construirGruposOperativos(gruposBackend.length);
-    const resultadoProvisional = calcularAsignacionHomogenea(gruposProvisionales, estudiantes);
-
-    // Paso 2: renombrar cada grupo según la moda real de nivelLengua de sus estudiantes.
-    // Si dos categorías empatan, gana la de mayor nivel (Innovador > Creador > Explorador).
-    // Si hay duplicados de nombre, se añade sufijo -1, -2, etc.
-    const NIVEL_JERARQUIA = { "innovador": 3, "creador": 2, "explorador": 1 };
-
-    function modaGrupo(lista) {
-      const cnt = { explorador: 0, creador: 0, innovador: 0 };
-      lista.forEach(function(e) {
-        const n = normalizarTexto(e.nivelLengua).toLowerCase();
-        if (cnt[n] !== undefined) cnt[n]++;
-        else cnt.creador++; // sin dato → Creador
-      });
-      // Ordenar por conteo desc, luego por jerarquía desc como desempate
-      return ["innovador", "creador", "explorador"].sort(function(a, b) {
-        if (cnt[b] !== cnt[a]) return cnt[b] - cnt[a];
-        return NIVEL_JERARQUIA[b] - NIVEL_JERARQUIA[a];
-      })[0];
-    }
-
-    function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1) + "es"; }
-    // "explorador" → "Exploradores", "creador" → "Creadores", "innovador" → "Innovadores"
-    const NOMBRE_CATEGORIA = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
-
-    // Contar cuántas veces aparece cada nombre base para asignar sufijos
-    const cuentaNombreBase = {};
-    gruposProvisionales.forEach(function(gProv) {
-      const lista = resultadoProvisional[gProv] || [];
-      const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
-      cuentaNombreBase[base] = (cuentaNombreBase[base] || 0) + 1;
-    });
-
-    const contadorNombre = {};
-    const mapaRenombrado = {}; // nombreProvisional → nombreFinal
-
-    gruposProvisionales.forEach(function(gProv) {
-      const lista = resultadoProvisional[gProv] || [];
-      const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
-      contadorNombre[base] = (contadorNombre[base] || 0) + 1;
-      const nombreFinal = cuentaNombreBase[base] === 1
-        ? base
-        : base + "-" + contadorNombre[base];
-      mapaRenombrado[gProv] = nombreFinal;
-    });
-
-    // Construir nuevo objeto asignacion con los nombres finales
-    const resultado = {};
-    gruposProvisionales.forEach(function(gProv) {
-      resultado[mapaRenombrado[gProv]] = resultadoProvisional[gProv] || [];
-    });
-    const grupos = gruposProvisionales.map(function(gProv) { return mapaRenombrado[gProv]; });
-
-    // Guardar el mapa nombre-semántico → nombre-backend para traducir al guardar.
-    // gruposProvisionales[i] → mapaRenombrado[gProv] = nombreFinal
-    // gruposBackend[i] = nombre original que acepta el backend
-    mapaGrupoSemanticoABackend = {};
-    mapaGrupoBackendASemantico = {};
-    gruposProvisionales.forEach(function(gProv, i) {
-      const nombreFinal = mapaRenombrado[gProv];
-      mapaGrupoSemanticoABackend[normalizarTexto(nombreFinal)] = gruposBackend[i];
-      mapaGrupoBackendASemantico[normalizarTexto(gruposBackend[i])] = nombreFinal;
-    });
-
-    // Persistir el mapa para que asistencia y facilitadores lo usen.
-    // ▼ CORRECCIÓN: antes se usaba usuarioActual.centroSede, que es la sede
-    // del PERFIL de quien inició sesión. Eso funciona si un coordinador
-    // reparte su propia sede, pero falla cuando un administrador, técnico
-    // nacional, regional o distrital ejecuta el reparto automático para la
-    // sede de OTRA persona (su propio centroSede está vacío o es distinto).
-    // En ese caso el mapa se guardaba bajo la clave equivocada (o no se
-    // guardaba), y por eso Pase de lista e Incidencias mostraban "Grupo 1"
-    // en vez del nombre semántico, aunque la asignación sí se hubiera hecho.
-    // Ahora se usa el centroSede de la SEDE que realmente se está repartiendo
-    // (datosAsignacionEstudiantesGrupos.sede.centroSede), que es la misma
-    // fuente que ya usan correctamente otras partes de este módulo.
-    const centroSedeAuto = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede)
-      || (usuarioActual && usuarioActual.centroSede);
-    if (centroSedeAuto) guardarMapaGruposSede(centroSedeAuto);
-
-    mostrarModalAsignacionAutomatica(resultado, grupos, mapaGrupoSemanticoABackend);
-  }
-
-  function calcularAsignacionHomogenea(grupos, estudiantes) {
-    /*
-      REGLA PRINCIPAL (basada en nivel de Lengua Española):
-        - Cada grupo solo puede contener niveles ADYACENTES:
-            · Explorador + Creador   → permitido solo si es inevitable
-            · Creador   + Innovador  → permitido solo si es inevitable
-            · Explorador + Innovador → PROHIBIDO siempre
-            · Un solo nivel          → PREFERIDO (grupos puros primero)
-        - Máximo 25 estudiantes por grupo.
-        - PRIORIDAD: grupos puros (E, C, I) antes que mezclas.
-          Solo se mezcla el sobrante que no llena un grupo entero por sí solo.
-
-      ESTRATEGIA:
-        1. Separar en bandas E, C, I (Sin dato → Creador).
-        2. Calcular grupos puros para cada banda.
-           - Si la banda llena exactamente sus grupos → puramente puros.
-           - Si sobran estudiantes que no llenan otro grupo, son "sobrantes".
-        3. Agrupar los sobrantes:
-           - Sobrante E + sobrante C → van a un grupo EC mixto.
-           - Sobrante C + sobrante I → van a un grupo CI mixto.
-           - Si hay sobrante de los tres: E+C en un grupo, I en otro CI si cabe.
-           - Si el sobrante mixto supera 25, crear grupos adicionales de mezcla.
-        4. Asignar grupos concretos y repartir en serpentina.
-    */
-
-    const MAX_POR_GRUPO = 25;
-    const numGrupos = grupos.length;
-
-    // ── 1. Separar por nivel de Lengua ──────────────────────────────────────
-    const bandaE  = [];
-    const bandaC  = [];
-    const bandaI  = [];
-    const bandaSD = [];
-
-    estudiantes.forEach(function(e) {
-      const n = normalizarTexto(e.nivelLengua).toLowerCase();
-      if      (n === "explorador") bandaE.push(e);
-      else if (n === "creador")    bandaC.push(e);
-      else if (n === "innovador")  bandaI.push(e);
-      else                         bandaSD.push(e);
-    });
-
-    function ordenarBanda(arr) {
-      return arr.slice().sort(function(a, b) {
-        return puntajeEstudiante(b) - puntajeEstudiante(a);
-      });
-    }
-
-    const E = ordenarBanda(bandaE);
-    const C = ordenarBanda(bandaC.concat(bandaSD)); // Sin dato ≡ Creador
-    const I = ordenarBanda(bandaI);
-
-    const totE = E.length, totC = C.length, totI = I.length;
-    const totTotal = totE + totC + totI;
-
-    // ── 2. Calcular grupos PUROS para cada banda ─────────────────────────────
-    // Grupos completos de 25 que puede formar cada banda sola
-    const gEpuro = Math.floor(totE / MAX_POR_GRUPO);
-    const gCpuro = Math.floor(totC / MAX_POR_GRUPO);
-    const gIpuro = Math.floor(totI / MAX_POR_GRUPO);
-
-    // Sobrantes que no llenan un grupo completo
-    let sobranteE = totE - gEpuro * MAX_POR_GRUPO;
-    let sobranteC = totC - gCpuro * MAX_POR_GRUPO;
-    let sobranteI = totI - gIpuro * MAX_POR_GRUPO;
-
-    // ── 3. Resolver sobrantes con mezcla mínima ──────────────────────────────
-    /*
-      Orden de prioridad para absorber sobrantes:
-        a) Si sobranteE + sobranteC <= MAX → un grupo EC mixto.
-           Si excede MAX, crear grupos EC adicionales.
-        b) Si sobranteI + sobranteC_restante <= MAX → un grupo CI mixto.
-        c) Si solo sobra uno de los tres → añadir al grupo puro correspondiente
-           (el último grupo de esa banda tendrá menos de 25, lo cual es válido).
-
-      Nota: "grupo puro" puede tener < 25 estudiantes; lo importante es que
-      todos son del mismo nivel. Eso es preferible a mezclar.
-    */
-
-    // Cuántos estudiantes de E van a grupos puros vs mezcla
-    let eEnPuro  = gEpuro * MAX_POR_GRUPO + sobranteE; // todos E van a grupos E
-    let cEnPuro  = gCpuro * MAX_POR_GRUPO;              // C completos en puros
-    let iEnPuro  = gIpuro * MAX_POR_GRUPO + sobranteI;  // todos I van a grupos I
-    let cEnMezcla = sobranteC;                           // sobrante C va a mezcla
-
-    // Grupos de mezcla necesarios para el sobrante C
-    // El sobrante C se distribuye entre grupos EC y CI según haya sobrante E/I
-    let cParaEC = 0, cParaCI = 0;
-    let gEC = 0, gCI = 0;
-
-    if (sobranteE > 0 && sobranteC > 0) {
-      // Mezclar sobrante E con parte del sobrante C
-      const totalEC = sobranteE + Math.min(sobranteC, MAX_POR_GRUPO - sobranteE);
-      cParaEC = Math.min(sobranteC, MAX_POR_GRUPO - sobranteE);
-      gEC = Math.ceil((sobranteE + cParaEC) / MAX_POR_GRUPO);
-    } else if (sobranteE > 0) {
-      // Solo sobrante E, sin C sobrante: va a su propio grupo (incompleto pero puro)
-      // ya está contado en eEnPuro
-      gEC = 0;
-    }
-
-    const cRestante = sobranteC - cParaEC;
-
-    if (sobranteI > 0 && cRestante > 0) {
-      cParaCI = Math.min(cRestante, MAX_POR_GRUPO - sobranteI);
-      gCI = Math.ceil((sobranteI + cParaCI) / MAX_POR_GRUPO);
-    } else if (sobranteI > 0) {
-      gCI = 0;
-    }
-
-    const cRestante2 = cRestante - cParaCI;
-    // Si aún queda sobrante C sin mezclar, añadirlo al último grupo C puro
-    // (ese grupo tendrá < 25 pero será puro)
-    const cTotalPuro = cEnPuro + cRestante2;
-    const gCpuroFinal = Math.ceil(cTotalPuro / MAX_POR_GRUPO);
-
-    // Si E/I no tienen sobrante pero sí tienen estudiantes → grupo puro incompleto
-    const gEpuroFinal = sobranteE > 0 && gEC === 0
-      ? Math.ceil(totE / MAX_POR_GRUPO)   // sobrante E va a su propio grupo puro
-      : gEpuro;
-    const gIpuroFinal = sobranteI > 0 && gCI === 0
-      ? Math.ceil(totI / MAX_POR_GRUPO)
-      : gIpuro;
-
-    // ── 4. Verificar que tenemos suficientes grupos ──────────────────────────
-    let totalNecesario = gEpuroFinal + gEC + gCpuroFinal + gCI + gIpuroFinal;
-
-    // Si hay más grupos disponibles que los necesarios, repartir sobrante en C
-    // Si hay menos, comprimir: algunos grupos puros tendrán más de 25 (inevitable)
-    let gCExtra = 0;
-    if (totalNecesario < numGrupos) {
-      gCExtra = numGrupos - totalNecesario;
-    }
-
-    // ── 5. Asignar grupos concretos a cada partición ─────────────────────────
-    // Los grupos ya vienen con nombres semánticos desde construirGruposOperativos.
-    // Los distribuimos en el orden E → EC → C → CI → I.
-    // Si la partición calcula más grupos de los disponibles, comprimir eliminando
-    // primero grupos extra de C, luego mezclas, para respetar numGrupos exacto.
-
-    let nE  = gEpuroFinal;
-    let nEC = gEC;
-    let nC  = gCpuroFinal + gCExtra;
-    let nCI = gCI;
-    let nI  = gIpuroFinal;
-
-    const totalCalculado = nE + nEC + nC + nCI + nI;
-    if (totalCalculado > numGrupos) {
-      let exceso = totalCalculado - numGrupos;
-      const qC  = Math.min(gCExtra, exceso); nC  -= qC;  exceso -= qC;
-      const qCI = Math.min(nCI,     exceso); nCI -= qCI; exceso -= qCI;
-      const qEC = Math.min(nEC,     exceso); nEC -= qEC; exceso -= qEC;
-      const qCp = Math.min(nC,      exceso); nC  -= qCp; exceso -= qCp;
-      const qI  = Math.min(nI,      exceso); nI  -= qI;  exceso -= qI;
-      const qE  = Math.min(nE,      exceso); nE  -= qE;
-    }
-    const suma = nE + nEC + nC + nCI + nI;
-    if (suma < numGrupos) nC += (numGrupos - suma);
-
-    const particionGrupos = { E: [], EC: [], C: [], CI: [], I: [] };
-    let gi = 0;
-    for (let k = 0; k < nE;  k++) particionGrupos.E.push(grupos[gi++]);
-    for (let k = 0; k < nEC; k++) particionGrupos.EC.push(grupos[gi++]);
-    for (let k = 0; k < nC;  k++) particionGrupos.C.push(grupos[gi++]);
-    for (let k = 0; k < nCI; k++) particionGrupos.CI.push(grupos[gi++]);
-    for (let k = 0; k < nI;  k++) particionGrupos.I.push(grupos[gi++]);
-
-    // ── 6. Repartir estudiantes en serpentina ────────────────────────────────
-    const asignacion = {};
-    grupos.forEach(function(g) { asignacion[g] = []; });
-
-    function repartirSerpentina(listaEstudiantes, listaGrupos) {
-      if (!listaGrupos.length || !listaEstudiantes.length) return;
-      const n = listaGrupos.length;
-      let idx = 0, fw = true;
-      listaEstudiantes.forEach(function(est) {
-        let intentos = 0;
-        while (asignacion[listaGrupos[idx]].length >= MAX_POR_GRUPO && intentos < n) {
-          if (fw) { idx++; if (idx >= n) { idx = n - 1; fw = false; } }
-          else    { idx--; if (idx < 0)  { idx = 0;     fw = true;  } }
-          intentos++;
-        }
-        asignacion[listaGrupos[idx]].push(est);
-        if (fw) { idx++; if (idx >= n) { idx = n - 1; fw = false; } }
-        else    { idx--; if (idx < 0)  { idx = 0;     fw = true;  } }
-      });
-    }
-
-    function intercalarDos(listaA, listaB, listaGrupos) {
-      if (!listaGrupos.length) return;
-      const combinado = [];
-      const maxLen = Math.max(listaA.length, listaB.length);
-      for (let k = 0; k < maxLen; k++) {
-        if (k < listaA.length) combinado.push(listaA[k]);
-        if (k < listaB.length) combinado.push(listaB[k]);
-      }
-      repartirSerpentina(combinado, listaGrupos);
-    }
-
-    // Distribuir E puros
-    // Si gEC > 0: los primeros (gEpuroFinal * MAX) van a grupos E, el sobrante a EC
-    const eEnGruposPuros = gEpuroFinal * MAX_POR_GRUPO;
-    repartirSerpentina(E.slice(0, eEnGruposPuros), particionGrupos.E);
-    const eSobrante = E.slice(eEnGruposPuros); // sobrante E para grupos EC
-
-    // Distribuir C puros (grupos enteros + sobrante C sin mezcla)
-    const cEnGruposPuros = cTotalPuro; // todos los C que van a grupos puros
-    repartirSerpentina(C.slice(0, cEnGruposPuros), particionGrupos.C);
-
-    // Distribuir I puros
-    const iEnGruposPuros = gIpuroFinal * MAX_POR_GRUPO;
-    repartirSerpentina(I.slice(0, iEnGruposPuros), particionGrupos.I);
-    const iSobrante = I.slice(iEnGruposPuros);
-
-    // Distribuir mezclas (solo si hay grupos EC/CI)
-    const cParaECArr = C.slice(cTotalPuro, cTotalPuro + cParaEC);
-    intercalarDos(eSobrante, cParaECArr, particionGrupos.EC);
-
-    const cParaCIArr = C.slice(cTotalPuro + cParaEC, cTotalPuro + cParaEC + cParaCI);
-    intercalarDos(iSobrante, cParaCIArr, particionGrupos.CI);
-
-    // ── Rescate: estudiantes que quedaron sin asignar por compresión de particiones.
-    // Se distribuyen en serpentina entre todos los grupos disponibles.
-    const asignados = new Set();
-    grupos.forEach(function(g) {
-      (asignacion[g] || []).forEach(function(e) { asignados.add(e.idEstudiante); });
-    });
-    const sinAsignar = estudiantes.filter(function(e) { return !asignados.has(e.idEstudiante); });
-    if (sinAsignar.length > 0) {
-      repartirSerpentina(sinAsignar, grupos);
-    }
-
-    return asignacion;
-  }
-
-  function contarNiveles(lista) {
-    const cnt = { innovador: 0, creador: 0, explorador: 0, sinDato: 0 };
-    lista.forEach(function(e) {
-      const n = normalizarTexto(e.nivelLengua).toLowerCase();
-      if (n === "innovador") cnt.innovador++;
-      else if (n === "creador") cnt.creador++;
-      else if (n === "explorador") cnt.explorador++;
-      else cnt.sinDato++;
-    });
-    return cnt;
-  }
-
-  function tipoGrupoLabel(cnt) {
-    const tieneE = cnt.explorador > 0;
-    const tieneC = cnt.creador > 0;
-    const tieneI = cnt.innovador > 0;
-    if (tieneE && tieneC && !tieneI) return { texto: "Explorador + Creador", color: "#0891b2" };
-    if (!tieneE && tieneC && tieneI) return { texto: "Creador + Innovador",  color: "#7c3aed" };
-    if (tieneE && !tieneC && !tieneI) return { texto: "Solo Explorador",     color: "#16a34a" };
-    if (!tieneE && tieneC && !tieneI) return { texto: "Solo Creador",        color: "#ca8a04" };
-    if (!tieneE && !tieneC && tieneI) return { texto: "Solo Innovador",      color: "#6d28d9" };
-    if (!tieneE && !tieneC && !tieneI) return { texto: "Sin estudiantes",    color: "#94a3b8" };
-    return { texto: "Mixto",                                                  color: "#ef4444" };
-  }
-
-  function mostrarModalAsignacionAutomatica(asignacion, grupos, mapaBackend) {
-    // Eliminar modal anterior si existe
-    const anterior = document.getElementById("modalAsignacionAuto");
-    if (anterior) anterior.remove();
-
-    // Guardar asignación y mapa en variable temporal
-    window._asignacionAutoPendiente = asignacion;
-    window._mapaBackendPendiente = mapaBackend || {};
-
-    let cardsHTML = "";
-    grupos.forEach(function(g) {
-      const lista = asignacion[g] || [];
-      const cnt = contarNiveles(lista);
-      const total = lista.length;
-      const pctInn = total ? Math.round(cnt.innovador / total * 100) : 0;
-      const pctCre = total ? Math.round(cnt.creador / total * 100) : 0;
-      const pctExp = total ? Math.round(cnt.explorador / total * 100) : 0;
-      const pctSD  = total ? (100 - pctInn - pctCre - pctExp) : 0;
-      const tipo   = tipoGrupoLabel(cnt);
-
-      cardsHTML += `
-        <div class="grupo-preview-card">
-          <h4>${escapeHtml(g)} <span style="font-weight:normal;color:#64748b;font-size:13px;">(${total} estudiantes)</span></h4>
-          <div style="margin-bottom:6px;">
-            <span style="display:inline-block;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:999px;background:${tipo.color}22;color:${tipo.color};border:1px solid ${tipo.color}55;">${tipo.texto}</span>
-          </div>
-          <div>
-            ${cnt.innovador ? `<span class="nivel-badge innovador">Innovador: ${cnt.innovador}</span>` : ""}
-            ${cnt.creador   ? `<span class="nivel-badge creador">Creador: ${cnt.creador}</span>` : ""}
-            ${cnt.explorador? `<span class="nivel-badge explorador">Explorador: ${cnt.explorador}</span>` : ""}
-            ${cnt.sinDato   ? `<span class="nivel-badge sin-dato">Sin dato: ${cnt.sinDato}</span>` : ""}
-          </div>
-          <div class="grupo-preview-barra" title="Distribución de niveles">
-            <div class="barra-segmento" style="width:${pctInn}%;background:#7c3aed;"></div>
-            <div class="barra-segmento" style="width:${pctCre}%;background:#ca8a04;"></div>
-            <div class="barra-segmento" style="width:${pctExp}%;background:#16a34a;"></div>
-            <div class="barra-segmento" style="width:${pctSD}%;background:#94a3b8;"></div>
-          </div>
-        </div>
-      `;
-    });
-
-    const totalEst = grupos.reduce(function(s, g) { return s + (asignacion[g] || []).length; }, 0);
-
-    const modal = document.createElement("div");
-    modal.id = "modalAsignacionAuto";
-    modal.className = "modal-overlay";
-    modal.innerHTML = `
-      <div class="modal-asignacion">
-        <h3>Vista previa de la asignación automática</h3>
-        <p class="nota">Se distribuyeron <strong>${totalEst} estudiantes</strong> en <strong>${grupos.length} grupos</strong> respetando la regla de niveles adyacentes en Lengua Española: cada grupo contiene únicamente Exploradores, Exploradores+Creadores, Creadores, Creadores+Innovadores o Innovadores. Los grupos no exceden 25 estudiantes. Puede confirmar y ajustar manualmente antes de guardar.</p>
-
-        <div class="grupos-preview">${cardsHTML}</div>
-
-        <p class="nota" style="font-size:13px;color:#7c3aed;">
-          <strong>Nota:</strong> Al confirmar, los selects de la tabla se actualizarán con esta distribución. Podrá hacer cambios manuales antes de guardar.
-        </p>
-
-        <div class="acciones-modal">
-          <button type="button" class="btn-secundario" onclick="cerrarModalAsignacion()">Cancelar</button>
-          <button type="button" class="btn-confirmar-asignacion" onclick="aplicarAsignacionAutomatica()">Confirmar y aplicar</button>
-        </div>
-      </div>
-    `;
-
-    // Guardar asignación en variable temporal (ya se asigna al inicio de la función)
-
-    document.body.appendChild(modal);
-
-    // Cerrar al hacer clic en el overlay (fuera del modal)
-    modal.addEventListener("click", function(e) {
-      if (e.target === modal) cerrarModalAsignacion();
-    });
-  }
-
-  function cerrarModalAsignacion() {
-    const modal = document.getElementById("modalAsignacionAuto");
-    if (modal) modal.remove();
-    window._asignacionAutoPendiente = null;
-    window._mapaBackendPendiente = null;
-  }
-
-  function aplicarAsignacionAutomatica() {
-    const asignacion = window._asignacionAutoPendiente;
-    if (!asignacion) return;
-
-    // Actualizar el mapa semántico→backend con los nombres por moda
-    if (window._mapaBackendPendiente) {
-      Object.assign(mapaGrupoSemanticoABackend, window._mapaBackendPendiente);
-    }
-
-    // Los grupos ya tienen nombres semánticos (son las claves del objeto asignacion)
-    const grupos = Object.keys(asignacion);
-
-    // Crear mapa de idEstudiante → nombre de grupo
-    const mapaGrupo = {};
-    grupos.forEach(function(grupo) {
-      (asignacion[grupo] || []).forEach(function(e) {
-        mapaGrupo[normalizarTexto(e.idEstudiante)] = grupo;
-      });
-    });
-
-    // Asegurar que cada select tenga las opciones semánticas antes de asignar
-    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
-      const opcionesActuales = new Set(
-        Array.from(select.options).map(function(op) { return op.value; }).filter(Boolean)
-      );
-      grupos.forEach(function(g) {
-        if (!opcionesActuales.has(g)) {
-          const opt = document.createElement("option");
-          opt.value = g;
-          opt.textContent = g;
-          select.appendChild(opt);
-        }
-      });
-    });
-
-    // Aplicar el grupo en cada select
-    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
-      const id = normalizarTexto(select.dataset.id);
-      const grupo = mapaGrupo[id];
-      if (grupo) select.value = grupo;
-    });
-
-    actualizarResumenVisualAsignacionEstudiantes();
-    cerrarModalAsignacion();
-
-    const mensaje = document.getElementById("mensajeAsignacionEstudiantesGrupos");
-    mensaje.textContent = "Asignación automática aplicada. Puede hacer ajustes manuales y luego guardar.";
-    mensaje.className = "mensaje ok";
-  }
-
-  // Mostrar/ocultar el botón de asignación automática según permisos
   function actualizarVisibilidadBtnAsignacionAuto() {
     const btn = document.getElementById("btnAsignacionAutomatica");
     if (!btn) return;
@@ -8293,6 +9306,869 @@
     }
   }
 
+
+
+  // ═══ GESTIÓN DE USUARIOS (ADMINISTRADOR) ══════════════════════════════════
+  let usuariosAdminCache = [];
+  let sedesGestionUsuarios = [];
+
+  function abrirModuloGestionUsuarios() {
+    if (!esAdministradorReal()) {
+      alert("Este módulo solo está disponible para el Administrador.");
+      return;
+    }
+
+    mostrarModulo("moduloGestionUsuarios");
+    limpiarFormularioUsuarioAdmin();
+    cargarSedesGestionUsuarios(function() {
+      cargarRegionalesUsuarioAdmin();
+      listarUsuariosAdmin();
+    });
+  }
+
+
+
+  // ═══ GESTIÓN DE SEDES (ADMINISTRADOR) ═════════════════════════════════════
+  let sedesGestionAdminCache = [];
+
+  function abrirModuloGestionSedes() {
+    if (!esAdministradorReal()) {
+      alert("Este módulo solo está disponible para el Administrador.");
+      return;
+    }
+    mostrarModulo("moduloGestionSedes");
+    limpiarFormularioSedeAdmin();
+    listarSedesAdmin();
+  }
+
+  function listarSedesAdmin() {
+    if (!esAdministradorReal()) return;
+    const mensaje = document.getElementById("mensajeSedeAdmin");
+    const resumen = document.getElementById("resumenSedesAdmin");
+    if (mensaje) { mensaje.textContent = "Cargando sedes..."; mensaje.className = "mensaje"; }
+    if (resumen) resumen.textContent = "";
+
+    llamarBackend(
+      { accion: "listarSedesAdmin", cedula: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula },
+      function(resp) {
+        if (resp && resp.ok) {
+          sedesGestionAdminCache = resp.sedes || [];
+          llenarDatalistSedesAdmin();
+          renderizarTablaSedesAdmin();
+          if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
+        } else {
+          sedesGestionAdminCache = [];
+          renderizarTablaSedesAdmin();
+          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudieron cargar las sedes."; mensaje.className = "mensaje error"; }
+        }
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  function llenarDatalistSedesAdmin() {
+    const listaReg = document.getElementById("listaRegionalesSedesAdmin");
+    const listaDis = document.getElementById("listaDistritosSedesAdmin");
+    if (listaReg) {
+      listaReg.innerHTML = "";
+      obtenerValoresUnicos(sedesGestionAdminCache, "regional").forEach(function(regional) {
+        const opt = document.createElement("option");
+        opt.value = regional;
+        listaReg.appendChild(opt);
+      });
+    }
+    if (listaDis) {
+      listaDis.innerHTML = "";
+      obtenerValoresUnicos(sedesGestionAdminCache, "distrito").forEach(function(distrito) {
+        const opt = document.createElement("option");
+        opt.value = distrito;
+        listaDis.appendChild(opt);
+      });
+    }
+  }
+
+  function sedesAdminFiltradas() {
+    const filtro = normalizarRol(document.getElementById("filtroSedesAdmin").value || "");
+    if (!filtro) return sedesGestionAdminCache.slice();
+    return sedesGestionAdminCache.filter(function(s) {
+      const texto = [s.regional, s.distrito, s.codigoSede, s.centroSede, s.coordinador, s.telefono, s.estado]
+        .map(function(v) { return normalizarRol(v); })
+        .join(" ");
+      return texto.indexOf(filtro) >= 0;
+    });
+  }
+
+  function renderizarTablaSedesAdmin() {
+    const cont = document.getElementById("tablaSedesAdmin");
+    const resumen = document.getElementById("resumenSedesAdmin");
+    if (!cont) return;
+
+    const sedes = sedesAdminFiltradas();
+    if (resumen) resumen.textContent = sedes.length + " sede(s) mostrada(s) de " + sedesGestionAdminCache.length + " registrada(s).";
+
+    if (!sedes.length) {
+      cont.classList.add("oculto");
+      cont.innerHTML = "";
+      return;
+    }
+
+    let html = '<table class="tabla-sedes-admin"><thead><tr>' +
+      '<th>Regional</th><th>Distrito</th><th>Código</th><th>Centro sede</th><th>Cuota</th><th>Grupos</th><th>Coordinador</th><th>Teléfono</th><th>Estado</th><th>Acciones</th>' +
+      '</tr></thead><tbody>';
+
+    sedes.forEach(function(s) {
+      const estadoNorm = normalizarRol(s.estado || "Activo") === "inactivo" ? "Inactivo" : "Activo";
+      const claseEstado = estadoNorm === "Activo" ? "estado-sede-activa" : "estado-sede-inactiva";
+      html += '<tr>' +
+        '<td>' + escapeHtml(s.regional) + '</td>' +
+        '<td>' + escapeHtml(s.distrito) + '</td>' +
+        '<td>' + escapeHtml(s.codigoSede) + '</td>' +
+        '<td>' + escapeHtml(s.centroSede) + '</td>' +
+        '<td>' + escapeHtml(s.cuota) + '</td>' +
+        '<td>' + escapeHtml(s.gruposEsperados) + '</td>' +
+        '<td>' + escapeHtml(s.coordinador) + '</td>' +
+        '<td>' + escapeHtml(s.telefono) + '</td>' +
+        '<td><span class="' + claseEstado + '">' + estadoNorm + '</span></td>' +
+        '<td><div class="acciones-tabla">' +
+          '<button type="button" onclick="editarSedeAdmin(\'' + escapeJs(s.centroSede) + '\')">Editar</button>' +
+          '<button type="button" class="btn-peligro" onclick="cambiarEstadoSedeAdmin(\'' + escapeJs(s.centroSede) + '\', \'' + (estadoNorm === "Activo" ? "Inactivo" : "Activo") + '\')">' + (estadoNorm === "Activo" ? "Inactivar" : "Activar") + '</button>' +
+        '</div></td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+    cont.classList.remove("oculto");
+  }
+
+  function limpiarFormularioSedeAdmin() {
+    ["sedeAdminCentroOriginal", "sedeAdminRegional", "sedeAdminDistrito", "sedeAdminCodigo", "sedeAdminCentro", "sedeAdminCuota", "sedeAdminCoordinador", "sedeAdminTelefono"].forEach(function(id) {
+      const el = document.getElementById(id); if (el) el.value = "";
+    });
+    const estado = document.getElementById("sedeAdminEstado");
+    if (estado) estado.value = "Activo";
+    const titulo = document.getElementById("tituloFormularioSedeAdmin");
+    if (titulo) titulo.textContent = "Crear sede";
+    const mensaje = document.getElementById("mensajeSedeAdmin");
+    if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
+  }
+
+  function editarSedeAdmin(centroSede) {
+    const s = sedesGestionAdminCache.find(function(x) { return normalizarTexto(x.centroSede) === normalizarTexto(centroSede); });
+    if (!s) return;
+    document.getElementById("sedeAdminCentroOriginal").value = s.centroSede || "";
+    document.getElementById("sedeAdminRegional").value = s.regional || "";
+    document.getElementById("sedeAdminDistrito").value = s.distrito || "";
+    document.getElementById("sedeAdminCodigo").value = s.codigoSede || "";
+    document.getElementById("sedeAdminCentro").value = s.centroSede || "";
+    document.getElementById("sedeAdminCuota").value = String(s.cuota ?? "");
+    document.getElementById("sedeAdminCoordinador").value = s.coordinador || "";
+    document.getElementById("sedeAdminTelefono").value = s.telefono || "";
+    document.getElementById("sedeAdminEstado").value = normalizarRol(s.estado || "Activo") === "inactivo" ? "Inactivo" : "Activo";
+
+    const titulo = document.getElementById("tituloFormularioSedeAdmin");
+    if (titulo) titulo.textContent = "Editar sede";
+    const mensaje = document.getElementById("mensajeSedeAdmin");
+    if (mensaje) { mensaje.textContent = "Editando sede: " + (s.centroSede || ""); mensaje.className = "mensaje"; }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function construirPayloadSedeAdmin() {
+    return {
+      cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+      centroSedeOriginal: document.getElementById("sedeAdminCentroOriginal").value.trim(),
+      regional: document.getElementById("sedeAdminRegional").value.trim(),
+      distrito: document.getElementById("sedeAdminDistrito").value.trim(),
+      codigoSede: document.getElementById("sedeAdminCodigo").value.trim(),
+      centroSede: document.getElementById("sedeAdminCentro").value.trim(),
+      cuota: document.getElementById("sedeAdminCuota").value.trim(),
+      coordinador: document.getElementById("sedeAdminCoordinador").value.trim(),
+      telefono: document.getElementById("sedeAdminTelefono").value.trim(),
+      estado: document.getElementById("sedeAdminEstado").value
+    };
+  }
+
+  function validarPayloadSedeAdmin(p) {
+    if (!p.regional) return "Debe indicar la regional.";
+    if (!p.distrito) return "Debe indicar el distrito.";
+    if (!p.centroSede) return "Debe indicar el centro sede.";
+    const cuota = Number(p.cuota || 0);
+    if (!Number.isFinite(cuota) || cuota < 0) return "La cuota debe ser un número mayor o igual que cero.";
+    if (p.estado !== "Activo" && p.estado !== "Inactivo") return "Estado no válido.";
+    return "";
+  }
+
+  function guardarSedeAdmin() {
+    if (!esAdministradorReal()) return;
+    const mensaje = document.getElementById("mensajeSedeAdmin");
+    const payload = construirPayloadSedeAdmin();
+    const error = validarPayloadSedeAdmin(payload);
+    if (error) {
+      if (mensaje) { mensaje.textContent = error; mensaje.className = "mensaje error"; }
+      return;
+    }
+
+    if (mensaje) { mensaje.textContent = "Guardando sede..."; mensaje.className = "mensaje"; }
+    llamarBackend(
+      { accion: "guardarSede", payload: JSON.stringify(payload) },
+      function(resp) {
+        if (resp && resp.ok) {
+          if (mensaje) { mensaje.textContent = resp.mensaje || "Sede guardada correctamente."; mensaje.className = "mensaje ok"; }
+          invalidarCacheSedes();
+          limpiarFormularioSedeAdmin();
+          listarSedesAdmin();
+        } else {
+          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudo guardar la sede."; mensaje.className = "mensaje error"; }
+        }
+      },
+      { timeout: 22000 }
+    );
+  }
+
+  function cambiarEstadoSedeAdmin(centroSede, nuevoEstado) {
+    if (!esAdministradorReal()) return;
+    if (!confirm("¿Desea cambiar el estado de esta sede a " + nuevoEstado + "?")) return;
+    const mensaje = document.getElementById("mensajeSedeAdmin");
+    if (mensaje) { mensaje.textContent = "Actualizando sede..."; mensaje.className = "mensaje"; }
+    llamarBackend(
+      {
+        accion: "cambiarEstadoSede",
+        payload: JSON.stringify({
+          cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+          centroSede: centroSede,
+          estado: nuevoEstado
+        })
+      },
+      function(resp) {
+        if (resp && resp.ok) {
+          if (mensaje) { mensaje.textContent = resp.mensaje || "Estado actualizado."; mensaje.className = "mensaje ok"; }
+          invalidarCacheSedes();
+          listarSedesAdmin();
+        } else {
+          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudo actualizar el estado."; mensaje.className = "mensaje error"; }
+        }
+      },
+      { timeout: 18000 }
+    );
+  }
+
+  /* ============================ MÓDULO INSCRIPCIÓN ======================== */
+
+  // Solo Administrador y Técnico regional.
+  function puedeInscribirEstudiantes() {
+    const rol = normalizarRol(usuarioSesion && usuarioSesion.rol);
+    return rol === "administrador" || rol === "tecnico regional";
+  }
+
+  let sedesInscripcion = [];
+
+  function abrirModuloInscripcion() {
+    if (!puedeInscribirEstudiantes()) {
+      alert("Este módulo solo está disponible para el Administrador y el Técnico regional.");
+      return;
+    }
+    mostrarModulo("moduloInscripcion");
+    limpiarInscripcion();
+    cargarSedesInscripcion();
+  }
+
+  // Carga las sedes permitidas del usuario (el técnico regional solo verá las
+  // de su regional; el administrador, todas) para el selector de centro sede.
+  function cargarSedesInscripcion() {
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+    llamarBackend(
+      { accion: "sedesPermitidas", cedula: cedula },
+      function(resp) {
+        sedesInscripcion = (resp && resp.ok && resp.sedes) ? resp.sedes : [];
+      },
+      { timeout: 14000 }
+    );
+  }
+
+  function poblarSelectSedesInscripcion(regionalDelNino) {
+    const select = document.getElementById("inscCentro");
+    select.innerHTML = '<option value="">Seleccione el centro sede</option>';
+
+    // El administrador podría tener sedes de varias regionales; mostramos las
+    // de la regional del niño para mantener coherencia. El técnico regional
+    // ya solo tiene las suyas.
+    let lista = sedesInscripcion.slice();
+    if (regionalDelNino) {
+      const objetivo = normalizarTexto(regionalDelNino).toLowerCase();
+      const filtradas = lista.filter(function(s) {
+        return normalizarTexto(s.centroSede ? s.regional : s.Regional).toLowerCase() === objetivo;
+      });
+      if (filtradas.length) lista = filtradas;
+    }
+
+    lista.forEach(function(s) {
+      const nombre = s.centroSede || s.CentroSede || "";
+      if (!nombre) return;
+      const opt = document.createElement("option");
+      opt.value = nombre;
+      opt.textContent = nombre;
+      select.appendChild(opt);
+    });
+  }
+
+  function buscarEstudianteInscripcion() {
+    const id = document.getElementById("inscID").value.trim();
+    const mensaje = document.getElementById("mensajeBusquedaInscripcion");
+    const bloqueDatos = document.getElementById("bloqueDatosInscripcion");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "";
+
+    if (!id) {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "Debe digitar el ID del estudiante.";
+      return;
+    }
+
+    mensaje.textContent = "Consultando catálogo...";
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+
+    llamarBackend(
+      { accion: "buscarCatalogoEstudiante", cedula: cedula, id: id },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          bloqueDatos.classList.add("oculto");
+          mensaje.className = "mensaje error";
+          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo consultar el catálogo.";
+          return;
+        }
+        if (!resp.encontrado) {
+          bloqueDatos.classList.add("oculto");
+          mensaje.className = "mensaje error";
+          mensaje.textContent = resp.mensaje || "No se encontró el estudiante en el catálogo.";
+          return;
+        }
+
+        const e = resp.estudiante;
+        document.getElementById("inscNombre").value = e.nombre || "";
+        document.getElementById("inscGrado").value = e.grado || "";
+        document.getElementById("inscRegional").value = e.regional || "";
+        document.getElementById("inscDistrito").value = e.distrito || "";
+        document.getElementById("inscNacionalidad").value = e.nacionalidad || "";
+        document.getElementById("inscSexo").value = e.sexo || "";
+
+        // El catálogo no trae centro sede: el técnico la elige entre las de su regional.
+        poblarSelectSedesInscripcion(e.regional);
+
+        bloqueDatos.classList.remove("oculto");
+
+        if (resp.yaInscrito) {
+          mensaje.className = "mensaje error";
+          mensaje.textContent = "Atención: este estudiante YA está inscrito. No se puede inscribir de nuevo.";
+          document.getElementById("btnConfirmarInscripcion").disabled = true;
+        } else {
+          mensaje.className = "mensaje ok";
+          mensaje.textContent = "Estudiante encontrado. Confirme el centro sede y complete la inscripción.";
+          document.getElementById("btnConfirmarInscripcion").disabled = false;
+        }
+      },
+      function() {
+        bloqueDatos.classList.add("oculto");
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo consultar el catálogo. Verifique la conexión.";
+      },
+      { timeout: 14000 }
+    );
+  }
+
+  // Si la sede del catálogo no está en la lista permitida, la agregamos para
+  // que el usuario la vea preseleccionada (el backend revalidará al guardar).
+  function asegurarOpcionSedeInscripcion(centro) {
+    const select = document.getElementById("inscCentro");
+    let existe = false;
+    for (let i = 0; i < select.options.length; i++) {
+      if (normalizarTexto(select.options[i].value).toLowerCase() === normalizarTexto(centro).toLowerCase()) {
+        existe = true; select.selectedIndex = i; break;
+      }
+    }
+    if (!existe) {
+      const opt = document.createElement("option");
+      opt.value = centro; opt.textContent = centro;
+      select.appendChild(opt);
+      select.value = centro;
+    }
+  }
+
+  function confirmarInscripcion() {
+    const id = document.getElementById("inscID").value.trim();
+    const centro = document.getElementById("inscCentro").value.trim();
+    const mensaje = document.getElementById("mensajeInscripcion");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "";
+
+    if (!id) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe buscar un estudiante primero."; return; }
+    if (!centro) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe seleccionar el centro sede."; return; }
+
+    const boton = document.getElementById("btnConfirmarInscripcion");
+    boton.disabled = true;
+    mensaje.textContent = "Inscribiendo...";
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+    const payload = { cedula: cedula, idEstudiante: id, centroSede: centro };
+
+    llamarBackend(
+      { accion: "inscribirEstudiante", payload: JSON.stringify(payload) },
+      function(resp) {
+        if (resp && resp.ok) {
+          mensaje.className = "mensaje ok";
+          mensaje.textContent = resp.mensaje || "Estudiante inscrito correctamente.";
+          document.getElementById("bloqueDatosInscripcion").classList.add("oculto");
+          document.getElementById("inscID").value = "";
+          document.getElementById("mensajeBusquedaInscripcion").textContent = "";
+        } else {
+          boton.disabled = false;
+          mensaje.className = "mensaje error";
+          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo inscribir el estudiante.";
+        }
+      },
+      function() {
+        boton.disabled = false;
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo inscribir. Verifique la conexión.";
+      },
+      { timeout: 14000 }
+    );
+  }
+
+  function limpiarInscripcion() {
+    const ids = ["inscID","inscNombre","inscGrado","inscRegional","inscDistrito","inscNacionalidad","inscSexo"];
+    ids.forEach(function(x){ const el = document.getElementById(x); if (el) el.value = ""; });
+    const sel = document.getElementById("inscCentro");
+    if (sel) sel.innerHTML = '<option value="">Seleccione el centro sede</option>';
+    const bd = document.getElementById("bloqueDatosInscripcion");
+    if (bd) bd.classList.add("oculto");
+    ["mensajeBusquedaInscripcion","mensajeInscripcion"].forEach(function(x){
+      const el = document.getElementById(x); if (el) { el.textContent = ""; el.className = "mensaje"; }
+    });
+    const btn = document.getElementById("btnConfirmarInscripcion");
+    if (btn) btn.disabled = false;
+  }
+
+  function cargarSedesGestionUsuarios(callback) {
+    if (sedesGestionUsuarios && sedesGestionUsuarios.length) {
+      if (callback) callback();
+      return;
+    }
+
+    if (sedesModoAdministrador && sedesModoAdministrador.length) {
+      sedesGestionUsuarios = sedesModoAdministrador.slice();
+      if (callback) callback();
+      return;
+    }
+
+    llamarBackend(
+      { accion: "sedesPermitidas", cedula: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula },
+      function(resp) {
+        if (resp && resp.ok) {
+          sedesGestionUsuarios = resp.sedes || [];
+          sedesModoAdministrador = sedesGestionUsuarios.slice();
+        } else {
+          sedesGestionUsuarios = [];
+        }
+        if (callback) callback();
+      },
+      { timeout: 14000 }
+    );
+  }
+
+  function cargarRegionalesUsuarioAdmin() {
+    const select = document.getElementById("usuarioAdminRegional");
+    if (!select) return;
+    const valorAnterior = select.value;
+    select.innerHTML = '<option value="">Todas</option>';
+
+    obtenerValoresUnicos(sedesGestionUsuarios, "regional").forEach(function(regional) {
+      const opt = document.createElement("option");
+      opt.value = regional;
+      opt.textContent = regional;
+      select.appendChild(opt);
+    });
+
+    if (valorAnterior) select.value = valorAnterior;
+    cargarDistritosUsuarioAdmin();
+  }
+
+  function cargarDistritosUsuarioAdmin() {
+    const regional = document.getElementById("usuarioAdminRegional").value;
+    const selectDistrito = document.getElementById("usuarioAdminDistrito");
+    const selectSede = document.getElementById("usuarioAdminCentroSede");
+    if (!selectDistrito || !selectSede) return;
+
+    const distritoAnterior = selectDistrito.value;
+    selectDistrito.innerHTML = '<option value="">Todos</option>';
+    selectSede.innerHTML = '<option value="">Todas</option>';
+
+    const sedesFiltradas = regional
+      ? sedesGestionUsuarios.filter(function(s) { return normalizarTexto(s.regional) === normalizarTexto(regional); })
+      : sedesGestionUsuarios;
+
+    obtenerValoresUnicos(sedesFiltradas, "distrito").forEach(function(distrito) {
+      const opt = document.createElement("option");
+      opt.value = distrito;
+      opt.textContent = distrito;
+      selectDistrito.appendChild(opt);
+    });
+
+    if (distritoAnterior) selectDistrito.value = distritoAnterior;
+    cargarSedesUsuarioAdmin();
+  }
+
+  function cargarSedesUsuarioAdmin() {
+    const regional = document.getElementById("usuarioAdminRegional").value;
+    const distrito = document.getElementById("usuarioAdminDistrito").value;
+    const selectSede = document.getElementById("usuarioAdminCentroSede");
+    if (!selectSede) return;
+
+    const sedeAnterior = selectSede.value;
+    selectSede.innerHTML = '<option value="">Todas</option>';
+
+    sedesGestionUsuarios.filter(function(s) {
+      if (regional && normalizarTexto(s.regional) !== normalizarTexto(regional)) return false;
+      if (distrito && normalizarTexto(s.distrito) !== normalizarTexto(distrito)) return false;
+      return true;
+    }).forEach(function(sede) {
+      const opt = document.createElement("option");
+      opt.value = sede.centroSede;
+      opt.textContent = sede.codigoSede ? (sede.codigoSede + " - " + sede.centroSede) : sede.centroSede;
+      selectSede.appendChild(opt);
+    });
+
+    if (sedeAnterior) selectSede.value = sedeAnterior;
+    actualizarAlcanceFormularioUsuarioAdmin();
+  }
+
+  function actualizarAlcanceFormularioUsuarioAdmin() {
+    const rol = document.getElementById("usuarioAdminRol").value;
+    const regional = document.getElementById("usuarioAdminRegional");
+    const distrito = document.getElementById("usuarioAdminDistrito");
+    const sede = document.getElementById("usuarioAdminCentroSede");
+    const grupo = document.getElementById("usuarioAdminGrupo");
+
+    const requiereRegional = rol === "Técnico regional" || rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
+    const requiereDistrito = rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
+    const requiereSede = rol === "Coordinador sede" || rol === "Facilitador";
+    const requiereGrupo = rol === "Facilitador";
+
+    if (regional) regional.disabled = !requiereRegional;
+    if (distrito) distrito.disabled = !requiereDistrito;
+    if (sede) sede.disabled = !requiereSede;
+    if (grupo) grupo.disabled = !requiereGrupo;
+
+    if (!requiereRegional && regional) regional.value = "";
+    if (!requiereDistrito && distrito) distrito.value = "";
+    if (!requiereSede && sede) sede.value = "";
+    if (!requiereGrupo && grupo) grupo.value = "";
+  }
+
+  function listarUsuariosAdmin() {
+    if (!esAdministradorReal()) return;
+    const mensaje = document.getElementById("mensajeUsuarioAdmin");
+    const resumen = document.getElementById("resumenUsuariosAdmin");
+    if (mensaje) { mensaje.textContent = "Cargando usuarios..."; mensaje.className = "mensaje"; }
+    if (resumen) resumen.textContent = "";
+
+    llamarBackend(
+      { accion: "listarUsuarios", cedula: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula },
+      function(resp) {
+        if (resp && resp.ok) {
+          usuariosAdminCache = resp.usuarios || [];
+          renderizarTablaUsuariosAdmin();
+          if (mensaje) { mensaje.textContent = "Listado actualizado."; mensaje.className = "mensaje ok"; }
+        } else {
+          usuariosAdminCache = [];
+          renderizarTablaUsuariosAdmin();
+          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudieron cargar los usuarios."; mensaje.className = "mensaje error"; }
+        }
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  function usuariosAdminFiltrados() {
+    const filtro = normalizarRol(document.getElementById("filtroUsuariosAdmin").value || "");
+    if (!filtro) return usuariosAdminCache.slice();
+    return usuariosAdminCache.filter(function(u) {
+      const texto = [u.cedula, u.nombre, u.rol, u.regional, u.distrito, u.centroSede, u.grupo, u.estado]
+        .map(function(v) { return normalizarRol(v); })
+        .join(" ");
+      return texto.indexOf(filtro) >= 0;
+    });
+  }
+
+  function renderizarTablaUsuariosAdmin() {
+    const cont = document.getElementById("tablaUsuariosAdmin");
+    const resumen = document.getElementById("resumenUsuariosAdmin");
+    if (!cont) return;
+
+    const usuarios = usuariosAdminFiltrados();
+    if (resumen) {
+      const inactivosVisibles = usuarios.filter(function(u) { return normalizarRol(u.estado) !== "activo"; }).length;
+      const inactivosTotales = usuariosAdminCache.filter(function(u) { return normalizarRol(u.estado) !== "activo"; }).length;
+      resumen.textContent = usuarios.length + " usuario(s) mostrado(s) de " + usuariosAdminCache.length + " registrado(s). Inactivos visibles: " + inactivosVisibles + ". Inactivos totales: " + inactivosTotales + ".";
+    }
+
+    if (!usuarios.length) {
+      cont.classList.add("oculto");
+      cont.innerHTML = "";
+      return;
+    }
+
+    let html = '<table class="tabla-usuarios-admin"><thead><tr>' +
+      '<th>Cédula</th><th>Nombre</th><th>Rol</th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grupo</th><th>Estado</th><th>Acciones</th>' +
+      '</tr></thead><tbody>';
+
+    usuarios.forEach(function(u) {
+      const estadoNorm = normalizarRol(u.estado) === "activo" ? "Activo" : "Inactivo";
+      const claseEstado = estadoNorm === "Activo" ? "estado-usuario-activo" : "estado-usuario-inactivo";
+      html += '<tr>' +
+        '<td>' + escapeHtml(u.cedula) + '</td>' +
+        '<td>' + escapeHtml(u.nombre) + '</td>' +
+        '<td>' + escapeHtml(u.rol) + '</td>' +
+        '<td>' + escapeHtml(u.regional) + '</td>' +
+        '<td>' + escapeHtml(u.distrito) + '</td>' +
+        '<td>' + escapeHtml(u.centroSede) + '</td>' +
+        '<td>' + escapeHtml(u.grupo) + '</td>' +
+        '<td><span class="' + claseEstado + '">' + estadoNorm + '</span></td>' +
+        '<td><div class="acciones-tabla">' +
+          '<button type="button" onclick="editarUsuarioAdmin(\'' + escapeJs(u.cedula) + '\')">Editar</button>' +
+          '<button type="button" class="btn-secundario" onclick="prepararResetPasswordUsuarioAdmin(\'' + escapeJs(u.cedula) + '\')">Reset</button>' +
+          '<button type="button" class="btn-peligro" onclick="cambiarEstadoUsuarioAdmin(\'' + escapeJs(u.cedula) + '\', \'' + (estadoNorm === "Activo" ? "Inactivo" : "Activo") + '\')">' + (estadoNorm === "Activo" ? "Inactivar" : "Activar") + '</button>' +
+        '</div></td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table>';
+    cont.innerHTML = html;
+    cont.classList.remove("oculto");
+  }
+
+  function limpiarFormularioUsuarioAdmin() {
+    const ids = ["usuarioAdminCedulaOriginal", "usuarioAdminCedula", "usuarioAdminNombre", "usuarioAdminPassword"];
+    ids.forEach(function(id) { const el = document.getElementById(id); if (el) el.value = ""; });
+
+    const rol = document.getElementById("usuarioAdminRol");
+    const estado = document.getElementById("usuarioAdminEstado");
+    if (rol) rol.value = "";
+    if (estado) estado.value = "Activo";
+
+    const regional = document.getElementById("usuarioAdminRegional");
+    const distrito = document.getElementById("usuarioAdminDistrito");
+    const sede = document.getElementById("usuarioAdminCentroSede");
+    const grupo = document.getElementById("usuarioAdminGrupo");
+    if (regional) regional.value = "";
+    if (distrito) distrito.value = "";
+    if (sede) sede.value = "";
+    if (grupo) grupo.value = "";
+
+    const titulo = document.getElementById("tituloFormularioUsuarioAdmin");
+    if (titulo) titulo.textContent = "Crear usuario";
+
+    const cedula = document.getElementById("usuarioAdminCedula");
+    if (cedula) cedula.disabled = false;
+
+    const mensaje = document.getElementById("mensajeUsuarioAdmin");
+    if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
+
+    actualizarAlcanceFormularioUsuarioAdmin();
+  }
+
+  function editarUsuarioAdmin(cedula) {
+    const u = usuariosAdminCache.find(function(x) { return normalizarTexto(x.cedula) === normalizarTexto(cedula); });
+    if (!u) return;
+
+    document.getElementById("usuarioAdminCedulaOriginal").value = u.cedula || "";
+    document.getElementById("usuarioAdminCedula").value = u.cedula || "";
+    document.getElementById("usuarioAdminCedula").disabled = true;
+    document.getElementById("usuarioAdminNombre").value = u.nombre || "";
+    document.getElementById("usuarioAdminRol").value = u.rol || "";
+    document.getElementById("usuarioAdminEstado").value = normalizarRol(u.estado) === "activo" ? "Activo" : "Inactivo";
+    document.getElementById("usuarioAdminPassword").value = "";
+
+    cargarSedesGestionUsuarios(function() {
+      cargarRegionalesUsuarioAdmin();
+      document.getElementById("usuarioAdminRegional").value = u.regional || "";
+      cargarDistritosUsuarioAdmin();
+      document.getElementById("usuarioAdminDistrito").value = u.distrito || "";
+      cargarSedesUsuarioAdmin();
+      document.getElementById("usuarioAdminCentroSede").value = u.centroSede || "";
+      document.getElementById("usuarioAdminGrupo").value = u.grupo || "";
+      actualizarAlcanceFormularioUsuarioAdmin();
+    });
+
+    const titulo = document.getElementById("tituloFormularioUsuarioAdmin");
+    if (titulo) titulo.textContent = "Editar usuario";
+
+    const mensaje = document.getElementById("mensajeUsuarioAdmin");
+    if (mensaje) { mensaje.textContent = "Editando usuario: " + (u.nombre || u.cedula); mensaje.className = "mensaje"; }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function prepararResetPasswordUsuarioAdmin(cedula) {
+    editarUsuarioAdmin(cedula);
+    const input = document.getElementById("usuarioAdminPassword");
+    if (input) {
+      input.value = cedula;
+      input.focus();
+      input.select();
+    }
+    const mensaje = document.getElementById("mensajeUsuarioAdmin");
+    if (mensaje) {
+      mensaje.textContent = "Se preparó el restablecimiento de contraseña. Puede cambiarla antes de guardar.";
+      mensaje.className = "mensaje";
+    }
+  }
+
+  function construirPayloadUsuarioAdmin() {
+    return {
+      cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+      cedulaOriginal: document.getElementById("usuarioAdminCedulaOriginal").value.trim(),
+      cedula: document.getElementById("usuarioAdminCedula").value.trim(),
+      nombre: document.getElementById("usuarioAdminNombre").value.trim(),
+      rol: document.getElementById("usuarioAdminRol").value,
+      regional: document.getElementById("usuarioAdminRegional").value,
+      distrito: document.getElementById("usuarioAdminDistrito").value,
+      centroSede: document.getElementById("usuarioAdminCentroSede").value,
+      grupo: document.getElementById("usuarioAdminGrupo").value,
+      estado: document.getElementById("usuarioAdminEstado").value,
+      password: document.getElementById("usuarioAdminPassword").value.trim()
+    };
+  }
+
+  function validarPayloadUsuarioAdmin(p) {
+    if (!p.cedula) return "Debe indicar la cédula.";
+    if (!p.nombre) return "Debe indicar el nombre completo.";
+    if (!p.rol) return "Debe seleccionar el rol.";
+
+    const requiereRegional = p.rol === "Técnico regional" || p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
+    const requiereDistrito = p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
+    const requiereSede = p.rol === "Coordinador sede" || p.rol === "Facilitador";
+    const requiereGrupo = p.rol === "Facilitador";
+
+    if (requiereRegional && !p.regional) return "Para este rol debe seleccionar una regional.";
+    if (requiereDistrito && !p.distrito) return "Para este rol debe seleccionar un distrito.";
+    if (requiereSede && !p.centroSede) return "Para este rol debe seleccionar un centro sede.";
+    if (requiereGrupo && !p.grupo) return "Para el rol Facilitador debe seleccionar un grupo.";
+    if (p.password && p.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
+    return "";
+  }
+
+  function guardarUsuarioAdmin() {
+    if (!esAdministradorReal()) return;
+    const mensaje = document.getElementById("mensajeUsuarioAdmin");
+    const payload = construirPayloadUsuarioAdmin();
+    const error = validarPayloadUsuarioAdmin(payload);
+    if (error) {
+      if (mensaje) { mensaje.textContent = error; mensaje.className = "mensaje error"; }
+      return;
+    }
+
+    if (mensaje) { mensaje.textContent = "Guardando usuario..."; mensaje.className = "mensaje"; }
+
+    llamarBackend(
+      { accion: "guardarUsuario", payload: JSON.stringify(payload) },
+      function(resp) {
+        if (resp && resp.ok) {
+          if (mensaje) { mensaje.textContent = resp.mensaje || "Usuario guardado correctamente."; mensaje.className = "mensaje ok"; }
+          limpiarFormularioUsuarioAdmin();
+          listarUsuariosAdmin();
+        } else {
+          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudo guardar el usuario."; mensaje.className = "mensaje error"; }
+        }
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  function cambiarEstadoUsuarioAdmin(cedula, nuevoEstado) {
+    if (!esAdministradorReal()) return;
+    if (!confirm("¿Desea cambiar el estado de este usuario a " + nuevoEstado + "?")) return;
+    const mensaje = document.getElementById("mensajeUsuarioAdmin");
+    if (mensaje) { mensaje.textContent = "Actualizando estado..."; mensaje.className = "mensaje"; }
+
+    llamarBackend(
+      {
+        accion: "cambiarEstadoUsuario",
+        payload: JSON.stringify({
+          cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+          cedula: cedula,
+          estado: nuevoEstado
+        })
+      },
+      function(resp) {
+        if (resp && resp.ok) {
+          if (mensaje) { mensaje.textContent = resp.mensaje || "Estado actualizado."; mensaje.className = "mensaje ok"; }
+          listarUsuariosAdmin();
+        } else {
+          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudo actualizar el estado."; mensaje.className = "mensaje error"; }
+        }
+      },
+      { timeout: 16000 }
+    );
+  }
+
+
+  function reactivarUsuariosInactivosFiltradosAdmin() {
+    if (!esAdministradorReal()) return;
+
+    const mensaje = document.getElementById("mensajeUsuarioAdmin");
+    const filtro = document.getElementById("filtroUsuariosAdmin");
+    const textoFiltro = filtro ? String(filtro.value || "").trim() : "";
+    const usuarios = usuariosAdminFiltrados().filter(function(u) {
+      return normalizarRol(u.estado) !== "activo";
+    });
+
+    if (!usuarios.length) {
+      if (mensaje) {
+        mensaje.textContent = "No hay usuarios inactivos en el listado actual para reactivar.";
+        mensaje.className = "mensaje";
+      }
+      return;
+    }
+
+    const alcance = textoFiltro
+      ? "los usuarios inactivos que coinciden con el filtro actual"
+      : "todos los usuarios inactivos registrados";
+
+    if (!confirm("Se reactivarán " + usuarios.length + " usuario(s) inactivo(s) de " + alcance + ". ¿Desea continuar?")) return;
+
+    if (mensaje) {
+      mensaje.textContent = "Reactivando usuarios inactivos...";
+      mensaje.className = "mensaje";
+    }
+
+    llamarBackendPost(
+      {
+        accion: "reactivarUsuariosMasivo",
+        payload: JSON.stringify({
+          cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+          cedulas: usuarios.map(function(u) { return u.cedula; })
+        })
+      },
+      function(resp) {
+        if (resp && resp.ok) {
+          if (mensaje) {
+            mensaje.textContent = resp.mensaje || "Usuarios reactivados correctamente.";
+            mensaje.className = "mensaje ok";
+          }
+          listarUsuariosAdmin();
+        } else {
+          if (mensaje) {
+            mensaje.textContent = (resp && resp.mensaje) || "No se pudo completar la reactivación masiva.";
+            mensaje.className = "mensaje error";
+          }
+        }
+      },
+      { timeout: 30000 }
+    );
+  }
+
+  function escapeJs(valor) {
+    return String(valor || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, " ");
+  }
   // ─── FIN ASIGNACIÓN AUTOMÁTICA ─────────────────────────────────────────────
 
   function escapeHtml(valor) {
@@ -8319,6 +10195,7 @@
     personaSeleccionadaAcompanamiento = null;
     sedesIncidencias = [];
     sedeSeleccionadaIncidencia = null;
+    sedesGestionAdminCache = [];
     invalidarCacheSedes();
 
     localStorage.removeItem("usuarioCampamento");
@@ -8480,6 +10357,554 @@
     });
     document.body.appendChild(modal);
   }
+
+
+
+  function abrirModuloEvaluaciones() {
+    if (!usuarioActual) { alert("Debe iniciar sesión."); return; }
+    mostrarModulo("moduloEvaluaciones");
+    document.getElementById("pantallaInicio").classList.remove("oculto");
+    document.getElementById("pantallaLengua").classList.add("oculto");
+    document.getElementById("pantallaMatematica").classList.add("oculto");
+    cerrarModal();
+  }
+
+  // ═══ MÓDULO DE EVALUACIONES — LENGUA Y MATEMÁTICA ════════════════════════
+
+const respuestasTexto = {
+      p6: "c", p7: "g", p8: "s", p9: "l",
+      p10: "maestra", p11: "sombrilla", p12: "barco", p13: "mariposa",
+      p17: "astuto", p18: "madrigueras", p19: "cascabel", p20: "solucion"
+    };
+
+    const respuestasMatematica = {
+      ma7: "25", ma8: "38", ma9: "935", ma10: "6", ma11: "41", ma12: "252"
+    };
+
+    let ultimoResultadoLengua = null;
+    let ultimoResultadoMatematica = null;
+
+    function jsonp(params, callback, errorCallback){
+      if(!usuarioActual || !usuarioActual.cedula){
+        if(errorCallback) errorCallback({ ok:false, mensaje:"Debe iniciar sesión en la plataforma." });
+        else callback({ ok:false, mensaje:"Debe iniciar sesión en la plataforma." });
+        return;
+      }
+
+      const originalAccion = params.accion;
+      let paramsBackend = Object.assign({}, params);
+
+      if(originalAccion === "buscar"){
+        paramsBackend = {
+          accion: "buscarEstudianteEvaluacion",
+          cedula: usuarioActual.cedula,
+          id: params.id || ""
+        };
+      } else if(originalAccion === "sedes"){
+        paramsBackend = {
+          accion: "sedesPermitidas",
+          cedula: usuarioActual.cedula
+        };
+      } else if(originalAccion === "guardar"){
+        let payload = {};
+        try { payload = JSON.parse(params.payload || "{}"); } catch(e) { payload = {}; }
+        payload.cedulaUsuario = usuarioActual.cedula;
+        payload.nombreUsuario = usuarioActual.nombre || "";
+        payload.rolUsuario = usuarioActual.rol || "";
+        paramsBackend = {
+          accion: "guardarEvaluacion",
+          payload: JSON.stringify(payload)
+        };
+      }
+
+      llamarBackend(paramsBackend, function(respuesta){
+        if(originalAccion === "sedes" && respuesta && respuesta.ok && Array.isArray(respuesta.sedes)){
+          const regional = (params.regional || "").toString().trim();
+          const distrito = (params.distrito || "").toString().trim();
+          respuesta.sedes = respuesta.sedes.filter(function(s){
+            const r = (s.regional || s.Regional || "").toString().trim();
+            const d = (s.distrito || s.Distrito || "").toString().trim();
+            return (!regional || r === regional) && (!distrito || d === distrito);
+          });
+        }
+        callback(respuesta);
+      }, { timeout: 18000 });
+    }
+
+    function cargarSedesPorDistrito(regional, distrito){
+      const selectCentro = document.getElementById("inicioCentro");
+
+      selectCentro.innerHTML = '<option value="">Cargando centros sede...</option>';
+
+      jsonp(
+        {
+          accion: "sedes",
+          regional: regional,
+          distrito: distrito
+        },
+        function(respuesta){
+          selectCentro.innerHTML = '<option value="">Seleccione el centro sede</option>';
+
+          if(!respuesta || !respuesta.ok || !respuesta.sedes || respuesta.sedes.length === 0){
+            selectCentro.innerHTML = '<option value="">No hay sedes registradas para este distrito</option>';
+            return;
+          }
+
+          respuesta.sedes.forEach(function(sede){
+            const nombreSede = sede.centroSede || sede.nombre || sede.centro || "";
+            if(!nombreSede) return;
+
+            const option = document.createElement("option");
+            option.value = nombreSede;
+            option.textContent = nombreSede;
+            selectCentro.appendChild(option);
+          });
+        },
+        function(){
+          selectCentro.innerHTML = '<option value="">No se pudieron cargar las sedes</option>';
+        }
+      );
+    }
+
+    function buscarEstudiante(){
+      const id = document.getElementById("inicioID").value.trim();
+      const mensaje = document.getElementById("mensajeBusqueda");
+      mensaje.className = "linea-respuesta neutra";
+      mensaje.textContent = "";
+
+      if(!id){
+        alert("Debe digitar el ID del estudiante.");
+        return;
+      }
+
+      mensaje.textContent = "Consultando listado...";
+
+      jsonp(
+        { accion:"buscar", id:id },
+        function(respuesta){
+          if(respuesta && respuesta.encontrado){
+            document.getElementById("inicioNombre").value = respuesta.nombre || "";
+            document.getElementById("inicioRegional").value = respuesta.regional || "";
+            document.getElementById("inicioDistrito").value = respuesta.distrito || "";
+            document.getElementById("inicioCentro").innerHTML = '<option value="">Seleccione el centro sede</option>';
+
+            if(respuesta.regional && respuesta.distrito){
+              cargarSedesPorDistrito(respuesta.regional, respuesta.distrito);
+            }
+
+            mensaje.className = "linea-respuesta correcta";
+            mensaje.textContent = "Estudiante encontrado.";
+          }else{
+            document.getElementById("inicioNombre").value = "";
+            document.getElementById("inicioRegional").value = "";
+            document.getElementById("inicioDistrito").value = "";
+            document.getElementById("inicioCentro").innerHTML = '<option value="">Seleccione el centro sede</option>';
+            mensaje.className = "linea-respuesta incorrecta";
+            mensaje.textContent = (respuesta && respuesta.mensaje) ? respuesta.mensaje : "No se encontró el estudiante.";
+          }
+        },
+        function(){
+          mensaje.className = "linea-respuesta incorrecta";
+          mensaje.textContent = "No se pudo consultar el listado. Verifique la conexión con Supabase.";
+        }
+      );
+    }
+
+    function guardarResultado(payload, callback){
+      jsonp(
+        { accion:"guardar", payload:JSON.stringify(payload) },
+        function(respuesta){
+          callback(respuesta);
+        },
+        function(){
+          callback({ ok:false, mensaje:"No se pudo guardar. Verifique la conexión con Supabase." });
+        }
+      );
+    }
+
+    function obtenerPruebaSeleccionada(){
+      return document.querySelector('input[name="tipoPrueba"]:checked');
+    }
+
+    function iniciarProceso(){
+      const id = document.getElementById("inicioID").value.trim();
+      const nombre = document.getElementById("inicioNombre").value.trim();
+      const regional = document.getElementById("inicioRegional").value.trim();
+      const distrito = document.getElementById("inicioDistrito").value.trim();
+      const centro = document.getElementById("inicioCentro").value.trim();
+      const prueba = obtenerPruebaSeleccionada();
+
+      if(!id){ alert("Debe digitar el ID del estudiante."); return; }
+      if(!nombre){ alert("Debe buscar el estudiante para autocompletar el nombre."); return; }
+      if(!centro){ alert("Debe seleccionar el centro sede."); return; }
+      if(!prueba){ alert("Debe seleccionar la prueba que se va a digitar."); return; }
+
+      document.getElementById("idEstudiante").value = id;
+      document.getElementById("nombre").value = nombre;
+      document.getElementById("regional").value = regional;
+      document.getElementById("distrito").value = distrito;
+      document.getElementById("centro").value = centro;
+
+      document.getElementById("idEstudianteMa").value = id;
+      document.getElementById("nombreMa").value = nombre;
+      document.getElementById("regionalMa").value = regional;
+      document.getElementById("distritoMa").value = distrito;
+      document.getElementById("centroMa").value = centro;
+
+      document.getElementById("pantallaInicio").classList.add("oculto");
+      document.getElementById("pantallaLengua").classList.add("oculto");
+      document.getElementById("pantallaMatematica").classList.add("oculto");
+
+      if(prueba.value === "lengua"){
+        document.getElementById("pantallaLengua").classList.remove("oculto");
+      } else {
+        document.getElementById("pantallaMatematica").classList.remove("oculto");
+      }
+
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+
+    function volverInicio(){
+      document.getElementById("pantallaLengua").classList.add("oculto");
+      document.getElementById("pantallaMatematica").classList.add("oculto");
+      document.getElementById("pantallaInicio").classList.remove("oculto");
+      cerrarModal();
+    }
+
+    function normalizar(valor){
+      return (valor || "")
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "");
+    }
+
+    function marcarResultado(idLinea, correcto, mensaje){
+      const linea = document.getElementById(idLinea);
+      linea.className = "linea-respuesta " + (correcto ? "correcta" : "incorrecta");
+      linea.textContent = mensaje;
+    }
+
+    function revisarRadio(nombre, correcta, idLinea){
+      const seleccionada = document.querySelector(`input[name="${nombre}"]:checked`);
+      if(!seleccionada){
+        marcarResultado(idLinea, false, `No respondida. Respuesta correcta: ${correcta.toUpperCase()}.`);
+        return 0;
+      }
+      if(seleccionada.value === correcta){
+        marcarResultado(idLinea, true, "Correcta.");
+        return 1;
+      }
+      marcarResultado(idLinea, false, `Incorrecta. Respuesta correcta: ${correcta.toUpperCase()}.`);
+      return 0;
+    }
+
+    function revisarTexto(idCampo, correcta, idLinea){
+      const valor = normalizar(document.getElementById(idCampo).value);
+      const esperado = normalizar(correcta);
+      if(!valor){
+        marcarResultado(idLinea, false, `No respondida. Respuesta correcta: ${correcta}.`);
+        return 0;
+      }
+      if(valor === esperado){
+        marcarResultado(idLinea, true, "Correcta.");
+        return 1;
+      }
+      marcarResultado(idLinea, false, `Incorrecta. Respuesta correcta: ${correcta}.`);
+      return 0;
+    }
+
+    function obtenerNivelBloqueLengua(aciertos, actividad){
+      if (actividad === 1) {
+        if (aciertos <= 1) return { nivel:"Elemental", texto:`Elemental (${aciertos}/5).`, clase:"elemental" };
+        if (aciertos <= 3) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/5).`, clase:"aceptable" };
+        return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/5).`, clase:"satisfactorio" };
+      }
+      if (actividad === 2) {
+        if (aciertos <= 1) return { nivel:"Elemental", texto:`Elemental (${aciertos}/4).`, clase:"elemental" };
+        if (aciertos <= 2) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/4).`, clase:"aceptable" };
+        return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/4).`, clase:"satisfactorio" };
+      }
+      if (actividad === 3) {
+        if (aciertos <= 1) return { nivel:"Elemental", texto:`Elemental (${aciertos}/4).`, clase:"elemental" };
+        if (aciertos === 2) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/4).`, clase:"aceptable" };
+        return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/4).`, clase:"satisfactorio" };
+      }
+      if (actividad === 4) {
+        if (aciertos <= 1) return { nivel:"Elemental", texto:`Elemental (${aciertos}/4).`, clase:"elemental" };
+        if (aciertos <= 2) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/4).`, clase:"aceptable" };
+        return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/4).`, clase:"satisfactorio" };
+      }
+      if (actividad === 5) {
+        if (aciertos <= 1) return { nivel:"Elemental", texto:`Elemental (${aciertos}/4).`, clase:"elemental" };
+        if (aciertos === 2) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/4).`, clase:"aceptable" };
+        return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/4).`, clase:"satisfactorio" };
+      }
+      return { nivel:"Elemental", texto:"Elemental.", clase:"elemental" };
+    }
+
+    function mostrarNivel(id, resultado){
+      const el = document.getElementById(id);
+      el.className = "linea-respuesta " + resultado.clase;
+      el.textContent = resultado.texto;
+    }
+
+    function obtenerClasificacionLengua(resultados){
+      const satisfactorios = resultados.filter(r => r.nivel === "Satisfactorio").length;
+      if (satisfactorios <= 1) return { nombre:"Explorador", detalle:`${satisfactorios} indicador(es) en satisfactorio.`, clase:"elemental" };
+      if (satisfactorios <= 3) return { nombre:"Creador", detalle:`${satisfactorios} indicador(es) en satisfactorio.`, clase:"aceptable" };
+      return { nombre:"Innovador", detalle:`${satisfactorios} indicador(es) en satisfactorio.`, clase:"satisfactorio" };
+    }
+
+    function revisarPruebaLengua(){
+      let total = 0;
+      let bloque1 = 0, bloque2 = 0, bloque3 = 0, bloque4 = 0, bloque5 = 0;
+
+      bloque1 += revisarRadio("p1", "a", "r-p1");
+      bloque1 += revisarRadio("p2", "c", "r-p2");
+      bloque1 += revisarRadio("p3", "d", "r-p3");
+      bloque1 += revisarRadio("p4", "d", "r-p4");
+      bloque1 += revisarRadio("p5", "c", "r-p5");
+      total += bloque1;
+
+      bloque2 += revisarTexto("p6", respuestasTexto.p6, "r-p6");
+      bloque2 += revisarTexto("p7", respuestasTexto.p7, "r-p7");
+      bloque2 += revisarTexto("p8", respuestasTexto.p8, "r-p8");
+      bloque2 += revisarTexto("p9", respuestasTexto.p9, "r-p9");
+      total += bloque2;
+
+      bloque3 += revisarTexto("p10", respuestasTexto.p10, "r-p10");
+      bloque3 += revisarTexto("p11", respuestasTexto.p11, "r-p11");
+      bloque3 += revisarTexto("p12", respuestasTexto.p12, "r-p12");
+      bloque3 += revisarTexto("p13", respuestasTexto.p13, "r-p13");
+      total += bloque3;
+
+      bloque4 += revisarRadio("p14", "b", "r-p14");
+      bloque4 += revisarRadio("p15", "c", "r-p15");
+      bloque4 += revisarRadio("p16", "a", "r-p16");
+      bloque4 += revisarRadio("p17b", "a", "r-p17b");
+      total += bloque4;
+
+      bloque5 += revisarTexto("p17", respuestasTexto.p17, "r-p17");
+      bloque5 += revisarTexto("p18", respuestasTexto.p18, "r-p18");
+      bloque5 += revisarTexto("p19", respuestasTexto.p19, "r-p19");
+      bloque5 += revisarTexto("p20", respuestasTexto.p20, "r-p20");
+      total += bloque5;
+
+      const resultados = [
+        obtenerNivelBloqueLengua(bloque1, 1),
+        obtenerNivelBloqueLengua(bloque2, 2),
+        obtenerNivelBloqueLengua(bloque3, 3),
+        obtenerNivelBloqueLengua(bloque4, 4),
+        obtenerNivelBloqueLengua(bloque5, 5)
+      ];
+
+      mostrarNivel("bloque1", resultados[0]);
+      mostrarNivel("bloque2", resultados[1]);
+      mostrarNivel("bloque3", resultados[2]);
+      mostrarNivel("bloque4", resultados[3]);
+      mostrarNivel("bloque5", resultados[4]);
+
+      const clasificacion = obtenerClasificacionLengua(resultados);
+      const cg = document.getElementById("clasificacionGlobal");
+      cg.className = "linea-respuesta " + clasificacion.clase;
+      cg.textContent = clasificacion.nombre;
+      document.getElementById("detalleClasificacion").textContent = clasificacion.detalle;
+      document.getElementById("resultadoGlobalLengua").textContent = `Puntuación: ${total} / 21`;
+
+      const cantidadSatisfactorios = resultados.filter(r => r.nivel === "Satisfactorio").length;
+
+      ultimoResultadoLengua = {
+        tipoPrueba:"LENGUA",
+        idEstudiante:document.getElementById("idEstudiante").value,
+        nombreEstudiante:document.getElementById("nombre").value,
+        regional:document.getElementById("regional").value,
+        distrito:document.getElementById("distrito").value,
+        centroSede:document.getElementById("centro").value,
+        indicador1:resultados[0].nivel,
+        indicador2:resultados[1].nivel,
+        indicador3:resultados[2].nivel,
+        indicador4:resultados[3].nivel,
+        indicador5:resultados[4].nivel,
+        indicador6:"",
+        cantidadSatisfactorios:cantidadSatisfactorios,
+        grupo:clasificacion.nombre,
+        puntuacionTotal:`${total}/21`,
+        observacion:""
+      };
+
+      guardarResultado(ultimoResultadoLengua, function(respuesta){
+        mostrarModal((respuesta && respuesta.ok)
+          ? `Prueba de Lengua guardada correctamente. Grupo: ${clasificacion.nombre}.`
+          : `La prueba fue revisada, pero no se guardó. ${respuesta && respuesta.mensaje ? respuesta.mensaje : ""}`);
+      });
+    }
+
+    function nivelMatematica(aciertos, total){
+      if(total === 1){
+        if(aciertos === 1) return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/${total}).`, clase:"satisfactorio" };
+        return { nivel:"Elemental", texto:`Elemental (${aciertos}/${total}).`, clase:"elemental" };
+      }
+      if(total === 2){
+        if(aciertos === 2) return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/${total}).`, clase:"satisfactorio" };
+        if(aciertos === 1) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/${total}).`, clase:"aceptable" };
+        return { nivel:"Elemental", texto:`Elemental (${aciertos}/${total}).`, clase:"elemental" };
+      }
+      if(total === 3){
+        if(aciertos === 3) return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/${total}).`, clase:"satisfactorio" };
+        if(aciertos === 2) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/${total}).`, clase:"aceptable" };
+        return { nivel:"Elemental", texto:`Elemental (${aciertos}/${total}).`, clase:"elemental" };
+      }
+      if(total === 6){
+        if(aciertos >= 5) return { nivel:"Satisfactorio", texto:`Satisfactorio (${aciertos}/${total}).`, clase:"satisfactorio" };
+        if(aciertos >= 3) return { nivel:"Aceptable", texto:`Aceptable (${aciertos}/${total}).`, clase:"aceptable" };
+        return { nivel:"Elemental", texto:`Elemental (${aciertos}/${total}).`, clase:"elemental" };
+      }
+      return { nivel:"Elemental", texto:`Elemental (${aciertos}/${total}).`, clase:"elemental" };
+    }
+
+    function obtenerClasificacionMatematica(resultados){
+      const satisfactorios = resultados.filter(r => r.nivel === "Satisfactorio").length;
+      if(satisfactorios >= 5) return { nombre:"Innovador", detalle:`${satisfactorios} indicador(es) en satisfactorio.`, clase:"satisfactorio" };
+      if(satisfactorios >= 3) return { nombre:"Creador", detalle:`${satisfactorios} indicador(es) en satisfactorio.`, clase:"aceptable" };
+      return { nombre:"Explorador", detalle:`${satisfactorios} indicador(es) en satisfactorio.`, clase:"elemental" };
+    }
+
+    function revisarPruebaMatematica(){
+      let total = 0;
+
+      let ind1 = 0;
+      ind1 += revisarRadio("ma1", "b", "r-ma1");
+      ind1 += revisarRadio("ma2", "a", "r-ma2");
+      ind1 += revisarRadio("ma3", "a", "r-ma3");
+      total += ind1;
+
+      let ind2 = 0;
+      ind2 += revisarRadio("ma4", "b", "r-ma4");
+      total += ind2;
+
+      let ind3 = 0;
+      ind3 += revisarRadio("ma5", "d", "r-ma5");
+      ind3 += revisarRadio("ma6", "a", "r-ma6");
+      total += ind3;
+
+      let ind4 = 0;
+      ind4 += revisarTexto("ma7", respuestasMatematica.ma7, "r-ma7");
+      total += ind4;
+
+      let ind5 = 0;
+      ind5 += revisarTexto("ma8", respuestasMatematica.ma8, "r-ma8");
+      ind5 += revisarTexto("ma9", respuestasMatematica.ma9, "r-ma9");
+      ind5 += revisarTexto("ma10", respuestasMatematica.ma10, "r-ma10");
+      total += ind5;
+
+      let ind6 = 0;
+      ind6 += revisarTexto("ma11", respuestasMatematica.ma11, "r-ma11");
+      ind6 += revisarTexto("ma12", respuestasMatematica.ma12, "r-ma12");
+      total += ind6;
+
+      const resultados = [
+        nivelMatematica(ind1, 3),
+        nivelMatematica(ind2, 1),
+        nivelMatematica(ind3, 2),
+        nivelMatematica(ind4, 1),
+        nivelMatematica(ind5, 3),
+        nivelMatematica(ind6, 2)
+      ];
+
+      mostrarNivel("maInd1", resultados[0]);
+      mostrarNivel("maInd2", resultados[1]);
+      mostrarNivel("maInd3", resultados[2]);
+      mostrarNivel("maInd4", resultados[3]);
+      mostrarNivel("maInd5", resultados[4]);
+      mostrarNivel("maInd6", resultados[5]);
+
+      const clasificacion = obtenerClasificacionMatematica(resultados);
+      const cg = document.getElementById("clasificacionGlobalMa");
+      cg.className = "linea-respuesta " + clasificacion.clase;
+      cg.textContent = clasificacion.nombre;
+      document.getElementById("detalleClasificacionMa").textContent = clasificacion.detalle;
+      document.getElementById("resultadoGlobalMatematica").textContent = `Puntuación: ${total} / 12`;
+
+      const cantidadSatisfactorios = resultados.filter(r => r.nivel === "Satisfactorio").length;
+
+      ultimoResultadoMatematica = {
+        tipoPrueba:"MATEMATICA",
+        idEstudiante:document.getElementById("idEstudianteMa").value,
+        nombreEstudiante:document.getElementById("nombreMa").value,
+        regional:document.getElementById("regionalMa").value,
+        distrito:document.getElementById("distritoMa").value,
+        centroSede:document.getElementById("centroMa").value,
+        indicador1:resultados[0].nivel,
+        indicador2:resultados[1].nivel,
+        indicador3:resultados[2].nivel,
+        indicador4:resultados[3].nivel,
+        indicador5:resultados[4].nivel,
+        indicador6:resultados[5].nivel,
+        cantidadSatisfactorios:cantidadSatisfactorios,
+        grupo:clasificacion.nombre,
+        puntuacionTotal:`${total}/12`,
+        observacion:""
+      };
+
+      guardarResultado(ultimoResultadoMatematica, function(respuesta){
+        mostrarModal((respuesta && respuesta.ok)
+          ? `Prueba de Matemática guardada correctamente. Grupo: ${clasificacion.nombre}.`
+          : `La prueba fue revisada, pero no se guardó. ${respuesta && respuesta.mensaje ? respuesta.mensaje : ""}`);
+      });
+    }
+
+    function mostrarModal(mensaje){
+      document.getElementById("mensajeModal").textContent = mensaje;
+      document.getElementById("modalFinal").classList.remove("oculto");
+    }
+
+    function cerrarModal(){
+      document.getElementById("modalFinal").classList.add("oculto");
+    }
+
+    function digitarOtraPrueba(){
+      cerrarModal();
+      volverInicio();
+      document.getElementById("inicioCentro").focus();
+    }
+
+    function digitarOtroEstudiante(){
+      cerrarModal();
+      reiniciarTodo();
+      volverInicio();
+      document.getElementById("inicioID").focus();
+    }
+
+    function reiniciarTodo(){
+      document.querySelectorAll("#moduloEvaluaciones input[type='text']").forEach(i => i.value = "");
+      document.querySelectorAll("#moduloEvaluaciones input[type='radio']").forEach(i => i.checked = false);
+      document.querySelectorAll("#moduloEvaluaciones .linea-respuesta").forEach(el => { el.className = "linea-respuesta neutra"; el.textContent = ""; });
+      document.getElementById("inicioCentro").innerHTML = '<option value="">Seleccione el centro sede</option>';
+      document.getElementById("resultadoGlobalLengua").textContent = "Puntuación: 0 / 21";
+      document.getElementById("resultadoGlobalMatematica").textContent = "Puntuación: 0 / 12";
+    }
+
+    function reiniciarLengua(){
+      document.querySelectorAll("#pantallaLengua input[type='text']").forEach(i => {
+        if(!["nombre","idEstudiante","regional","distrito","centro"].includes(i.id)) i.value = "";
+      });
+      document.querySelectorAll("#pantallaLengua input[type='radio']").forEach(i => i.checked = false);
+      document.querySelectorAll("#pantallaLengua .linea-respuesta").forEach(el => { el.className = "linea-respuesta neutra"; el.textContent = ""; });
+      document.getElementById("resultadoGlobalLengua").textContent = "Puntuación: 0 / 21";
+    }
+
+    function reiniciarMatematica(){
+      document.querySelectorAll("#pantallaMatematica input[type='text']").forEach(i => {
+        if(!["nombreMa","idEstudianteMa","regionalMa","distritoMa","centroMa"].includes(i.id)) i.value = "";
+      });
+      document.querySelectorAll("#pantallaMatematica input[type='radio']").forEach(i => i.checked = false);
+      document.querySelectorAll("#pantallaMatematica .linea-respuesta").forEach(el => { el.className = "linea-respuesta neutra"; el.textContent = ""; });
+      document.getElementById("resultadoGlobalMatematica").textContent = "Puntuación: 0 / 12";
+    }
+  
 
   // ═══════════════════════════════════════════════════════════════════════
   // SERVICE WORKER – Caché de recursos estáticos
