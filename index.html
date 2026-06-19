@@ -2615,7 +2615,7 @@
           <svg viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path><path d="M3 21v-1a5 5 0 0 1 5-5h2"></path><path d="M16 11h6"></path><path d="M19 8v6"></path></svg>
         </div>
         <h3>Inscripción de estudiantes</h3>
-        <p>Inscribe niños desde el catálogo por su ID</p>
+        <p>Inscribe o desinscribe estudiantes por su ID</p>
         <span class="modulo-flecha">›</span>
       </div>
     </div>
@@ -3400,13 +3400,13 @@
   <section id="moduloInscripcion" class="tarjeta oculto">
     <div class="encabezado-modulo">
       <div>
-        <h2>Inscripción de estudiantes</h2>
-        <p class="nota">Digite el ID del estudiante para buscarlo en el catálogo. Si existe, confirme el centro sede y complete la inscripción.</p>
+        <h2>Inscripción y desinscripción de estudiantes</h2>
+        <p class="nota">Digite el ID del estudiante para buscarlo. Si no está inscrito, podrá inscribirlo. Si ya está inscrito, podrá desinscribirlo según su rol y alcance.</p>
       </div>
     </div>
 
     <div class="bloque-formulario">
-      <h3>Buscar en el catálogo</h3>
+      <h3>Buscar estudiante</h3>
       <div class="form-grid-3">
         <div>
           <label for="inscID">ID del estudiante</label>
@@ -3446,6 +3446,18 @@
           <label for="inscSexo">Sexo</label>
           <input type="text" id="inscSexo" readonly>
         </div>
+        <div>
+          <label for="inscCentroActual">Centro sede actual</label>
+          <input type="text" id="inscCentroActual" readonly>
+        </div>
+        <div>
+          <label for="inscEstadoActual">Estado de inscripción</label>
+          <input type="text" id="inscEstadoActual" readonly>
+        </div>
+        <div>
+          <label for="inscGrupoActual">Grupo actual</label>
+          <input type="text" id="inscGrupoActual" readonly>
+        </div>
       </div>
 
       <h3 style="margin-top:18px;">Centro sede de inscripción</h3>
@@ -3461,6 +3473,7 @@
 
       <div class="acciones-asignacion" style="margin-top:18px;">
         <button type="button" id="btnConfirmarInscripcion" onclick="confirmarInscripcion()">Confirmar inscripción</button>
+        <button type="button" id="btnDesinscribirEstudiante" class="btn-peligro oculto" onclick="confirmarDesinscripcionEstudiante()">Desinscribir estudiante</button>
         <button type="button" class="btn-secundario" onclick="limpiarInscripcion()">Limpiar</button>
         <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
       </div>
@@ -4206,7 +4219,7 @@
     moduloAsignacionEstudiantesGrupos: "Asignación de estudiantes",
     moduloGestionUsuarios: "Gestión de usuarios",
     moduloGestionSedes: "Gestión de sedes",
-    moduloInscripcion: "Inscripción de estudiantes",
+    moduloInscripcion: "Inscripción y desinscripción de estudiantes",
     moduloEvaluaciones: "Evaluaciones"
   };
 
@@ -4907,7 +4920,7 @@
       else tileEstudiantes.classList.add("oculto");
     }
 
-    // Inscripción: Administrador (real o en vista) y Técnico regional.
+    // Inscripción/desinscripción: Administrador, Técnico regional y Coordinador de sede.
     // Se basa en el rol real para que el administrador no pierda el acceso
     // al asumir vistas de coordinador o facilitador.
     const tileInscripcion = document.getElementById("tileInscripcion");
@@ -4915,8 +4928,9 @@
       const rolVista = normalizarTexto(usuario && usuario.rol).toLowerCase();
       const rolReal = normalizarRol(usuarioSesion && usuarioSesion.rol);
       const puedeInscribir = esAdministradorReal() ||
-        rolReal === "tecnico regional" ||
-        rolVista === "administrador" || rolVista === "técnico regional" || rolVista === "tecnico regional";
+        rolReal === "tecnico regional" || rolReal === "coordinador sede" ||
+        rolVista === "administrador" || rolVista === "técnico regional" || rolVista === "tecnico regional" ||
+        rolVista === "coordinador sede";
       if (puedeInscribir) tileInscripcion.classList.remove("oculto");
       else tileInscripcion.classList.add("oculto");
     }
@@ -9547,17 +9561,17 @@
 
   /* ============================ MÓDULO INSCRIPCIÓN ======================== */
 
-  // Solo Administrador y Técnico regional.
+  // Administrador, Técnico regional y Coordinador de sede pueden gestionar inscripción/desinscripción.
   function puedeInscribirEstudiantes() {
     const rol = normalizarRol(usuarioSesion && usuarioSesion.rol);
-    return rol === "administrador" || rol === "tecnico regional";
+    return rol === "administrador" || rol === "tecnico regional" || rol === "coordinador sede";
   }
 
   let sedesInscripcion = [];
 
   function abrirModuloInscripcion() {
     if (!puedeInscribirEstudiantes()) {
-      alert("Este módulo solo está disponible para el Administrador y el Técnico regional.");
+      alert("Este módulo solo está disponible para el Administrador, el Técnico regional y el Coordinador de sede.");
       return;
     }
     mostrarModulo("moduloInscripcion");
@@ -9565,8 +9579,8 @@
     cargarSedesInscripcion();
   }
 
-  // Carga las sedes permitidas del usuario (el técnico regional solo verá las
-  // de su regional; el administrador, todas) para el selector de centro sede.
+  // Carga las sedes permitidas del usuario: administrador ve todas; técnico regional ve su regional;
+  // coordinador de sede ve su propia sede.
   function cargarSedesInscripcion() {
     const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
     llamarBackend(
@@ -9636,27 +9650,38 @@
           return;
         }
 
-        const e = resp.estudiante;
-        document.getElementById("inscNombre").value = e.nombre || "";
-        document.getElementById("inscGrado").value = e.grado || "";
-        document.getElementById("inscRegional").value = e.regional || "";
-        document.getElementById("inscDistrito").value = e.distrito || "";
+        const e = resp.estudiante || {};
+        const inscrito = resp.inscripcion || {};
+        document.getElementById("inscNombre").value = e.nombre || inscrito.nombre || "";
+        document.getElementById("inscGrado").value = e.grado || inscrito.grado || "";
+        document.getElementById("inscRegional").value = e.regional || inscrito.regional || "";
+        document.getElementById("inscDistrito").value = e.distrito || inscrito.distrito || "";
         document.getElementById("inscNacionalidad").value = e.nacionalidad || "";
         document.getElementById("inscSexo").value = e.sexo || "";
+        document.getElementById("inscCentroActual").value = inscrito.centroSede || "";
+        document.getElementById("inscEstadoActual").value = inscrito.estado || (resp.yaInscrito ? "Activo" : "No inscrito");
+        document.getElementById("inscGrupoActual").value = inscrito.grupo || "";
 
-        // El catálogo no trae centro sede: el técnico la elige entre las de su regional.
-        poblarSelectSedesInscripcion(e.regional);
+        // El catálogo no trae centro sede: se elige entre las sedes permitidas del usuario.
+        poblarSelectSedesInscripcion(e.regional || inscrito.regional || "");
+        if (inscrito.centroSede) asegurarOpcionSedeInscripcion(inscrito.centroSede);
 
         bloqueDatos.classList.remove("oculto");
 
-        if (resp.yaInscrito) {
-          mensaje.className = "mensaje error";
-          mensaje.textContent = "Atención: este estudiante YA está inscrito. No se puede inscribir de nuevo.";
-          document.getElementById("btnConfirmarInscripcion").disabled = true;
+        const btnInscribir = document.getElementById("btnConfirmarInscripcion");
+        const btnDesinscribir = document.getElementById("btnDesinscribirEstudiante");
+        if (resp.yaInscrito && (inscrito.estado || "Activo") === "Activo") {
+          mensaje.className = "mensaje ok";
+          mensaje.textContent = "Este estudiante está inscrito. Puede desinscribirlo si corresponde a su alcance.";
+          btnInscribir.disabled = true;
+          btnDesinscribir.classList.remove("oculto");
+          btnDesinscribir.disabled = false;
         } else {
           mensaje.className = "mensaje ok";
           mensaje.textContent = "Estudiante encontrado. Confirme el centro sede y complete la inscripción.";
-          document.getElementById("btnConfirmarInscripcion").disabled = false;
+          btnInscribir.disabled = false;
+          btnDesinscribir.classList.add("oculto");
+          btnDesinscribir.disabled = true;
         }
       },
       function() {
@@ -9727,8 +9752,57 @@
     );
   }
 
+  function confirmarDesinscripcionEstudiante() {
+    const id = document.getElementById("inscID").value.trim();
+    const mensaje = document.getElementById("mensajeInscripcion");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "";
+
+    if (!id) {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "Debe buscar un estudiante primero.";
+      return;
+    }
+
+    const observacion = prompt("Motivo u observación de la desinscripción (opcional):", "Desinscripción registrada desde la plataforma");
+    if (observacion === null) return;
+
+    if (!confirm("¿Está seguro de desinscribir este estudiante? Dejará de aparecer como activo en asistencia, asignación y demás listados operativos.")) {
+      return;
+    }
+
+    const boton = document.getElementById("btnDesinscribirEstudiante");
+    boton.disabled = true;
+    mensaje.textContent = "Desinscribiendo estudiante...";
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+    const payload = { cedula: cedula, idEstudiante: id, observacion: observacion || "" };
+
+    llamarBackend(
+      { accion: "desinscribirEstudiante", payload: JSON.stringify(payload) },
+      function(resp) {
+        if (resp && resp.ok) {
+          mensaje.className = "mensaje ok";
+          mensaje.textContent = resp.mensaje || "Estudiante desinscrito correctamente.";
+          limpiarInscripcion();
+          document.getElementById("inscID").value = id;
+        } else {
+          boton.disabled = false;
+          mensaje.className = "mensaje error";
+          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo desinscribir el estudiante.";
+        }
+      },
+      function() {
+        boton.disabled = false;
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo desinscribir. Verifique la conexión.";
+      },
+      { timeout: 14000 }
+    );
+  }
+
   function limpiarInscripcion() {
-    const ids = ["inscID","inscNombre","inscGrado","inscRegional","inscDistrito","inscNacionalidad","inscSexo"];
+    const ids = ["inscID","inscNombre","inscGrado","inscRegional","inscDistrito","inscNacionalidad","inscSexo","inscCentroActual","inscEstadoActual","inscGrupoActual"];
     ids.forEach(function(x){ const el = document.getElementById(x); if (el) el.value = ""; });
     const sel = document.getElementById("inscCentro");
     if (sel) sel.innerHTML = '<option value="">Seleccione el centro sede</option>';
@@ -9739,6 +9813,8 @@
     });
     const btn = document.getElementById("btnConfirmarInscripcion");
     if (btn) btn.disabled = false;
+    const btnDes = document.getElementById("btnDesinscribirEstudiante");
+    if (btnDes) { btnDes.disabled = true; btnDes.classList.add("oculto"); }
   }
 
   function cargarSedesGestionUsuarios(callback) {
