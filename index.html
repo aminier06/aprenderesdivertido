@@ -2710,6 +2710,33 @@
       <div id="mensajeUsuarioAdmin" class="mensaje"></div>
     </div>
 
+
+    <div class="bloque-formulario">
+      <h3>Carga masiva de usuarios</h3>
+      <p class="nota">Permite crear o actualizar usuarios desde un archivo CSV. El grupo no se carga en esta plantilla, porque se asigna posteriormente desde el módulo correspondiente.</p>
+
+      <div class="form-grid-3">
+        <div>
+          <label for="archivoCargaUsuarios">Archivo CSV de usuarios</label>
+          <input type="file" id="archivoCargaUsuarios" accept=".csv,text/csv">
+          <div class="ayuda-formulario">Use la plantilla oficial y conserve los encabezados.</div>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" class="btn-secundario" onclick="descargarPlantillaUsuariosCSV()">Descargar plantilla usuarios</button>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" onclick="cargarMasivaUsuariosAdmin()">Cargar usuarios</button>
+        </div>
+      </div>
+
+      <div class="ayuda-formulario">
+        Columnas esperadas: <strong>Cedula, Nombre, Rol, Regional, Distrito, CentroSede, Estado, Password</strong>.
+        Si la contraseña queda vacía en un usuario nuevo, se usará la cédula como contraseña inicial.
+      </div>
+      <div id="mensajeCargaUsuariosAdmin" class="mensaje"></div>
+      <div id="detalleCargaUsuariosAdmin" class="nota"></div>
+    </div>
+
     <div class="usuarios-admin-toolbar">
       <div class="campo-busqueda">
         <label for="filtroUsuariosAdmin">Buscar usuarios</label>
@@ -3419,6 +3446,33 @@
       <div id="mensajeBusquedaInscripcion" class="mensaje"></div>
     </div>
 
+
+    <div class="bloque-formulario">
+      <h3>Carga masiva de estudiantes</h3>
+      <p class="nota">Permite inscribir estudiantes de forma masiva. No se solicita centro sede; ese dato se completará cuando se registre la evaluación del estudiante.</p>
+
+      <div class="form-grid-3">
+        <div>
+          <label for="archivoCargaEstudiantes">Archivo CSV de estudiantes</label>
+          <input type="file" id="archivoCargaEstudiantes" accept=".csv,text/csv">
+          <div class="ayuda-formulario">Si el estudiante existe en el catálogo, basta con colocar su ID. Si no existe, complete los demás datos.</div>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" class="btn-secundario" onclick="descargarPlantillaEstudiantesCSV()">Descargar plantilla estudiantes</button>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" onclick="cargarMasivaEstudiantes()">Cargar estudiantes</button>
+        </div>
+      </div>
+
+      <div class="ayuda-formulario">
+        Columnas esperadas: <strong>IdEstudiante, NombreCompleto, Regional, Distrito, Grado, Nacionalidad, Sexo</strong>.
+        El campo <strong>CentroSede</strong> no se incluye en la plantilla.
+      </div>
+      <div id="mensajeCargaEstudiantes" class="mensaje"></div>
+      <div id="detalleCargaEstudiantes" class="nota"></div>
+    </div>
+
     <div id="bloqueDatosInscripcion" class="bloque-formulario oculto">
       <h3>Datos del estudiante</h3>
       <div class="form-grid-3">
@@ -3460,15 +3514,8 @@
         </div>
       </div>
 
-      <h3 style="margin-top:18px;">Centro sede de inscripción</h3>
-      <p class="nota">Elija el centro sede donde quedará inscrito el estudiante.</p>
-      <div class="form-grid-3">
-        <div>
-          <label for="inscCentro">Centro sede</label>
-          <select id="inscCentro">
-            <option value="">Seleccione el centro sede</option>
-          </select>
-        </div>
+      <div class="alerta-asignacion" style="margin-top:18px;">
+        <strong>Nota:</strong> en la inscripción no se selecciona centro sede. El centro sede del estudiante se completará posteriormente cuando el facilitador registre la evaluación y seleccione la sede correspondiente.
       </div>
 
       <div class="acciones-asignacion" style="margin-top:18px;">
@@ -9662,9 +9709,8 @@
         document.getElementById("inscEstadoActual").value = inscrito.estado || (resp.yaInscrito ? "Activo" : "No inscrito");
         document.getElementById("inscGrupoActual").value = inscrito.grupo || "";
 
-        // El catálogo no trae centro sede: se elige entre las sedes permitidas del usuario.
-        poblarSelectSedesInscripcion(e.regional || inscrito.regional || "");
-        if (inscrito.centroSede) asegurarOpcionSedeInscripcion(inscrito.centroSede);
+        // En la inscripción no se solicita centro sede.
+        // El CentroSede se completará cuando el facilitador registre la evaluación.
 
         bloqueDatos.classList.remove("oculto");
 
@@ -9678,7 +9724,7 @@
           btnDesinscribir.disabled = false;
         } else {
           mensaje.className = "mensaje ok";
-          mensaje.textContent = "Estudiante encontrado. Confirme el centro sede y complete la inscripción.";
+          mensaje.textContent = "Estudiante encontrado. Puede completar la inscripción. El centro sede se asignará al registrar la evaluación.";
           btnInscribir.disabled = false;
           btnDesinscribir.classList.add("oculto");
           btnDesinscribir.disabled = true;
@@ -9713,20 +9759,18 @@
 
   function confirmarInscripcion() {
     const id = document.getElementById("inscID").value.trim();
-    const centro = document.getElementById("inscCentro").value.trim();
     const mensaje = document.getElementById("mensajeInscripcion");
     mensaje.className = "mensaje";
     mensaje.textContent = "";
 
     if (!id) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe buscar un estudiante primero."; return; }
-    if (!centro) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe seleccionar el centro sede."; return; }
 
     const boton = document.getElementById("btnConfirmarInscripcion");
     boton.disabled = true;
     mensaje.textContent = "Inscribiendo...";
 
     const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
-    const payload = { cedula: cedula, idEstudiante: id, centroSede: centro };
+    const payload = { cedula: cedula, idEstudiante: id };
 
     llamarBackend(
       { accion: "inscribirEstudiante", payload: JSON.stringify(payload) },
@@ -9804,8 +9848,7 @@
   function limpiarInscripcion() {
     const ids = ["inscID","inscNombre","inscGrado","inscRegional","inscDistrito","inscNacionalidad","inscSexo","inscCentroActual","inscEstadoActual","inscGrupoActual"];
     ids.forEach(function(x){ const el = document.getElementById(x); if (el) el.value = ""; });
-    const sel = document.getElementById("inscCentro");
-    if (sel) sel.innerHTML = '<option value="">Seleccione el centro sede</option>';
+    // No hay selector de centro sede en inscripción; se asigna desde Evaluaciones.
     const bd = document.getElementById("bloqueDatosInscripcion");
     if (bd) bd.classList.add("oculto");
     ["mensajeBusquedaInscripcion","mensajeInscripcion"].forEach(function(x){
@@ -10990,6 +11033,316 @@ const respuestasTexto = {
       });
     });
   }
+
+  // ═══ CARGA MASIVA DE USUARIOS Y ESTUDIANTES ═══════════════════════════════
+
+  function csvEscaparValor(valor) {
+    const s = String(valor == null ? "" : valor);
+    if (/[",\n\r;]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function descargarCsv(nombreArchivo, encabezados, filas) {
+    const lineas = [];
+    lineas.push(encabezados.map(csvEscaparValor).join(","));
+    (filas || []).forEach(function(fila) {
+      lineas.push(encabezados.map(function(h) { return csvEscaparValor(fila[h] || ""); }).join(","));
+    });
+    const contenido = "\ufeff" + lineas.join("\r\n");
+    const blob = new Blob([contenido], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  function descargarPlantillaUsuariosCSV() {
+    descargarCsv("plantilla_carga_usuarios.csv",
+      ["Cedula","Nombre","Rol","Regional","Distrito","CentroSede","Estado","Password"],
+      [
+        {
+          Cedula: "00100000001",
+          Nombre: "María Pérez",
+          Rol: "Facilitador",
+          Regional: "01 - BARAHONA",
+          Distrito: "0101 - PEDERNALES",
+          CentroSede: "02334 - HERNANDO GORJON",
+          Estado: "Activo",
+          Password: ""
+        },
+        {
+          Cedula: "00100000002",
+          Nombre: "Juan Gómez",
+          Rol: "Técnico regional",
+          Regional: "01 - BARAHONA",
+          Distrito: "",
+          CentroSede: "",
+          Estado: "Activo",
+          Password: ""
+        }
+      ]
+    );
+  }
+
+  function descargarPlantillaEstudiantesCSV() {
+    descargarCsv("plantilla_carga_estudiantes.csv",
+      ["IdEstudiante","NombreCompleto","Regional","Distrito","Grado","Nacionalidad","Sexo"],
+      [
+        {
+          IdEstudiante: "33578410",
+          NombreCompleto: "",
+          Regional: "",
+          Distrito: "",
+          Grado: "",
+          Nacionalidad: "",
+          Sexo: ""
+        },
+        {
+          IdEstudiante: "33578411",
+          NombreCompleto: "Ana Rodríguez",
+          Regional: "01 - BARAHONA",
+          Distrito: "0101 - PEDERNALES",
+          Grado: "3-Tercero",
+          Nacionalidad: "DOMINICANA",
+          Sexo: "F"
+        }
+      ]
+    );
+  }
+
+  function parsearCsvCargaMasiva(texto) {
+    const filas = [];
+    let fila = [];
+    let campo = "";
+    let dentroComillas = false;
+
+    texto = String(texto || "").replace(/^\ufeff/, "");
+
+    for (let i = 0; i < texto.length; i++) {
+      const c = texto[i];
+      const sig = texto[i + 1];
+
+      if (c === '"') {
+        if (dentroComillas && sig === '"') {
+          campo += '"';
+          i++;
+        } else {
+          dentroComillas = !dentroComillas;
+        }
+      } else if ((c === "," || c === ";") && !dentroComillas) {
+        fila.push(campo);
+        campo = "";
+      } else if ((c === "\n" || c === "\r") && !dentroComillas) {
+        if (c === "\r" && sig === "\n") i++;
+        fila.push(campo);
+        if (fila.some(function(v) { return String(v || "").trim() !== ""; })) filas.push(fila);
+        fila = [];
+        campo = "";
+      } else {
+        campo += c;
+      }
+    }
+
+    fila.push(campo);
+    if (fila.some(function(v) { return String(v || "").trim() !== ""; })) filas.push(fila);
+
+    if (!filas.length) return [];
+    const encabezados = filas[0].map(normalizarEncabezadoCarga);
+    return filas.slice(1).map(function(cols) {
+      const obj = {};
+      encabezados.forEach(function(h, idx) {
+        obj[h] = String(cols[idx] == null ? "" : cols[idx]).trim();
+      });
+      return obj;
+    }).filter(function(obj) {
+      return Object.keys(obj).some(function(k) { return String(obj[k] || "").trim() !== ""; });
+    });
+  }
+
+  function normalizarEncabezadoCarga(texto) {
+    return String(texto || "")
+      .trim()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function valorCarga(fila, aliases) {
+    for (let i = 0; i < aliases.length; i++) {
+      const clave = normalizarEncabezadoCarga(aliases[i]);
+      if (Object.prototype.hasOwnProperty.call(fila, clave)) {
+        return String(fila[clave] == null ? "" : fila[clave]).trim();
+      }
+    }
+    return "";
+  }
+
+  function leerArchivoCsv(inputId, callback, mensajeId) {
+    const input = document.getElementById(inputId);
+    const mensaje = mensajeId ? document.getElementById(mensajeId) : null;
+    if (!input || !input.files || !input.files.length) {
+      if (mensaje) { mensaje.textContent = "Debe seleccionar un archivo CSV."; mensaje.className = "mensaje error"; }
+      return;
+    }
+
+    const archivo = input.files[0];
+    const lector = new FileReader();
+    lector.onload = function(e) {
+      try {
+        const filas = parsearCsvCargaMasiva(e.target.result || "");
+        callback(filas);
+      } catch (err) {
+        if (mensaje) {
+          mensaje.textContent = "No se pudo leer el archivo CSV: " + (err && err.message ? err.message : err);
+          mensaje.className = "mensaje error";
+        }
+      }
+    };
+    lector.onerror = function() {
+      if (mensaje) { mensaje.textContent = "No se pudo leer el archivo."; mensaje.className = "mensaje error"; }
+    };
+    lector.readAsText(archivo, "UTF-8");
+  }
+
+  function mostrarResultadoCargaMasiva(resp, mensajeId, detalleId) {
+    const mensaje = document.getElementById(mensajeId);
+    const detalle = document.getElementById(detalleId);
+    const okParcial = resp && (resp.ok || Number(resp.creados || 0) + Number(resp.actualizados || 0) + Number(resp.inscritos || 0) + Number(resp.reinscritos || 0) > 0);
+
+    if (mensaje) {
+      mensaje.className = okParcial ? "mensaje ok" : "mensaje error";
+      mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo completar la carga masiva.";
+    }
+
+    if (detalle) {
+      const errores = (resp && Array.isArray(resp.errores)) ? resp.errores : [];
+      let html = "";
+      if (resp) {
+        html += "Procesados: " + (resp.procesados || 0) +
+          ". Creados/inscritos: " + ((resp.creados || 0) + (resp.inscritos || 0)) +
+          ". Actualizados/reinscritos: " + ((resp.actualizados || 0) + (resp.reinscritos || 0)) +
+          ". Omitidos: " + (resp.omitidos || 0) +
+          ". Errores: " + errores.length + ".";
+      }
+      if (errores.length) {
+        html += "<br><strong>Primeros errores:</strong><br>";
+        html += errores.slice(0, 10).map(function(e) {
+          return "Fila " + escapeHtml(e.fila || "") + ": " + escapeHtml(e.mensaje || "");
+        }).join("<br>");
+        if (errores.length > 10) html += "<br>... y " + (errores.length - 10) + " error(es) más.";
+      }
+      detalle.innerHTML = html;
+    }
+  }
+
+  function cargarMasivaUsuariosAdmin() {
+    if (!esAdministradorReal()) return;
+    const mensaje = document.getElementById("mensajeCargaUsuariosAdmin");
+    const detalle = document.getElementById("detalleCargaUsuariosAdmin");
+    if (mensaje) { mensaje.textContent = "Leyendo archivo..."; mensaje.className = "mensaje"; }
+    if (detalle) detalle.innerHTML = "";
+
+    leerArchivoCsv("archivoCargaUsuarios", function(filasCrudas) {
+      const usuarios = filasCrudas.map(function(f) {
+        return {
+          cedula: valorCarga(f, ["Cedula", "Cédula"]),
+          nombre: valorCarga(f, ["Nombre", "NombreCompleto", "Nombre completo"]),
+          rol: valorCarga(f, ["Rol"]),
+          regional: valorCarga(f, ["Regional"]),
+          distrito: valorCarga(f, ["Distrito"]),
+          centroSede: valorCarga(f, ["CentroSede", "Centro sede"]),
+          estado: valorCarga(f, ["Estado"]) || "Activo",
+          password: valorCarga(f, ["Password", "Contraseña", "Contrasena"])
+        };
+      }).filter(function(u) {
+        return u.cedula || u.nombre || u.rol;
+      });
+
+      if (!usuarios.length) {
+        if (mensaje) { mensaje.textContent = "El archivo no contiene usuarios para cargar."; mensaje.className = "mensaje error"; }
+        return;
+      }
+
+      if (!confirm("Se procesarán " + usuarios.length + " usuario(s). ¿Desea continuar?")) {
+        if (mensaje) { mensaje.textContent = "Carga cancelada."; mensaje.className = "mensaje"; }
+        return;
+      }
+
+      if (mensaje) { mensaje.textContent = "Procesando carga masiva de usuarios..."; mensaje.className = "mensaje"; }
+
+      llamarBackendPost(
+        {
+          accion: "cargaMasivaUsuarios",
+          payload: JSON.stringify({
+            cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+            usuarios: usuarios
+          })
+        },
+        function(resp) {
+          mostrarResultadoCargaMasiva(resp, "mensajeCargaUsuariosAdmin", "detalleCargaUsuariosAdmin");
+          if (resp && (resp.ok || resp.creados || resp.actualizados)) listarUsuariosAdmin();
+        },
+        { timeout: 90000 }
+      );
+    }, "mensajeCargaUsuariosAdmin");
+  }
+
+  function cargarMasivaEstudiantes() {
+    const mensaje = document.getElementById("mensajeCargaEstudiantes");
+    const detalle = document.getElementById("detalleCargaEstudiantes");
+    if (mensaje) { mensaje.textContent = "Leyendo archivo..."; mensaje.className = "mensaje"; }
+    if (detalle) detalle.innerHTML = "";
+
+    leerArchivoCsv("archivoCargaEstudiantes", function(filasCrudas) {
+      const estudiantes = filasCrudas.map(function(f) {
+        return {
+          idEstudiante: valorCarga(f, ["IdEstudiante", "ID estudiante", "Id estudiante", "ID"]),
+          nombreCompleto: valorCarga(f, ["NombreCompleto", "Nombre completo", "Nombre"]),
+          regional: valorCarga(f, ["Regional"]),
+          distrito: valorCarga(f, ["Distrito"]),
+          grado: valorCarga(f, ["Grado"]),
+          nacionalidad: valorCarga(f, ["Nacionalidad"]),
+          sexo: valorCarga(f, ["Sexo"])
+        };
+      }).filter(function(e) {
+        return e.idEstudiante || e.nombreCompleto;
+      });
+
+      if (!estudiantes.length) {
+        if (mensaje) { mensaje.textContent = "El archivo no contiene estudiantes para cargar."; mensaje.className = "mensaje error"; }
+        return;
+      }
+
+      if (!confirm("Se procesarán " + estudiantes.length + " estudiante(s). No se cargará centro sede. ¿Desea continuar?")) {
+        if (mensaje) { mensaje.textContent = "Carga cancelada."; mensaje.className = "mensaje"; }
+        return;
+      }
+
+      if (mensaje) { mensaje.textContent = "Procesando carga masiva de estudiantes..."; mensaje.className = "mensaje"; }
+
+      llamarBackendPost(
+        {
+          accion: "cargaMasivaEstudiantes",
+          payload: JSON.stringify({
+            cedula: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+            estudiantes: estudiantes
+          })
+        },
+        function(resp) {
+          mostrarResultadoCargaMasiva(resp, "mensajeCargaEstudiantes", "detalleCargaEstudiantes");
+        },
+        { timeout: 90000 }
+      );
+    }, "mensajeCargaEstudiantes");
+  }
+
+
 </script>
 
 </body>
