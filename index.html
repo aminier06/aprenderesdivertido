@@ -2683,18 +2683,11 @@
 
       <div class="form-grid-3">
         <div>
-          <label for="usuarioAdminGrupo">Grupo</label>
-          <select id="usuarioAdminGrupo">
-            <option value="">Todos</option>
-            <option value="Grupo 1">Grupo 1</option>
-            <option value="Grupo 2">Grupo 2</option>
-            <option value="Grupo 3">Grupo 3</option>
-            <option value="Grupo 4">Grupo 4</option>
-            <option value="Grupo 5">Grupo 5</option>
-            <option value="Grupo 6">Grupo 6</option>
-            <option value="Grupo 7">Grupo 7</option>
-            <option value="Grupo 8">Grupo 8</option>
+          <label for="usuarioAdminGrupo">Grupo asignado</label>
+          <select id="usuarioAdminGrupo" disabled>
+            <option value="">Se asignará posteriormente</option>
           </select>
+          <div class="ayuda-formulario">El grupo no se selecciona al crear el usuario; se asigna luego desde el módulo correspondiente.</div>
         </div>
         <div>
           <label for="usuarioAdminEstado">Estado</label>
@@ -9851,17 +9844,20 @@
     const requiereRegional = rol === "Técnico regional" || rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
     const requiereDistrito = rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
     const requiereSede = rol === "Coordinador sede" || rol === "Facilitador";
-    const requiereGrupo = rol === "Facilitador";
+    // El grupo no se asigna al crear el usuario; queda como dato operativo
+    // posterior, administrado desde el módulo de asignación de grupos.
 
     if (regional) regional.disabled = !requiereRegional;
     if (distrito) distrito.disabled = !requiereDistrito;
     if (sede) sede.disabled = !requiereSede;
-    if (grupo) grupo.disabled = !requiereGrupo;
+    if (grupo) {
+      grupo.disabled = true;
+      grupo.title = "El grupo se asigna posteriormente desde el módulo de asignación.";
+    }
 
     if (!requiereRegional && regional) regional.value = "";
     if (!requiereDistrito && distrito) distrito.value = "";
     if (!requiereSede && sede) sede.value = "";
-    if (!requiereGrupo && grupo) grupo.value = "";
   }
 
   function listarUsuariosAdmin() {
@@ -9995,7 +9991,9 @@
       document.getElementById("usuarioAdminDistrito").value = u.distrito || "";
       cargarSedesUsuarioAdmin();
       document.getElementById("usuarioAdminCentroSede").value = u.centroSede || "";
-      document.getElementById("usuarioAdminGrupo").value = u.grupo || "";
+      const selectGrupoUsuario = document.getElementById("usuarioAdminGrupo");
+      asegurarOpcionGrupo(selectGrupoUsuario, u.grupo || "");
+      if (selectGrupoUsuario) selectGrupoUsuario.value = u.grupo || "";
       actualizarAlcanceFormularioUsuarioAdmin();
     });
 
@@ -10046,12 +10044,10 @@
     const requiereRegional = p.rol === "Técnico regional" || p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
     const requiereDistrito = p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
     const requiereSede = p.rol === "Coordinador sede" || p.rol === "Facilitador";
-    const requiereGrupo = p.rol === "Facilitador";
 
     if (requiereRegional && !p.regional) return "Para este rol debe seleccionar una regional.";
     if (requiereDistrito && !p.distrito) return "Para este rol debe seleccionar un distrito.";
     if (requiereSede && !p.centroSede) return "Para este rol debe seleccionar un centro sede.";
-    if (requiereGrupo && !p.grupo) return "Para el rol Facilitador debe seleccionar un grupo.";
     if (p.password && p.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
     return "";
   }
