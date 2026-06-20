@@ -3405,6 +3405,18 @@
 
     <div id="resumenAsignacionEstudiantesGrupos" class="resumen-asignacion"></div>
     <div id="alertaAsignacionEstudiantesGrupos" class="alerta-asignacion oculto"></div>
+    <div class="bloque-formulario">
+      <h3>Listado de estudiantes</h3>
+      <div class="form-grid-3">
+        <div>
+          <label for="busquedaAsignacionEstudiantes">Buscar estudiantes</label>
+          <input type="search" id="busquedaAsignacionEstudiantes" placeholder="Nombre, regional, distrito, sede o grado" oninput="sincronizarBorradorAsignacionEstudiantes(); renderizarModuloAsignacionEstudiantesGrupos()">
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" class="btn-secundario" onclick="exportarEstudiantesAsignacionExcel()">Exportar a Excel</button>
+        </div>
+      </div>
+    </div>
     <div id="tablaAsignacionEstudiantesGrupos" class="tabla-contenedor tabla-asignacion oculto"></div>
 
     <div class="acciones-asignacion">
@@ -4495,6 +4507,7 @@
   let datosAsignacionEstudiantesGrupos = null;
   let filtrosAsignacionGrupos = { regional: "", distrito: "", centroSede: "" };
   let filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
+  let borradorAsignacionEstudiantes = {};
   // Mapa de nombre semántico → nombre del backend para traducir al guardar
   let mapaGrupoSemanticoABackend = {};
   // Mapa de nombre del backend → nombre semántico para mostrar al usuario
@@ -8937,6 +8950,7 @@
     mostrarModulo("moduloAsignacionEstudiantesGrupos");
 
     datosAsignacionEstudiantesGrupos = null;
+    borradorAsignacionEstudiantes = {};
 
     // Si hay una vista simulada activa, inicializar los filtros con su alcance
     if (esAdministradorReal() && localStorage.getItem("usuarioCampamentoVista")) {
@@ -8958,6 +8972,8 @@
     document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
     document.getElementById("mensajeAsignacionEstudiantesGrupos").textContent = "";
     document.getElementById("mensajeAsignacionEstudiantesGrupos").className = "mensaje";
+    const busquedaEstudiantes = document.getElementById("busquedaAsignacionEstudiantes");
+    if (busquedaEstudiantes) busquedaEstudiantes.value = "";
 
     cargarEstudiantesAsignacionGrupos();
   }
@@ -8971,6 +8987,7 @@
       const mensaje = document.getElementById("mensajeAsignacionEstudiantesGrupos");
       if (respuesta.ok) {
         datosAsignacionEstudiantesGrupos = respuesta;
+        borradorAsignacionEstudiantes = {};
         if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
         renderizarModuloAsignacionEstudiantesGrupos();
       } else {
@@ -9004,6 +9021,127 @@
     document.body.appendChild(script);
   }
 
+  function obtenerBusquedaAsignacionEstudiantes() {
+    const input = document.getElementById("busquedaAsignacionEstudiantes");
+    return input ? normalizarTexto(input.value || "") : "";
+  }
+
+  function estudianteCoincideBusquedaAsignacion(estudiante, busqueda) {
+    if (!busqueda) return true;
+    const texto = [
+      estudiante.nombre,
+      estudiante.regional,
+      estudiante.distrito,
+      estudiante.centroSede,
+      estudiante.grado
+    ].map(function(valor) { return normalizarTexto(valor); }).join(" ");
+    return normalizarTexto(texto).toLowerCase().indexOf(busqueda.toLowerCase()) !== -1;
+  }
+
+  function filtrarEstudiantesAsignacion(estudiantes) {
+    const busqueda = obtenerBusquedaAsignacionEstudiantes();
+    return (estudiantes || []).filter(function(estudiante) {
+      return estudianteCoincideBusquedaAsignacion(estudiante, busqueda);
+    });
+  }
+
+  function sincronizarBorradorAsignacionEstudiantes() {
+    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+      borradorAsignacionEstudiantes[normalizarTexto(select.dataset.id)] = normalizarTexto(select.value);
+    });
+  }
+
+  function obtenerAsignacionesEstudiantesActuales() {
+    sincronizarBorradorAsignacionEstudiantes();
+    const estudiantes = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantes) || [];
+    const valoresVisibles = {};
+    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+      valoresVisibles[normalizarTexto(select.dataset.id)] = normalizarTexto(select.value);
+    });
+
+    return estudiantes.map(function(estudiante) {
+      const id = normalizarTexto(estudiante.idEstudiante);
+      return {
+        idEstudiante: id,
+        grupo: Object.prototype.hasOwnProperty.call(valoresVisibles, id)
+          ? valoresVisibles[id]
+          : Object.prototype.hasOwnProperty.call(borradorAsignacionEstudiantes, id)
+          ? borradorAsignacionEstudiantes[id]
+          : normalizarTexto(estudiante.grupo),
+        estudiante: estudiante
+      };
+    });
+  }
+
+  function filasEstudiantesAsignacionExportar() {
+    const estudiantes = filtrarEstudiantesAsignacion((datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantes) || []);
+    const asignaciones = {};
+    obtenerAsignacionesEstudiantesActuales().forEach(function(item) {
+      asignaciones[normalizarTexto(item.idEstudiante)] = item.grupo;
+    });
+
+    return estudiantes.map(function(e) {
+      return {
+        Regional: e.regional || "",
+        Distrito: e.distrito || "",
+        "Centro sede": e.centroSede || ((datosAsignacionEstudiantesGrupos.sede || {}).centroSede) || "",
+        "ID estudiante": e.idEstudiante || "",
+        Estudiante: e.nombre || "",
+        Grado: e.grado || "",
+        "Nivel Lengua": e.nivelLengua || "Sin dato",
+        "Nivel Matemática": e.nivelMat || "Sin dato",
+        Grupo: grupoLegible(asignaciones[normalizarTexto(e.idEstudiante)] || e.grupo) || "Sin asignar"
+      };
+    });
+  }
+
+  function valorExcelHtml(valor) {
+    return String(valor == null ? "" : valor)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function descargarTablaExcel(nombreArchivo, filas) {
+    if (!filas.length) {
+      alert("No hay estudiantes para exportar con los filtros actuales.");
+      return;
+    }
+
+    const encabezados = Object.keys(filas[0]);
+    const tabla = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="UTF-8"></head>
+      <body>
+        <table>
+          <thead><tr>${encabezados.map(function(h) { return "<th>" + valorExcelHtml(h) + "</th>"; }).join("")}</tr></thead>
+          <tbody>
+            ${filas.map(function(fila) {
+              return "<tr>" + encabezados.map(function(h) { return "<td>" + valorExcelHtml(fila[h]) + "</td>"; }).join("") + "</tr>";
+            }).join("")}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+    const blob = new Blob(["\ufeff", tabla], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportarEstudiantesAsignacionExcel() {
+    const filas = filasEstudiantesAsignacionExportar();
+    const fecha = new Date().toISOString().slice(0, 10);
+    descargarTablaExcel("estudiantes_asignacion_grupos_" + fecha + ".xls", filas);
+  }
+
   function renderizarModuloAsignacionEstudiantesGrupos() {
     if (!datosAsignacionEstudiantesGrupos) return;
 
@@ -9015,6 +9153,8 @@
     const sede = datosAsignacionEstudiantesGrupos.sede || {};
     const grupos = datosAsignacionEstudiantesGrupos.grupos || [];
     const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
+    const estudiantesFiltrados = filtrarEstudiantesAsignacion(estudiantes);
+    const hayBusqueda = !!normalizarTexto(obtenerBusquedaAsignacionEstudiantes());
     const cuotaAsignacion = Number(datosAsignacionEstudiantesGrupos.cuota || 0);
     const gruposDisponiblesCantidad = Number(
       datosAsignacionEstudiantesGrupos.gruposDisponiblesCantidad ||
@@ -9034,6 +9174,7 @@
       <div class="dato-asignacion"><span>Cuota estudiantes</span><strong>${cuotaAsignacion > 0 ? cuotaAsignacion : "No definida"}</strong></div>
       <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${gruposDisponiblesCantidad}</strong></div>
       <div class="dato-asignacion"><span>Estudiantes</span><strong>${total}</strong></div>
+      ${hayBusqueda ? `<div class="dato-asignacion"><span>Mostrados</span><strong>${estudiantesFiltrados.length}</strong></div>` : ""}
       <div class="dato-asignacion"><span>Asignados</span><strong id="totalEstudiantesAsignados">${asignados}</strong></div>
       <div class="dato-asignacion"><span>Sin asignar</span><strong id="totalEstudiantesSinAsignar">${sinAsignar}</strong></div>
     `;
@@ -9057,15 +9198,27 @@
       return;
     }
 
+    if (!estudiantesFiltrados.length) {
+      const alerta = document.getElementById("alertaAsignacionEstudiantesGrupos");
+      alerta.classList.remove("oculto");
+      alerta.textContent = "No hay estudiantes que coincidan con la búsqueda indicada.";
+      document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
+      document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
+      return;
+    }
+
     document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
-    renderizarTablaAsignacionEstudiantes(grupos, estudiantes);
+    renderizarTablaAsignacionEstudiantes(grupos, estudiantesFiltrados);
   }
 
   function renderizarConsultaAsignacionEstudiantes() {
     const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
+    const estudiantesFiltrados = filtrarEstudiantesAsignacion(estudiantes);
+    const hayBusqueda = !!normalizarTexto(obtenerBusquedaAsignacionEstudiantes());
     const total = estudiantes.length;
-    const asignados = estudiantes.filter(function(e) { return normalizarTexto(e.grupo); }).length;
-    const sinAsignar = total - asignados;
+    const totalFiltrado = estudiantesFiltrados.length;
+    const asignados = estudiantesFiltrados.filter(function(e) { return normalizarTexto(e.grupo); }).length;
+    const sinAsignar = totalFiltrado - asignados;
 
     actualizarFiltrosAsignacionEstudiantes();
     document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
@@ -9083,17 +9236,20 @@
       <div class="dato-asignacion"><span>Cuota estudiantes</span><strong>${cuotaConsulta > 0 ? cuotaConsulta : "No definida"}</strong></div>
       <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${gruposConsulta}</strong></div>
       <div class="dato-asignacion"><span>Total de estudiantes</span><strong>${total}</strong></div>
+      ${hayBusqueda ? `<div class="dato-asignacion"><span>Mostrados</span><strong>${totalFiltrado}</strong></div>` : ""}
       <div class="dato-asignacion"><span>Asignados</span><strong>${asignados}</strong></div>
       <div class="dato-asignacion"><span>Pendientes</span><strong>${sinAsignar}</strong></div>
     `;
 
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
 
-    if (!estudiantes.length) {
+    if (!estudiantes.length || !estudiantesFiltrados.length) {
       tabla.classList.add("oculto");
       const alerta = document.getElementById("alertaAsignacionEstudiantesGrupos");
       alerta.classList.remove("oculto");
-      alerta.textContent = "No hay estudiantes activos dentro del alcance de consulta de este usuario.";
+      alerta.textContent = estudiantes.length
+        ? "No hay estudiantes que coincidan con la búsqueda indicada."
+        : "No hay estudiantes activos dentro del alcance de consulta de este usuario.";
       return;
     }
 
@@ -9114,7 +9270,7 @@
         <tbody>
     `;
 
-    estudiantes.forEach(function(e) {
+    estudiantesFiltrados.forEach(function(e) {
       html += `
         <tr>
           <td>${escapeHtml(e.regional || "")}</td>
@@ -9207,6 +9363,9 @@
     document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
       const id = normalizarTexto(select.dataset.id);
       const estudiante = estudiantes.find(function(e) { return normalizarTexto(e.idEstudiante) === id; });
+      const valorBorrador = Object.prototype.hasOwnProperty.call(borradorAsignacionEstudiantes, id)
+        ? normalizarTexto(borradorAsignacionEstudiantes[id])
+        : null;
       if (estudiante && estudiante.grupo) {
         const nombreGrupo = normalizarTexto(estudiante.grupo);
         if (nombreGrupo && !Array.from(select.options).some(function(op) { return op.value === nombreGrupo; })) {
@@ -9219,7 +9378,19 @@
         }
         select.value = nombreGrupo;
       }
-      select.addEventListener("change", actualizarResumenVisualAsignacionEstudiantes);
+      if (valorBorrador !== null) {
+        if (valorBorrador && !Array.from(select.options).some(function(op) { return op.value === valorBorrador; })) {
+          const optBorrador = document.createElement("option");
+          optBorrador.value = valorBorrador;
+          optBorrador.textContent = valorBorrador;
+          select.appendChild(optBorrador);
+        }
+        select.value = valorBorrador;
+      }
+      select.addEventListener("change", function() {
+        borradorAsignacionEstudiantes[normalizarTexto(select.dataset.id)] = normalizarTexto(select.value);
+        actualizarResumenVisualAsignacionEstudiantes();
+      });
     });
 
     if (puedeModificarAsignaciones()) {
@@ -9233,9 +9404,9 @@
   }
 
   function actualizarResumenVisualAsignacionEstudiantes() {
-    const selects = Array.from(document.querySelectorAll(".select-asignacion-estudiante"));
-    const total = selects.length;
-    const asignados = selects.filter(function(s) { return normalizarTexto(s.value); }).length;
+    const asignaciones = obtenerAsignacionesEstudiantesActuales();
+    const total = asignaciones.length;
+    const asignados = asignaciones.filter(function(item) { return normalizarTexto(item.grupo); }).length;
     const sinAsignar = total - asignados;
 
     const indicadorAsignados = document.getElementById("totalEstudiantesAsignados");
@@ -9245,17 +9416,12 @@
   }
 
   function validarReglasAsignacionEstudiantesActual() {
-    const estudiantes = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantes) || [];
-    const porId = {};
-    estudiantes.forEach(function(e) { porId[normalizarTexto(e.idEstudiante)] = e; });
-
     const grupos = {};
-    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
-      const grupo = normalizarTexto(select.value);
+    obtenerAsignacionesEstudiantesActuales().forEach(function(item) {
+      const grupo = normalizarTexto(item.grupo);
       if (!grupo) return;
       if (!grupos[grupo]) grupos[grupo] = [];
-      const id = normalizarTexto(select.dataset.id);
-      grupos[grupo].push(porId[id] || { idEstudiante: id, nivelLengua: "" });
+      grupos[grupo].push(item.estudiante || { idEstudiante: item.idEstudiante, nivelLengua: "" });
     });
 
     const disponibles = Number(
@@ -9306,11 +9472,11 @@
     const asignaciones = [];
     let sinAsignar = 0;
 
-    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
-      const valorSelect = normalizarTexto(select.value);
+    obtenerAsignacionesEstudiantesActuales().forEach(function(item) {
+      const valorSelect = normalizarTexto(item.grupo);
       if (!valorSelect) sinAsignar++;
       asignaciones.push({
-        idEstudiante: normalizarTexto(select.dataset.id),
+        idEstudiante: normalizarTexto(item.idEstudiante),
         grupo: valorSelect
       });
     });
