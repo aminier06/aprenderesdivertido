@@ -2642,7 +2642,7 @@
       <div class="form-grid-3">
         <div>
           <label for="usuarioAdminCedula">Cédula</label>
-          <input type="text" id="usuarioAdminCedula" placeholder="Sin guiones o como aparece en la BD">
+          <input type="text" id="usuarioAdminCedula" placeholder="Sin guiones o como aparece en la BD" oninput="autocompletarNombrePersonalMinerd()">
         </div>
         <div>
           <label for="usuarioAdminNombre">Nombre completo</label>
@@ -10421,6 +10421,7 @@
 
     const cedula = document.getElementById("usuarioAdminCedula");
     if (cedula) cedula.disabled = false;
+    ultimaCedulaConsultadaPersonalMinerd = "";
 
     const mensaje = document.getElementById("mensajeUsuarioAdmin");
     if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
@@ -10506,6 +10507,35 @@
     if (requiereSede && !p.centroSede) return "Para este rol debe seleccionar un centro sede.";
     if (p.password && p.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
     return "";
+  }
+
+  // Autocompleta el nombre desde el padrón de personal del MINERD en cuanto
+  // se completan los 11 dígitos de la cédula (###-#######-#), sin esperar a
+  // que el campo pierda el foco. Si no se encuentra, no hace nada: el nombre
+  // sigue siendo editable para digitarlo a mano.
+  let ultimaCedulaConsultadaPersonalMinerd = "";
+
+  function autocompletarNombrePersonalMinerd() {
+    const inputCedula = document.getElementById("usuarioAdminCedula");
+    const inputNombre = document.getElementById("usuarioAdminNombre");
+    if (!inputCedula || !inputNombre || inputCedula.disabled) return;
+
+    const cedulaLimpia = inputCedula.value.replace(/\D/g, "");
+    if (cedulaLimpia.length < 11) return;
+    if (cedulaLimpia === ultimaCedulaConsultadaPersonalMinerd) return;
+    ultimaCedulaConsultadaPersonalMinerd = cedulaLimpia;
+
+    const cedulaAdmin = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+
+    llamarBackend(
+      { accion: "buscarPersonalPorCedula", cedula: cedulaAdmin, cedulaBuscar: cedulaLimpia },
+      function(resp) {
+        if (resp && resp.ok && resp.encontrado && resp.nombre) {
+          inputNombre.value = resp.nombre;
+        }
+      },
+      { timeout: 10000 }
+    );
   }
 
   function guardarUsuarioAdmin() {
