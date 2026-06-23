@@ -4694,6 +4694,10 @@
     return rol === "coordinador sede" || rol === "coordinador de sede";
   }
 
+  function esTecnicoRegional() {
+    return normalizarRol(usuarioActual && usuarioActual.rol) === "tecnico regional";
+  }
+
   function asegurarOpcionGrupo(select, grupo) {
     if (!select || !grupo) return;
 
@@ -8433,9 +8437,7 @@
   // El coordinador de sede en realidad coordina TODAS las sedes de su
   // distrito (la misma persona cubre varias sedes), no solo la que tiene
   // guardada en su ficha de USUARIOS.
-  function esCoordinadorSedeActual() {
-    return !!usuarioActual && normalizarTexto(usuarioActual.rol) === "Coordinador sede";
-  }
+  // (Reutiliza esCoordinadorSede(), ya existente en el código.)
 
   function renderizarPendientesSedeAsignacion() {
     const bloque = document.getElementById("bloquePendientesSedeAsignacionEstudiantes");
@@ -8443,7 +8445,7 @@
     if (!bloque || !tabla) return;
 
     const pendientes = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantesPendientesSede) || [];
-    if (!esCoordinadorSedeActual() || !pendientes.length) {
+    if (!esCoordinadorSede() || !pendientes.length) {
       bloque.classList.add("oculto");
       tabla.innerHTML = "";
       return;
@@ -8532,7 +8534,7 @@
     const bloque = document.getElementById("bloqueFiltrosAsignacionEstudiantes");
     if (!bloque) return;
 
-    const esCoord = esCoordinadorSedeActual();
+    const esCoord = esCoordinadorSede();
 
     if (!modoConsultaAsignaciones() && !esCoord) {
       bloque.classList.add("oculto");
@@ -9078,7 +9080,7 @@
       + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
       + vistaQueryString();
 
-    if (modoConsultaAsignaciones() || esCoordinadorSedeActual()) {
+    if (modoConsultaAsignaciones() || esCoordinadorSede()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionEstudiantes.regional || "")
         + "&filtroDistrito=" + encodeURIComponent(filtrosAsignacionEstudiantes.distrito || "")
         + "&filtroCentroSede=" + encodeURIComponent(filtrosAsignacionEstudiantes.centroSede || "");
@@ -9221,7 +9223,7 @@
       return;
     }
 
-    if (esCoordinadorSedeActual()) {
+    if (esCoordinadorSede()) {
       actualizarFiltrosAsignacionEstudiantes();
     }
 
@@ -9922,20 +9924,33 @@
       return;
     }
 
-    let html = "<table><thead><tr><th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grupo</th><th>Grado</th></tr></thead><tbody>";
+    const puedeDesinscribirAqui = esCoordinadorSede() || esTecnicoRegional() || esAdministradorReal();
+
+    let html = "<table><thead><tr><th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grupo</th><th>Grado</th>" + (puedeDesinscribirAqui ? "<th>Acción</th>" : "") + "</tr></thead><tbody>";
     lista.forEach(function(e) {
-      html += "<tr class=\"fila-clicable\" onclick=\"seleccionarEstudianteDelListadoInscripcion('" + escapeHtml(e.idEstudiante || "").replace(/'/g, "\\'") + "')\">"
+      const idJs = escapeJs(e.idEstudiante || "");
+      html += "<tr class=\"fila-clicable\" onclick=\"seleccionarEstudianteDelListadoInscripcion('" + idJs + "')\">"
         + "<td>" + escapeHtml(e.idEstudiante || "") + "</td>"
         + "<td>" + escapeHtml(e.nombre || "") + "</td>"
         + "<td>" + escapeHtml(e.regional || "") + "</td>"
         + "<td>" + escapeHtml(e.distrito || "") + "</td>"
         + "<td>" + (e.centroSede ? escapeHtml(e.centroSede) : "<em>Sin sede</em>") + "</td>"
         + "<td>" + escapeHtml(e.grupo || "") + "</td>"
-        + "<td>" + escapeHtml(e.grado || "") + "</td>"
-        + "</tr>";
+        + "<td>" + escapeHtml(e.grado || "") + "</td>";
+      if (puedeDesinscribirAqui) {
+        html += "<td><button type=\"button\" class=\"btn-peligro\" style=\"padding:4px 10px;font-size:12px;\" onclick=\"event.stopPropagation(); desinscribirDesdeListadoInscripcion('" + idJs + "')\">Desinscribir</button></td>";
+      }
+      html += "</tr>";
     });
     html += "</tbody></table>";
     tabla.innerHTML = html;
+  }
+
+  function desinscribirDesdeListadoInscripcion(idEstudiante) {
+    const input = document.getElementById("inscID");
+    if (!input) return;
+    input.value = idEstudiante;
+    confirmarDesinscripcionEstudiante();
   }
 
   function seleccionarEstudianteDelListadoInscripcion(idEstudiante) {
