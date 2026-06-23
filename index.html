@@ -983,6 +983,9 @@
       font-size: 13.5px;
     }
 
+    tr.fila-clicable { cursor: pointer; transition: background var(--t); }
+    tr.fila-clicable:hover { background: var(--azul-xclaro); }
+
     th, td {
       border: 1px solid var(--borde);
       padding: 9px 10px;
@@ -3419,6 +3422,13 @@
     </div>
     <div id="tablaAsignacionEstudiantesGrupos" class="tabla-contenedor tabla-asignacion oculto"></div>
 
+    <div id="bloquePendientesSedeAsignacionEstudiantes" class="bloque-formulario oculto">
+      <h3>Estudiantes de mi distrito sin sede asignada</h3>
+      <p class="nota">Ya están inscritos en su distrito, pero todavía no tienen centro sede (se completa al registrarles la primera evaluación). Es solo informativo: aquí no se les puede asignar grupo todavía.</p>
+      <div id="tablaPendientesSedeAsignacionEstudiantes" class="tabla-contenedor"></div>
+    </div>
+
+
     <div class="acciones-asignacion">
       <button type="button" id="btnAsignacionAutomatica" class="oculto btn-asignacion-auto" onclick="ejecutarAsignacionAutomatica()">
         <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:6px;">
@@ -3442,6 +3452,19 @@
         <h2>Inscripción y desinscripción de estudiantes</h2>
         <p class="nota">Digite el ID del estudiante para buscarlo. Si no está inscrito, podrá inscribirlo. Si ya está inscrito, podrá desinscribirlo según su rol y alcance.</p>
       </div>
+    </div>
+
+    <div class="bloque-formulario">
+      <h3>Listado de estudiantes</h3>
+      <p class="nota">Se carga automáticamente según su alcance. Haga clic en un estudiante para buscarlo y gestionarlo.</p>
+      <div class="form-grid-3">
+        <div>
+          <label for="busquedaListadoInscripcion">Buscar en el listado</label>
+          <input type="search" id="busquedaListadoInscripcion" placeholder="Nombre, ID, regional, distrito o sede" oninput="renderizarListadoInscripcion()">
+        </div>
+      </div>
+      <div id="mensajeListadoInscripcion" class="mensaje"></div>
+      <div id="tablaListadoInscripcion" class="tabla-contenedor"></div>
     </div>
 
     <div class="bloque-formulario">
@@ -8407,6 +8430,40 @@
     return (puedeConsultarAsignaciones(usuarioActual) && !puedeModificarAsignaciones()) || esModoVistaSimulada();
   }
 
+  // El coordinador de sede en realidad coordina TODAS las sedes de su
+  // distrito (la misma persona cubre varias sedes), no solo la que tiene
+  // guardada en su ficha de USUARIOS.
+  function esCoordinadorSedeActual() {
+    return !!usuarioActual && normalizarTexto(usuarioActual.rol) === "Coordinador sede";
+  }
+
+  function renderizarPendientesSedeAsignacion() {
+    const bloque = document.getElementById("bloquePendientesSedeAsignacionEstudiantes");
+    const tabla = document.getElementById("tablaPendientesSedeAsignacionEstudiantes");
+    if (!bloque || !tabla) return;
+
+    const pendientes = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantesPendientesSede) || [];
+    if (!esCoordinadorSedeActual() || !pendientes.length) {
+      bloque.classList.add("oculto");
+      tabla.innerHTML = "";
+      return;
+    }
+
+    bloque.classList.remove("oculto");
+    let html = "<table><thead><tr><th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Grado</th></tr></thead><tbody>";
+    pendientes.forEach(function(e) {
+      html += "<tr>"
+        + "<td>" + escapeHtml(e.idEstudiante || "") + "</td>"
+        + "<td>" + escapeHtml(e.nombre || "") + "</td>"
+        + "<td>" + escapeHtml(e.regional || "") + "</td>"
+        + "<td>" + escapeHtml(e.distrito || "") + "</td>"
+        + "<td>" + escapeHtml(e.grado || "") + "</td>"
+        + "</tr>";
+    });
+    html += "</tbody></table>";
+    tabla.innerHTML = html;
+  }
+
   function valoresUnicosOrdenados(lista) {
     return Array.from(new Set((lista || []).filter(function(v) { return normalizarTexto(v); }))).sort(function(a, b) {
       return String(a).localeCompare(String(b));
@@ -8475,12 +8532,24 @@
     const bloque = document.getElementById("bloqueFiltrosAsignacionEstudiantes");
     if (!bloque) return;
 
-    if (!modoConsultaAsignaciones()) {
+    const esCoord = esCoordinadorSedeActual();
+
+    if (!modoConsultaAsignaciones() && !esCoord) {
       bloque.classList.add("oculto");
       return;
     }
 
     bloque.classList.remove("oculto");
+
+    // El coordinador solo elige sede dentro de su propio distrito; su
+    // regional y distrito son fijos, así que esos dos selectores se ocultan.
+    const selectRegional = document.getElementById("filtroRegionalAsignacionEstudiantes");
+    const selectDistrito = document.getElementById("filtroDistritoAsignacionEstudiantes");
+    const bloqueRegional = selectRegional ? selectRegional.closest("div") : null;
+    const bloqueDistrito = selectDistrito ? selectDistrito.closest("div") : null;
+    if (bloqueRegional) bloqueRegional.classList.toggle("oculto", esCoord);
+    if (bloqueDistrito) bloqueDistrito.classList.toggle("oculto", esCoord);
+
     const filtros = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.filtros) || [];
     const regionalSeleccionada = filtrosAsignacionEstudiantes.regional || "";
     const distritoSeleccionado = filtrosAsignacionEstudiantes.distrito || "";
@@ -8490,13 +8559,13 @@
       .filter(function(f) { return !regionalSeleccionada || normalizarTexto(f.regional) === normalizarTexto(regionalSeleccionada); })
       .map(function(f) { return f.distrito; }));
     const sedes = valoresUnicosOrdenados(filtros
-      .filter(function(f) { return !regionalSeleccionada || normalizarTexto(f.regional) === normalizarTexto(regionalSeleccionada); })
-      .filter(function(f) { return !distritoSeleccionado || normalizarTexto(f.distrito) === normalizarTexto(distritoSeleccionado); })
+      .filter(function(f) { return esCoord || !regionalSeleccionada || normalizarTexto(f.regional) === normalizarTexto(regionalSeleccionada); })
+      .filter(function(f) { return esCoord || !distritoSeleccionado || normalizarTexto(f.distrito) === normalizarTexto(distritoSeleccionado); })
       .map(function(f) { return f.centroSede; }));
 
     poblarSelectFiltroAsignacion("filtroRegionalAsignacionEstudiantes", regionales, filtrosAsignacionEstudiantes.regional, "Todas las regionales");
     poblarSelectFiltroAsignacion("filtroDistritoAsignacionEstudiantes", distritos, filtrosAsignacionEstudiantes.distrito, "Todos los distritos");
-    poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, "Todas las sedes");
+    poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, esCoord ? "Seleccione su sede" : "Todas las sedes");
   }
 
   function cambiarFiltroRegionalAsignacionEstudiantes() {
@@ -9009,7 +9078,7 @@
       + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
       + vistaQueryString();
 
-    if (modoConsultaAsignaciones()) {
+    if (modoConsultaAsignaciones() || esCoordinadorSedeActual()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionEstudiantes.regional || "")
         + "&filtroDistrito=" + encodeURIComponent(filtrosAsignacionEstudiantes.distrito || "")
         + "&filtroCentroSede=" + encodeURIComponent(filtrosAsignacionEstudiantes.centroSede || "");
@@ -9145,9 +9214,15 @@
   function renderizarModuloAsignacionEstudiantesGrupos() {
     if (!datosAsignacionEstudiantesGrupos) return;
 
+    renderizarPendientesSedeAsignacion();
+
     if (datosAsignacionEstudiantesGrupos.modoConsulta || modoConsultaAsignaciones()) {
       renderizarConsultaAsignacionEstudiantes();
       return;
+    }
+
+    if (esCoordinadorSedeActual()) {
+      actualizarFiltrosAsignacionEstudiantes();
     }
 
     const sede = datosAsignacionEstudiantesGrupos.sede || {};
@@ -9790,6 +9865,85 @@
     mostrarModulo("moduloInscripcion");
     limpiarInscripcion();
     cargarSedesInscripcion();
+    cargarListadoInscripcion();
+  }
+
+  // Carga el listado de estudiantes correspondiente al alcance del usuario.
+  // El coordinador de sede ve todo su distrito (varias sedes son la misma
+  // persona), incluyendo estudiantes que todavía no tienen centro sede.
+  let estudiantesInscripcionListado = [];
+
+  function cargarListadoInscripcion() {
+    const mensaje = document.getElementById("mensajeListadoInscripcion");
+    const tabla = document.getElementById("tablaListadoInscripcion");
+    if (mensaje) { mensaje.textContent = "Cargando listado de estudiantes..."; mensaje.className = "mensaje"; }
+    if (tabla) tabla.innerHTML = "";
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+
+    llamarBackend(
+      { accion: "listarEstudiantesInscripcion", cedula: cedula },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          estudiantesInscripcionListado = [];
+          if (mensaje) {
+            mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo cargar el listado de estudiantes.";
+            mensaje.className = "mensaje error";
+          }
+          renderizarListadoInscripcion();
+          return;
+        }
+        estudiantesInscripcionListado = resp.estudiantes || [];
+        if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
+        renderizarListadoInscripcion();
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  function renderizarListadoInscripcion() {
+    const tabla = document.getElementById("tablaListadoInscripcion");
+    if (!tabla) return;
+
+    const busqueda = normalizarTexto((document.getElementById("busquedaListadoInscripcion") || {}).value || "").toLowerCase();
+    const lista = estudiantesInscripcionListado.filter(function(e) {
+      if (!busqueda) return true;
+      const texto = [e.idEstudiante, e.nombre, e.regional, e.distrito, e.centroSede, e.grado]
+        .map(function(v) { return normalizarTexto(v); }).join(" ").toLowerCase();
+      return texto.indexOf(busqueda) !== -1;
+    });
+
+    if (!estudiantesInscripcionListado.length) {
+      tabla.innerHTML = "<p class=\"nota\">No hay estudiantes para mostrar dentro de su alcance.</p>";
+      return;
+    }
+    if (!lista.length) {
+      tabla.innerHTML = "<p class=\"nota\">No hay estudiantes que coincidan con la búsqueda.</p>";
+      return;
+    }
+
+    let html = "<table><thead><tr><th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grupo</th><th>Grado</th></tr></thead><tbody>";
+    lista.forEach(function(e) {
+      html += "<tr class=\"fila-clicable\" onclick=\"seleccionarEstudianteDelListadoInscripcion('" + escapeHtml(e.idEstudiante || "").replace(/'/g, "\\'") + "')\">"
+        + "<td>" + escapeHtml(e.idEstudiante || "") + "</td>"
+        + "<td>" + escapeHtml(e.nombre || "") + "</td>"
+        + "<td>" + escapeHtml(e.regional || "") + "</td>"
+        + "<td>" + escapeHtml(e.distrito || "") + "</td>"
+        + "<td>" + (e.centroSede ? escapeHtml(e.centroSede) : "<em>Sin sede</em>") + "</td>"
+        + "<td>" + escapeHtml(e.grupo || "") + "</td>"
+        + "<td>" + escapeHtml(e.grado || "") + "</td>"
+        + "</tr>";
+    });
+    html += "</tbody></table>";
+    tabla.innerHTML = html;
+  }
+
+  function seleccionarEstudianteDelListadoInscripcion(idEstudiante) {
+    const input = document.getElementById("inscID");
+    if (!input) return;
+    input.value = idEstudiante;
+    buscarEstudianteInscripcion();
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   // Carga las sedes permitidas del usuario: administrador ve todas; técnico regional ve su regional;
@@ -9947,6 +10101,7 @@
           document.getElementById("bloqueDatosInscripcion").classList.add("oculto");
           document.getElementById("inscID").value = "";
           document.getElementById("mensajeBusquedaInscripcion").textContent = "";
+          cargarListadoInscripcion();
         } else {
           boton.disabled = false;
           mensaje.className = "mensaje error";
@@ -9996,6 +10151,7 @@
           mensaje.textContent = resp.mensaje || "Estudiante desinscrito correctamente.";
           limpiarInscripcion();
           document.getElementById("inscID").value = id;
+          cargarListadoInscripcion();
         } else {
           boton.disabled = false;
           mensaje.className = "mensaje error";
@@ -11502,6 +11658,7 @@ const respuestasTexto = {
         },
         function(resp) {
           mostrarResultadoCargaMasiva(resp, "mensajeCargaEstudiantes", "detalleCargaEstudiantes");
+          if (resp && (resp.ok || resp.creados || resp.inscritos)) cargarListadoInscripcion();
         },
         { timeout: 90000 }
       );
