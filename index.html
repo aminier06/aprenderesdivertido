@@ -2684,9 +2684,9 @@
 
       <div class="form-grid-3">
         <div>
-          <label for="usuarioAdminGrupo">Grupo</label>
+          <label for="usuarioAdminGrupo">Grupo (opcional)</label>
           <select id="usuarioAdminGrupo">
-            <option value="">Todos</option>
+            <option value="">Sin asignar (se definirá luego, al asignar grupos)</option>
             <option value="Grupo 1">Grupo 1</option>
             <option value="Grupo 2">Grupo 2</option>
             <option value="Grupo 3">Grupo 3</option>
@@ -3424,22 +3424,29 @@
 
     <div class="bloque-formulario" style="margin-top:24px;">
       <h3>Estudiantes inscritos</h3>
-      <p class="nota">Busque por ID, por nombre o por distrito para ver los estudiantes ya inscritos y, si hace falta, desinscribirlos.</p>
+      <p class="nota">El listado se carga automáticamente según su alcance (su regional, o todo el país si es administrador). Puede acotar por ID, nombre o distrito.</p>
       <div class="form-grid-3">
         <div>
-          <label for="inscritosTexto">ID o nombre</label>
+          <label for="inscritosTexto">ID o nombre (opcional)</label>
           <input type="text" id="inscritosTexto" placeholder="Ej. 33578410 o Juan Pérez" autocomplete="off">
         </div>
         <div>
           <label for="inscritosDistrito">Distrito (opcional)</label>
           <input type="text" id="inscritosDistrito" placeholder="Ej. 0101 - Pedernales" autocomplete="off">
         </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button type="button" onclick="buscarInscritosLista()">Buscar inscritos</button>
+        <div style="display:flex; align-items:flex-end; gap:8px;">
+          <button type="button" onclick="buscarInscritosLista()">Buscar</button>
         </div>
+      </div>
+      <div class="acciones-asignacion" style="margin-top:6px;">
+        <button type="button" class="btn-secundario" onclick="exportarInscritosExcel()">Exportar a Excel</button>
+        <button type="button" class="btn-secundario" onclick="exportarInscritosPDF()">Exportar a PDF</button>
       </div>
       <div id="mensajeInscritos" class="mensaje"></div>
       <div id="tablaInscritos" class="tabla-contenedor oculto"></div>
+      <div class="acciones-asignacion" style="margin-top:10px;">
+        <button type="button" id="btnCargarMasInscritos" class="btn-secundario oculto" onclick="cargarMasInscritos()">Cargar más</button>
+      </div>
     </div>
   </section>
 
@@ -9601,10 +9608,6 @@
     limpiarInscripcion();
     document.getElementById("inscritosTexto").value = "";
     document.getElementById("inscritosDistrito").value = "";
-    document.getElementById("mensajeInscritos").textContent = "";
-    document.getElementById("mensajeInscritos").className = "mensaje";
-    document.getElementById("tablaInscritos").innerHTML = "";
-    document.getElementById("tablaInscritos").classList.add("oculto");
 
     const inputArchivo = document.getElementById("inscripcionMasivaArchivo");
     if (inputArchivo) inputArchivo.value = "";
@@ -9613,6 +9616,10 @@
     document.getElementById("progresoInscripcionMasiva").classList.add("oculto");
     document.getElementById("resumenInscripcionMasiva").classList.add("oculto");
     document.getElementById("resumenInscripcionMasiva").innerHTML = "";
+
+    // El listado se carga solo, según el alcance del usuario (no hace falta
+    // que escriba nada para verlo).
+    buscarInscritosLista();
   }
 
   function buscarEstudianteInscripcion() {
@@ -9736,42 +9743,65 @@
 
   // ── Listado de inscritos + desinscribir ───────────────────────────────────
 
+  // Estado de la lista en pantalla, para poder "Cargar más" y para que
+  // exportar use exactamente los mismos filtros que el usuario ve.
+  let inscritosCargados = [];
+  let inscritosOffsetActual = 0;
+  let inscritosTotalServidor = 0;
+  const INSCRITOS_PAGINA = 50;
+
   function buscarInscritosLista() {
+    inscritosCargados = [];
+    inscritosOffsetActual = 0;
+    inscritosTotalServidor = 0;
+    document.getElementById("tablaInscritos").innerHTML = "";
+    document.getElementById("tablaInscritos").classList.add("oculto");
+    document.getElementById("btnCargarMasInscritos").classList.add("oculto");
+    cargarPaginaInscritos();
+  }
+
+  function cargarMasInscritos() {
+    cargarPaginaInscritos();
+  }
+
+  function cargarPaginaInscritos() {
     const texto = document.getElementById("inscritosTexto").value.trim();
     const distrito = document.getElementById("inscritosDistrito").value.trim();
     const mensaje = document.getElementById("mensajeInscritos");
-    const tabla = document.getElementById("tablaInscritos");
     mensaje.className = "mensaje";
-    mensaje.textContent = "";
-    tabla.innerHTML = "";
-    tabla.classList.add("oculto");
+    mensaje.textContent = "Cargando...";
 
-    if (!texto && !distrito) {
-      mensaje.className = "mensaje error";
-      mensaje.textContent = "Indique un ID, un nombre o un distrito para buscar.";
-      return;
-    }
-
-    mensaje.textContent = "Buscando...";
     const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
 
     llamarBackend(
-      { accion: "buscarInscritos", cedula: cedula, texto: texto, distrito: distrito },
+      {
+        accion: "buscarInscritos", cedula: cedula, texto: texto, distrito: distrito,
+        offset: inscritosOffsetActual, limite: INSCRITOS_PAGINA
+      },
       function(resp) {
         if (!resp || !resp.ok) {
           mensaje.className = "mensaje error";
           mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo realizar la búsqueda.";
           return;
         }
-        const inscritos = resp.inscritos || [];
-        if (inscritos.length === 0) {
+        const pagina = resp.inscritos || [];
+        inscritosTotalServidor = resp.total || 0;
+        inscritosCargados = inscritosCargados.concat(pagina);
+        inscritosOffsetActual += pagina.length;
+
+        if (inscritosCargados.length === 0) {
           mensaje.className = "mensaje";
           mensaje.textContent = "No se encontraron estudiantes inscritos con ese criterio.";
           return;
         }
+
         mensaje.className = "mensaje ok";
-        mensaje.textContent = inscritos.length + " estudiante(s) encontrado(s).";
-        renderizarTablaInscritos(inscritos);
+        mensaje.textContent = "Mostrando " + inscritosCargados.length + " de " + inscritosTotalServidor + " estudiante(s).";
+        renderizarTablaInscritos(inscritosCargados);
+
+        const btnMas = document.getElementById("btnCargarMasInscritos");
+        if (inscritosOffsetActual < inscritosTotalServidor) btnMas.classList.remove("oculto");
+        else btnMas.classList.add("oculto");
       },
       function() {
         mensaje.className = "mensaje error";
@@ -9784,17 +9814,17 @@
   function renderizarTablaInscritos(inscritos) {
     const tabla = document.getElementById("tablaInscritos");
     let html = "<table><thead><tr>"
-      + "<th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grado</th><th></th>"
+      + "<th>ID</th><th>Nombre</th><th></th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grado</th>"
       + "</tr></thead><tbody>";
     inscritos.forEach(function(e) {
       html += "<tr>"
         + "<td>" + escapeHtml(e.idEstudiante) + "</td>"
         + "<td>" + escapeHtml(e.nombre) + "</td>"
+        + '<td><button type="button" class="btn-secundario" onclick="desinscribirEstudianteAccion(\'' + e.idEstudiante.replace(/'/g, "\\'") + '\')">Desinscribir</button></td>'
         + "<td>" + escapeHtml(e.regional) + "</td>"
         + "<td>" + escapeHtml(e.distrito) + "</td>"
         + "<td>" + (e.centroSede ? escapeHtml(e.centroSede) : '<span class="nota">Sin sede (aún no evaluado)</span>') + "</td>"
         + "<td>" + escapeHtml(e.grado) + "</td>"
-        + '<td><button type="button" class="btn-secundario" onclick="desinscribirEstudianteAccion(\'' + e.idEstudiante.replace(/'/g, "\\'") + '\')">Desinscribir</button></td>'
         + "</tr>";
     });
     html += "</tbody></table>";
@@ -9830,6 +9860,134 @@
       },
       { timeout: 14000 }
     );
+  }
+
+  // Pide al backend TODO lo que coincida con el alcance + filtros actuales
+  // (sin paginar), para exportar. Reusa los mismos campos de búsqueda que ya
+  // se ven en pantalla, así lo exportado coincide con lo filtrado.
+  function obtenerInscritosCompletosParaExportar(callback) {
+    const texto = document.getElementById("inscritosTexto").value.trim();
+    const distrito = document.getElementById("inscritosDistrito").value.trim();
+    const mensaje = document.getElementById("mensajeInscritos");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "Preparando exportación...";
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+
+    llamarBackend(
+      { accion: "buscarInscritos", cedula: cedula, texto: texto, distrito: distrito, todo: "1" },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.className = "mensaje error";
+          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo preparar la exportación.";
+          return;
+        }
+        if (!resp.inscritos || resp.inscritos.length === 0) {
+          mensaje.className = "mensaje";
+          mensaje.textContent = "No hay estudiantes inscritos para exportar con ese criterio.";
+          return;
+        }
+        mensaje.className = "mensaje";
+        mensaje.textContent = "";
+        if (resp.truncado) {
+          mensaje.className = "mensaje error";
+          mensaje.textContent = "Atención: el listado es muy extenso y la exportación se limitó a los primeros 20 000 registros. Acote la búsqueda por distrito para exportar el resto.";
+        }
+        callback(resp.inscritos);
+      },
+      function() {
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo conectar para preparar la exportación.";
+      },
+      { timeout: 30000 }
+    );
+  }
+
+  function exportarInscritosExcel() {
+    if (typeof XLSX === "undefined") {
+      alert("No se pudo cargar la librería para generar el archivo. Verifique su conexión e intente de nuevo.");
+      return;
+    }
+    obtenerInscritosCompletosParaExportar(function(inscritos) {
+      const filas = inscritos.map(function(e) {
+        return {
+          "ID": e.idEstudiante,
+          "Nombre": e.nombre,
+          "Regional": e.regional,
+          "Distrito": e.distrito,
+          "Centro sede": e.centroSede || "Sin sede (aún no evaluado)",
+          "Grado": e.grado,
+          "Nivel Lengua": e.nivelLengua,
+          "Nivel Matemática": e.nivelMat
+        };
+      });
+      const hoja = XLSX.utils.json_to_sheet(filas);
+      hoja["!cols"] = [{ wch: 12 }, { wch: 32 }, { wch: 16 }, { wch: 18 }, { wch: 28 }, { wch: 10 }, { wch: 14 }, { wch: 16 }];
+      const libro = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(libro, hoja, "Inscritos");
+      XLSX.writeFile(libro, "Estudiantes_Inscritos.xlsx");
+    });
+  }
+
+  function exportarInscritosPDF() {
+    if (typeof window.jspdf === "undefined") {
+      alert("No se pudo cargar la librería para generar el PDF. Verifique su conexión e intente de nuevo.");
+      return;
+    }
+    obtenerInscritosCompletosParaExportar(function(inscritos) {
+      const jsPDFCtor = window.jspdf.jsPDF;
+      const doc = new jsPDFCtor({ unit: "mm", format: "a4", orientation: "landscape" });
+      const anchoPagina = doc.internal.pageSize.getWidth();
+      const altoPagina = doc.internal.pageSize.getHeight();
+      const margen = 12;
+      const columnas = [
+        { titulo: "ID", ancho: 28 },
+        { titulo: "Nombre", ancho: 70 },
+        { titulo: "Regional", ancho: 45 },
+        { titulo: "Distrito", ancho: 45 },
+        { titulo: "Centro sede", ancho: 60 },
+        { titulo: "Grado", ancho: 20 }
+      ];
+
+      function dibujarEncabezado(y) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        let x = margen;
+        columnas.forEach(function(c) { doc.text(c.titulo, x, y); x += c.ancho; });
+        doc.setFont("helvetica", "normal");
+        return y + 5;
+      }
+
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text("Estudiantes inscritos", margen, 14);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text("Total: " + inscritos.length, margen, 20);
+
+      let y = dibujarEncabezado(28);
+      doc.setFontSize(8);
+      inscritos.forEach(function(e) {
+        if (y > altoPagina - 14) {
+          doc.addPage();
+          y = dibujarEncabezado(16);
+          doc.setFontSize(8);
+        }
+        let x = margen;
+        const valores = [
+          e.idEstudiante, e.nombre, e.regional, e.distrito,
+          e.centroSede || "Sin sede", e.grado
+        ];
+        valores.forEach(function(v, i) {
+          const texto = doc.splitTextToSize(String(v || ""), columnas[i].ancho - 2)[0] || "";
+          doc.text(texto, x, y);
+          x += columnas[i].ancho;
+        });
+        y += 5;
+      });
+
+      doc.save("Estudiantes_Inscritos.pdf");
+    });
   }
 
   // ── Carga masiva desde plantilla ───────────────────────────────────────────
@@ -10435,19 +10593,22 @@
     const requiereRegional = rol === "Técnico regional" || rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
     const requiereDistrito = rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
     const requiereSede = rol === "Coordinador sede" || rol === "Facilitador";
-    const requiereGrupo = rol === "Facilitador";
+    // El grupo del facilitador ya no es obligatorio: se asigna después, en el
+    // módulo de Asignación de grupos operativos. El campo sigue disponible
+    // por si se quiere dejarlo precargado, pero nunca bloquea el guardado.
+    const mostrarGrupo = rol === "Facilitador";
 
     if (regional) regional.disabled = !requiereRegional;
     if (distrito) distrito.disabled = !requiereDistrito;
     // Para Coordinador de sede, la selección se hace con los checkboxes de
     // abajo; el select único se deshabilita y se oculta en ese caso.
     if (sede) sede.disabled = !requiereSede || esCoordinador;
-    if (grupo) grupo.disabled = !requiereGrupo;
+    if (grupo) grupo.disabled = !mostrarGrupo;
 
     if (!requiereRegional && regional) regional.value = "";
     if (!requiereDistrito && distrito) distrito.value = "";
     if (!requiereSede && sede) sede.value = "";
-    if (!requiereGrupo && grupo) grupo.value = "";
+    if (!mostrarGrupo && grupo) grupo.value = "";
 
     const sedeCampo = sede ? sede.closest("div") : null;
     const multipleWrap = document.getElementById("usuarioAdminCentroSedeMultipleWrap");
@@ -10645,7 +10806,8 @@
 
     const requiereRegional = p.rol === "Técnico regional" || p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
     const requiereDistrito = p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
-    const requiereGrupo = p.rol === "Facilitador";
+    // El grupo del facilitador ya no se exige aquí: se asigna después, en el
+    // módulo de Asignación de grupos operativos.
 
     if (requiereRegional && !p.regional) return "Para este rol debe seleccionar una regional.";
     if (requiereDistrito && !p.distrito) return "Para este rol debe seleccionar un distrito.";
@@ -10653,7 +10815,6 @@
       return "Para el rol Coordinador de sede debe marcar al menos un centro sede.";
     }
     if (p.rol === "Facilitador" && !p.centroSede) return "Para este rol debe seleccionar un centro sede.";
-    if (requiereGrupo && !p.grupo) return "Para el rol Facilitador debe seleccionar un grupo.";
     if (p.password && p.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
     return "";
   }
