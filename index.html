@@ -621,9 +621,6 @@
     .modulo-usuarios        .modulo-acento { background: #be185d; }
     .modulo-usuarios        .icono-modulo  { color: #be185d; background: #fce7f3; }
 
-    .modulo-sedes           .modulo-acento { background: #0f766e; }
-    .modulo-sedes           .icono-modulo  { color: #0f766e; background: #ccfbf1; }
-
     /* ── GESTIÓN DE USUARIOS ────────────────────── */
     .usuarios-admin-toolbar {
       display: flex;
@@ -646,9 +643,7 @@
     .usuarios-admin-toolbar button { margin-top: 0; }
 
     .estado-usuario-activo,
-    .estado-usuario-inactivo,
-    .estado-sede-activa,
-    .estado-sede-inactiva {
+    .estado-usuario-inactivo {
       display: inline-block;
       padding: 3px 9px;
       border-radius: 999px;
@@ -657,19 +652,16 @@
       white-space: nowrap;
     }
 
-    .estado-usuario-activo, .estado-sede-activa { background: #d1fae5; color: #065f46; }
-    .estado-usuario-inactivo, .estado-sede-inactiva { background: #fee2e2; color: #991b1b; }
+    .estado-usuario-activo { background: #d1fae5; color: #065f46; }
+    .estado-usuario-inactivo { background: #fee2e2; color: #991b1b; }
 
     .tabla-usuarios-admin td,
-    .tabla-usuarios-admin th,
-    .tabla-sedes-admin td,
-    .tabla-sedes-admin th {
+    .tabla-usuarios-admin th {
       text-align: left;
       vertical-align: middle;
     }
 
-    .tabla-usuarios-admin .acciones-tabla,
-    .tabla-sedes-admin .acciones-tabla {
+    .tabla-usuarios-admin .acciones-tabla {
       justify-content: flex-start;
       min-width: 210px;
     }
@@ -982,9 +974,6 @@
       min-width: 850px;
       font-size: 13.5px;
     }
-
-    tr.fila-clicable { cursor: pointer; transition: background var(--t); }
-    tr.fila-clicable:hover { background: var(--azul-xclaro); }
 
     th, td {
       border: 1px solid var(--borde);
@@ -2361,6 +2350,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Aprender es Divertido">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
 <body>
@@ -2582,16 +2573,6 @@
         <span class="modulo-flecha">›</span>
       </div>
 
-      <div id="tileGestionSedes" class="modulo modulo-sedes oculto" onclick="abrirModulo('gestionSedes')">
-        <div class="modulo-acento"></div>
-        <div class="icono-modulo" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M3 21h18"></path><path d="M5 21V7l8-4 6 3v15"></path><path d="M9 9h1"></path><path d="M9 13h1"></path><path d="M9 17h1"></path><path d="M14 11h1"></path><path d="M14 15h1"></path></svg>
-        </div>
-        <h3>Gestión de sedes</h3>
-        <p>Añadir, editar o inactivar sedes</p>
-        <span class="modulo-flecha">›</span>
-      </div>
-
       <div id="tileAsignacionGrupos" class="modulo modulo-asignacion oculto" onclick="abrirModulo('asignacionGrupos')">
         <div class="modulo-acento"></div>
         <div class="icono-modulo" aria-hidden="true">
@@ -2618,7 +2599,17 @@
           <svg viewBox="0 0 24 24"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path><path d="M3 21v-1a5 5 0 0 1 5-5h2"></path><path d="M16 11h6"></path><path d="M19 8v6"></path></svg>
         </div>
         <h3>Inscripción de estudiantes</h3>
-        <p>Inscribe o desinscribe estudiantes por su ID</p>
+        <p>Inscribe niños desde el catálogo por su ID</p>
+        <span class="modulo-flecha">›</span>
+      </div>
+
+      <div id="tileContratos" class="modulo modulo-asignacion oculto" onclick="abrirModulo('contratos')">
+        <div class="modulo-acento"></div>
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 13h6"></path><path d="M9 17h6"></path></svg>
+        </div>
+        <h3>Generar contratos</h3>
+        <p>Cartas compromiso de facilitadores y coordinadores por distrito</p>
         <span class="modulo-flecha">›</span>
       </div>
     </div>
@@ -2642,7 +2633,7 @@
       <div class="form-grid-3">
         <div>
           <label for="usuarioAdminCedula">Cédula</label>
-          <input type="text" id="usuarioAdminCedula" placeholder="Sin guiones o como aparece en la BD" oninput="autocompletarNombrePersonalMinerd()">
+          <input type="text" id="usuarioAdminCedula" placeholder="Sin guiones o como aparece en la BD">
         </div>
         <div>
           <label for="usuarioAdminNombre">Nombre completo</label>
@@ -2686,11 +2677,18 @@
 
       <div class="form-grid-3">
         <div>
-          <label for="usuarioAdminGrupo">Grupo asignado</label>
-          <select id="usuarioAdminGrupo" disabled>
-            <option value="">Se asignará posteriormente</option>
+          <label for="usuarioAdminGrupo">Grupo</label>
+          <select id="usuarioAdminGrupo">
+            <option value="">Todos</option>
+            <option value="Grupo 1">Grupo 1</option>
+            <option value="Grupo 2">Grupo 2</option>
+            <option value="Grupo 3">Grupo 3</option>
+            <option value="Grupo 4">Grupo 4</option>
+            <option value="Grupo 5">Grupo 5</option>
+            <option value="Grupo 6">Grupo 6</option>
+            <option value="Grupo 7">Grupo 7</option>
+            <option value="Grupo 8">Grupo 8</option>
           </select>
-          <div class="ayuda-formulario">El grupo no se selecciona al crear el usuario; se asigna luego desde el módulo correspondiente.</div>
         </div>
         <div>
           <label for="usuarioAdminEstado">Estado</label>
@@ -2713,33 +2711,6 @@
       <div id="mensajeUsuarioAdmin" class="mensaje"></div>
     </div>
 
-
-    <div class="bloque-formulario">
-      <h3>Carga masiva de usuarios</h3>
-      <p class="nota">Permite crear o actualizar usuarios desde un archivo CSV. El grupo no se carga en esta plantilla, porque se asigna posteriormente desde el módulo correspondiente.</p>
-
-      <div class="form-grid-3">
-        <div>
-          <label for="archivoCargaUsuarios">Archivo CSV de usuarios</label>
-          <input type="file" id="archivoCargaUsuarios" accept=".csv,text/csv">
-          <div class="ayuda-formulario">Use la plantilla oficial y conserve los encabezados.</div>
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button type="button" class="btn-secundario" onclick="descargarPlantillaUsuariosCSV()">Descargar plantilla usuarios</button>
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button type="button" onclick="cargarMasivaUsuariosAdmin()">Cargar usuarios</button>
-        </div>
-      </div>
-
-      <div class="ayuda-formulario">
-        Columnas esperadas: <strong>Cedula, Nombre, Rol, Regional, Distrito, CentroSede, Estado, Password</strong>.
-        Si la contraseña queda vacía en un usuario nuevo, se usará la cédula como contraseña inicial.
-      </div>
-      <div id="mensajeCargaUsuariosAdmin" class="mensaje"></div>
-      <div id="detalleCargaUsuariosAdmin" class="nota"></div>
-    </div>
-
     <div class="usuarios-admin-toolbar">
       <div class="campo-busqueda">
         <label for="filtroUsuariosAdmin">Buscar usuarios</label>
@@ -2747,96 +2718,11 @@
       </div>
       <div class="acciones-usuarios">
         <button type="button" onclick="listarUsuariosAdmin()">Actualizar listado</button>
-        <button type="button" class="btn-secundario" onclick="reactivarUsuariosInactivosFiltradosAdmin()">Reactivar inactivos filtrados</button>
       </div>
     </div>
 
     <div id="resumenUsuariosAdmin" class="nota"></div>
     <div id="tablaUsuariosAdmin" class="tabla-contenedor oculto"></div>
-  </section>
-
-  <section id="moduloGestionSedes" class="tarjeta oculto">
-    <div class="encabezado-modulo">
-      <div>
-        <h2>Gestión de sedes</h2>
-        <p class="nota">Módulo exclusivo para administradores reales. Permite añadir sedes, modificar sus datos, ajustar la cuota e inactivar sedes que no deban aparecer en los selectores.</p>
-      </div>
-      <div class="acciones-modulo">
-        <button class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
-      </div>
-    </div>
-
-    <div class="bloque-formulario">
-      <h3 id="tituloFormularioSedeAdmin">Crear sede</h3>
-      <input type="hidden" id="sedeAdminCentroOriginal">
-
-      <div class="form-grid-3">
-        <div>
-          <label for="sedeAdminRegional">Regional</label>
-          <input type="text" id="sedeAdminRegional" list="listaRegionalesSedesAdmin" placeholder="Ej.: 01 - BARAHONA">
-          <datalist id="listaRegionalesSedesAdmin"></datalist>
-        </div>
-        <div>
-          <label for="sedeAdminDistrito">Distrito</label>
-          <input type="text" id="sedeAdminDistrito" list="listaDistritosSedesAdmin" placeholder="Ej.: 0101 - PEDERNALES">
-          <datalist id="listaDistritosSedesAdmin"></datalist>
-        </div>
-        <div>
-          <label for="sedeAdminCodigo">Código sede</label>
-          <input type="text" id="sedeAdminCodigo" placeholder="Código del centro sede">
-        </div>
-      </div>
-
-      <div class="form-grid-3">
-        <div>
-          <label for="sedeAdminCentro">Centro sede</label>
-          <input type="text" id="sedeAdminCentro" placeholder="Nombre del centro sede">
-          <div class="ayuda-formulario">Este texto se usa para relacionar usuarios, estudiantes y registros de la sede.</div>
-        </div>
-        <div>
-          <label for="sedeAdminCuota">Cuota de estudiantes</label>
-          <input type="number" id="sedeAdminCuota" min="0" step="1" placeholder="Ej.: 75">
-          <div class="ayuda-formulario">Los grupos disponibles se calculan como cuota ÷ 25, redondeando hacia arriba.</div>
-        </div>
-        <div>
-          <label for="sedeAdminEstado">Estado</label>
-          <select id="sedeAdminEstado">
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-grid-2">
-        <div>
-          <label for="sedeAdminCoordinador">Coordinador</label>
-          <input type="text" id="sedeAdminCoordinador" placeholder="Nombre del coordinador de sede">
-        </div>
-        <div>
-          <label for="sedeAdminTelefono">Teléfono</label>
-          <input type="text" id="sedeAdminTelefono" placeholder="Teléfono de contacto">
-        </div>
-      </div>
-
-      <div class="acciones-modulo" style="margin-top: 14px;">
-        <button type="button" onclick="guardarSedeAdmin()">Guardar sede</button>
-        <button type="button" class="btn-secundario" onclick="limpiarFormularioSedeAdmin()">Limpiar</button>
-      </div>
-      <div id="mensajeSedeAdmin" class="mensaje"></div>
-    </div>
-
-    <div class="usuarios-admin-toolbar">
-      <div class="campo-busqueda">
-        <label for="filtroSedesAdmin">Buscar sedes</label>
-        <input type="search" id="filtroSedesAdmin" placeholder="Buscar por regional, distrito, código, centro sede o coordinador" oninput="renderizarTablaSedesAdmin()">
-      </div>
-      <div class="acciones-usuarios">
-        <button type="button" onclick="listarSedesAdmin()">Actualizar listado</button>
-      </div>
-    </div>
-
-    <div id="resumenSedesAdmin" class="nota"></div>
-    <div id="tablaSedesAdmin" class="tabla-contenedor oculto"></div>
   </section>
 
   <section id="moduloAsistencia" class="tarjeta oculto">
@@ -3408,26 +3294,7 @@
 
     <div id="resumenAsignacionEstudiantesGrupos" class="resumen-asignacion"></div>
     <div id="alertaAsignacionEstudiantesGrupos" class="alerta-asignacion oculto"></div>
-    <div class="bloque-formulario">
-      <h3>Listado de estudiantes</h3>
-      <div class="form-grid-3">
-        <div>
-          <label for="busquedaAsignacionEstudiantes">Buscar estudiantes</label>
-          <input type="search" id="busquedaAsignacionEstudiantes" placeholder="Nombre, regional, distrito, sede o grado" oninput="sincronizarBorradorAsignacionEstudiantes(); renderizarModuloAsignacionEstudiantesGrupos()">
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button type="button" class="btn-secundario" onclick="exportarEstudiantesAsignacionExcel()">Exportar a Excel</button>
-        </div>
-      </div>
-    </div>
     <div id="tablaAsignacionEstudiantesGrupos" class="tabla-contenedor tabla-asignacion oculto"></div>
-
-    <div id="bloquePendientesSedeAsignacionEstudiantes" class="bloque-formulario oculto">
-      <h3>Estudiantes de mi distrito sin sede asignada</h3>
-      <p class="nota">Ya están inscritos en su distrito, pero todavía no tienen centro sede (se completa al registrarles la primera evaluación). Es solo informativo: aquí no se les puede asignar grupo todavía.</p>
-      <div id="tablaPendientesSedeAsignacionEstudiantes" class="tabla-contenedor"></div>
-    </div>
-
 
     <div class="acciones-asignacion">
       <button type="button" id="btnAsignacionAutomatica" class="oculto btn-asignacion-auto" onclick="ejecutarAsignacionAutomatica()">
@@ -3449,26 +3316,13 @@
   <section id="moduloInscripcion" class="tarjeta oculto">
     <div class="encabezado-modulo">
       <div>
-        <h2>Inscripción y desinscripción de estudiantes</h2>
-        <p class="nota">Digite el ID del estudiante para buscarlo. Si no está inscrito, podrá inscribirlo. Si ya está inscrito, podrá desinscribirlo según su rol y alcance.</p>
+        <h2>Inscripción de estudiantes</h2>
+        <p class="nota">Digite el ID del estudiante para buscarlo en el catálogo. Si existe, confirme el centro sede y complete la inscripción.</p>
       </div>
     </div>
 
     <div class="bloque-formulario">
-      <h3>Listado de estudiantes</h3>
-      <p class="nota">Se carga automáticamente según su alcance. Haga clic en un estudiante para buscarlo y gestionarlo.</p>
-      <div class="form-grid-3">
-        <div>
-          <label for="busquedaListadoInscripcion">Buscar en el listado</label>
-          <input type="search" id="busquedaListadoInscripcion" placeholder="Nombre, ID, regional, distrito o sede" oninput="renderizarListadoInscripcion()">
-        </div>
-      </div>
-      <div id="mensajeListadoInscripcion" class="mensaje"></div>
-      <div id="tablaListadoInscripcion" class="tabla-contenedor"></div>
-    </div>
-
-    <div class="bloque-formulario">
-      <h3>Buscar estudiante</h3>
+      <h3>Buscar en el catálogo</h3>
       <div class="form-grid-3">
         <div>
           <label for="inscID">ID del estudiante</label>
@@ -3479,33 +3333,6 @@
         </div>
       </div>
       <div id="mensajeBusquedaInscripcion" class="mensaje"></div>
-    </div>
-
-
-    <div class="bloque-formulario">
-      <h3>Carga masiva de estudiantes</h3>
-      <p class="nota">Permite inscribir estudiantes de forma masiva. No se solicita centro sede; ese dato se completará cuando se registre la evaluación del estudiante.</p>
-
-      <div class="form-grid-3">
-        <div>
-          <label for="archivoCargaEstudiantes">Archivo CSV de estudiantes</label>
-          <input type="file" id="archivoCargaEstudiantes" accept=".csv,text/csv">
-          <div class="ayuda-formulario">Si el estudiante existe en el catálogo, basta con colocar su ID. Si no existe, complete los demás datos.</div>
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button type="button" class="btn-secundario" onclick="descargarPlantillaEstudiantesCSV()">Descargar plantilla estudiantes</button>
-        </div>
-        <div style="display:flex; align-items:flex-end;">
-          <button type="button" onclick="cargarMasivaEstudiantes()">Cargar estudiantes</button>
-        </div>
-      </div>
-
-      <div class="ayuda-formulario">
-        Columnas esperadas: <strong>IdEstudiante, NombreCompleto, Regional, Distrito, Grado, Nacionalidad, Sexo</strong>.
-        El campo <strong>CentroSede</strong> no se incluye en la plantilla.
-      </div>
-      <div id="mensajeCargaEstudiantes" class="mensaje"></div>
-      <div id="detalleCargaEstudiantes" class="nota"></div>
     </div>
 
     <div id="bloqueDatosInscripcion" class="bloque-formulario oculto">
@@ -3535,33 +3362,59 @@
           <label for="inscSexo">Sexo</label>
           <input type="text" id="inscSexo" readonly>
         </div>
-        <div>
-          <label for="inscCentroActual">Centro sede actual</label>
-          <input type="text" id="inscCentroActual" readonly>
-        </div>
-        <div>
-          <label for="inscEstadoActual">Estado de inscripción</label>
-          <input type="text" id="inscEstadoActual" readonly>
-        </div>
-        <div>
-          <label for="inscGrupoActual">Grupo actual</label>
-          <input type="text" id="inscGrupoActual" readonly>
-        </div>
       </div>
 
-      <div class="alerta-asignacion" style="margin-top:18px;">
-        <strong>Nota:</strong> en la inscripción no se selecciona centro sede. El centro sede del estudiante se completará posteriormente cuando el facilitador registre la evaluación y seleccione la sede correspondiente.
+      <h3 style="margin-top:18px;">Centro sede de inscripción</h3>
+      <p class="nota">Elija el centro sede donde quedará inscrito el estudiante.</p>
+      <div class="form-grid-3">
+        <div>
+          <label for="inscCentro">Centro sede</label>
+          <select id="inscCentro">
+            <option value="">Seleccione el centro sede</option>
+          </select>
+        </div>
       </div>
 
       <div class="acciones-asignacion" style="margin-top:18px;">
         <button type="button" id="btnConfirmarInscripcion" onclick="confirmarInscripcion()">Confirmar inscripción</button>
-        <button type="button" id="btnDesinscribirEstudiante" class="btn-peligro oculto" onclick="confirmarDesinscripcionEstudiante()">Desinscribir estudiante</button>
         <button type="button" class="btn-secundario" onclick="limpiarInscripcion()">Limpiar</button>
         <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
       </div>
     </div>
 
     <div id="mensajeInscripcion" class="mensaje"></div>
+  </section>
+
+
+
+  <section id="moduloContratos" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Generar contratos</h2>
+        <p class="nota">Seleccione un distrito para generar las cartas compromiso de todos los facilitadores y coordinadores de sede activos en él. Se descargará un archivo .zip con un PDF por persona.</p>
+      </div>
+    </div>
+
+    <div class="bloque-formulario">
+      <h3>Distrito</h3>
+      <div class="form-grid-3">
+        <div>
+          <label for="contratosDistrito">Distrito</label>
+          <select id="contratosDistrito">
+            <option value="">Seleccione un distrito</option>
+          </select>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" id="btnGenerarContratos" onclick="generarContratosDistrito()">Generar contratos (.zip)</button>
+        </div>
+      </div>
+      <div id="resumenContratos" class="nota"></div>
+      <div id="mensajeContratos" class="mensaje"></div>
+    </div>
+
+    <div class="acciones-asignacion" style="margin-top:10px;">
+      <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+    </div>
   </section>
 
 
@@ -4099,44 +3952,6 @@
     document.body.appendChild(script);
   }
 
-
-
-  function llamarBackendPost(params, callback, opciones) {
-    var opts = opciones || {};
-    var timeout = opts.timeout || 30000;
-    var terminado = false;
-    var controller = new AbortController();
-    var timer = setTimeout(function() {
-      if (terminado) return;
-      terminado = true;
-      controller.abort();
-      callback({ ok: false, timeout: true, mensaje: "El servidor tardó demasiado en responder. Verifica tu conexión e intenta de nuevo." });
-    }, timeout);
-
-    var v = (typeof datosVistaSimulada === "function") ? datosVistaSimulada() : null;
-    var paramsFinales = v ? Object.assign({}, params, v) : params;
-
-    fetch(URL_SCRIPT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(paramsFinales),
-      signal: controller.signal
-    })
-      .then(function(r) { return r.json(); })
-      .then(function(respuesta) {
-        if (terminado) return;
-        terminado = true;
-        clearTimeout(timer);
-        callback(respuesta);
-      })
-      .catch(function(error) {
-        if (terminado) return;
-        terminado = true;
-        clearTimeout(timer);
-        callback({ ok: false, mensaje: "No se pudo conectar con el servidor: " + (error && error.message ? error.message : error) });
-      });
-  }
-
   // ═══ COLA DE ENVÍOS OFFLINE ════════════════════════════════════════════════
   // Los guardados de asistencia, acompañamientos e incidencias fallidos por
   // falta de conexión se encolan en localStorage y se reenvían automáticamente
@@ -4276,7 +4091,7 @@
     "panel", "moduloAsistencia", "moduloDashboard",
     "moduloAcompanamientos", "moduloIncidencias",
     "moduloAsignacionGrupos", "moduloAsignacionEstudiantesGrupos",
-    "moduloGestionUsuarios", "moduloGestionSedes", "moduloInscripcion", "moduloEvaluaciones", "login", "cambioPassword"
+    "moduloGestionUsuarios", "moduloEvaluaciones", "login", "cambioPassword"
   ];
 
   function mostrarModulo(id) {
@@ -4300,8 +4115,6 @@
     moduloAsignacionGrupos: "Asignación de facilitadores",
     moduloAsignacionEstudiantesGrupos: "Asignación de estudiantes",
     moduloGestionUsuarios: "Gestión de usuarios",
-    moduloGestionSedes: "Gestión de sedes",
-    moduloInscripcion: "Inscripción y desinscripción de estudiantes",
     moduloEvaluaciones: "Evaluaciones"
   };
 
@@ -4465,7 +4278,7 @@
     datosAsignacionEstudiantesGrupos = null;
     // Cerrar todos los módulos
     ["moduloAsistencia","moduloDashboard","moduloAcompanamientos","moduloIncidencias",
-     "moduloAsignacionGrupos","moduloAsignacionEstudiantesGrupos","moduloGestionUsuarios","moduloGestionSedes","moduloInscripcion"].forEach(function(id) {
+     "moduloAsignacionGrupos","moduloAsignacionEstudiantesGrupos","moduloGestionUsuarios"].forEach(function(id) {
       const el = document.getElementById(id);
       if (el) el.classList.add("oculto");
     });
@@ -4503,9 +4316,6 @@
     _sedesGlobalesCargando = false;
     _sedesGlobalesCallbacks = [];
     sedesModoAdministrador = [];
-    sedesGestionUsuarios = [];
-    sedesGestionAdminCache = [];
-    sedesInscripcion = [];
   }
 
 
@@ -4530,7 +4340,6 @@
   let datosAsignacionEstudiantesGrupos = null;
   let filtrosAsignacionGrupos = { regional: "", distrito: "", centroSede: "" };
   let filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
-  let borradorAsignacionEstudiantes = {};
   // Mapa de nombre semántico → nombre del backend para traducir al guardar
   let mapaGrupoSemanticoABackend = {};
   // Mapa de nombre del backend → nombre semántico para mostrar al usuario
@@ -4692,10 +4501,6 @@
   function esCoordinadorSede() {
     const rol = normalizarRol(usuarioActual && usuarioActual.rol);
     return rol === "coordinador sede" || rol === "coordinador de sede";
-  }
-
-  function esTecnicoRegional() {
-    return normalizarRol(usuarioActual && usuarioActual.rol) === "tecnico regional";
   }
 
   function asegurarOpcionGrupo(select, grupo) {
@@ -4987,7 +4792,6 @@
     tarjetaUsuario.classList.remove("oculto");
     actualizarVisibilidadAsignacionGrupos(usuario);
     actualizarVisibilidadGestionUsuarios();
-    actualizarVisibilidadGestionSedes();
     actualizarPanelAdministrador();
     actualizarBarraVistaSimulada();
   }
@@ -5007,7 +4811,7 @@
       else tileEstudiantes.classList.add("oculto");
     }
 
-    // Inscripción/desinscripción: Administrador, Técnico regional y Coordinador de sede.
+    // Inscripción: Administrador (real o en vista) y Técnico regional.
     // Se basa en el rol real para que el administrador no pierda el acceso
     // al asumir vistas de coordinador o facilitador.
     const tileInscripcion = document.getElementById("tileInscripcion");
@@ -5015,23 +4819,27 @@
       const rolVista = normalizarTexto(usuario && usuario.rol).toLowerCase();
       const rolReal = normalizarRol(usuarioSesion && usuarioSesion.rol);
       const puedeInscribir = esAdministradorReal() ||
-        rolReal === "tecnico regional" || rolReal === "coordinador sede" ||
-        rolVista === "administrador" || rolVista === "técnico regional" || rolVista === "tecnico regional" ||
-        rolVista === "coordinador sede";
+        rolReal === "tecnico regional" ||
+        rolVista === "administrador" || rolVista === "técnico regional" || rolVista === "tecnico regional";
       if (puedeInscribir) tileInscripcion.classList.remove("oculto");
       else tileInscripcion.classList.add("oculto");
+    }
+
+    // Contratos: misma regla que Inscripción (Administrador y Técnico regional).
+    const tileContratos = document.getElementById("tileContratos");
+    if (tileContratos) {
+      const rolVistaC = normalizarTexto(usuario && usuario.rol).toLowerCase();
+      const rolRealC = normalizarRol(usuarioSesion && usuarioSesion.rol);
+      const puedeContratos = esAdministradorReal() ||
+        rolRealC === "tecnico regional" ||
+        rolVistaC === "administrador" || rolVistaC === "técnico regional" || rolVistaC === "tecnico regional";
+      if (puedeContratos) tileContratos.classList.remove("oculto");
+      else tileContratos.classList.add("oculto");
     }
   }
 
   function actualizarVisibilidadGestionUsuarios() {
     const tile = document.getElementById("tileGestionUsuarios");
-    if (!tile) return;
-    if (esAdministradorReal()) tile.classList.remove("oculto");
-    else tile.classList.add("oculto");
-  }
-
-  function actualizarVisibilidadGestionSedes() {
-    const tile = document.getElementById("tileGestionSedes");
     if (!tile) return;
     if (esAdministradorReal()) tile.classList.remove("oculto");
     else tile.classList.add("oculto");
@@ -5387,11 +5195,6 @@
       return;
     }
 
-    if (modulo === "gestionSedes") {
-      abrirModuloGestionSedes();
-      return;
-    }
-
     if (modulo === "evaluaciones") {
       abrirModuloEvaluaciones();
       return;
@@ -5399,6 +5202,11 @@
 
     if (modulo === "inscripcion") {
       abrirModuloInscripcion();
+      return;
+    }
+
+    if (modulo === "contratos") {
+      abrirModuloContratos();
       return;
     }
 
@@ -5946,16 +5754,6 @@
       return;
     }
 
-    if (dashboardActual === "evaluaciones") {
-      cargarDashboardEvaluaciones();
-      return;
-    }
-
-    if (dashboardActual === "acompanamientos") {
-      cargarDashboardAcompanamientos();
-      return;
-    }
-
     mostrarMatrizDashboardBasica(dashboardActual);
   }
 
@@ -6183,306 +5981,6 @@
     };
 
     return nombres[tipo] || "Dashboard";
-  }
-
-  function parametrosDashboardComoQuery() {
-    return "&cedula=" + encodeURIComponent(usuarioActual.cedula)
-      + "&regional=" + encodeURIComponent(document.getElementById("regionalDashboard").value)
-      + "&distrito=" + encodeURIComponent(document.getElementById("distritoDashboard").value)
-      + "&centroSede=" + encodeURIComponent(document.getElementById("sedeDashboard").value)
-      + "&grupo=" + encodeURIComponent(document.getElementById("grupoDashboard").value)
-      + "&fechaInicio=" + encodeURIComponent(document.getElementById("fechaInicioDashboard").value)
-      + "&fechaFin=" + encodeURIComponent(document.getElementById("fechaFinDashboard").value)
-      + (typeof vistaQueryString === "function" ? vistaQueryString() : "");
-  }
-
-  function cargarDashboardEvaluaciones() {
-    const mensaje = document.getElementById("mensajeDashboard");
-    mensaje.textContent = "";
-    mensaje.className = "mensaje";
-    limpiarResultadosDashboard();
-
-    if (!usuarioActual) {
-      mensaje.textContent = "Debe iniciar sesión.";
-      mensaje.classList.add("error");
-      return;
-    }
-
-    mostrarSpinner("mensajeDashboard", "Cargando evaluaciones...");
-    const callbackName = "callbackDashboardEvaluaciones_" + Date.now();
-
-    window[callbackName] = function(respuesta) {
-      mensaje.textContent = "";
-      mensaje.className = "mensaje";
-
-      if (respuesta.ok) {
-        mostrarDashboardEvaluaciones(respuesta.evaluaciones || []);
-      } else {
-        mensaje.textContent = respuesta.mensaje || "No se pudo cargar el dashboard de evaluaciones.";
-        mensaje.classList.add("error");
-      }
-
-      delete window[callbackName];
-      script.remove();
-    };
-
-    const script = document.createElement("script");
-    script.src = URL_SCRIPT
-      + "?accion=dashboardEvaluaciones"
-      + parametrosDashboardComoQuery()
-      + "&callback=" + callbackName;
-
-    document.body.appendChild(script);
-  }
-
-  function mostrarDashboardEvaluaciones(evaluaciones) {
-    const total = evaluaciones.length;
-    const porTipo = contarPorCampoDashboard(evaluaciones, "tipoPrueba");
-    const porResultado = contarPorCampoDashboard(evaluaciones, "grupoResultado");
-    const porFecha = contarPorCampoDashboard(evaluaciones, "fechaEvaluacion");
-    const porSede = ordenarConteoDashboard(contarPorCampoDashboard(evaluaciones, "centroSede"), 10);
-    const fechas = Object.keys(porFecha).sort();
-
-    const lengua = porTipo.LENGUA || porTipo.Lengua || porTipo["Lengua Española"] || 0;
-    const matematica = porTipo.MATEMATICA || porTipo.Matemática || porTipo.Matematica || 0;
-    const exploradores = porResultado.Explorador || porResultado.Exploradores || 0;
-    const creadores = porResultado.Creador || porResultado.Creadores || 0;
-    const innovadores = porResultado.Innovador || porResultado.Innovadores || 0;
-
-    const kpis = [
-      { icono: "📝", label: "Evaluaciones", valor: total, color: "#059669" },
-      { icono: "📘", label: "Lengua", valor: lengua, color: "#2563eb" },
-      { icono: "➗", label: "Matemática", valor: matematica, color: "#7c3aed" },
-      { icono: "🧭", label: "Exploradores", valor: exploradores, color: "#d97706" },
-      { icono: "🛠️", label: "Creadores", valor: creadores, color: "#0891b2" },
-      { icono: "🚀", label: "Innovadores", valor: innovadores, color: "#16a34a" }
-    ];
-
-    document.getElementById("resumenDashboard").innerHTML = kpis.map(function(k) {
-      return `<div class="db-kpi-card" style="border-left:5px solid ${k.color}">
-        <span class="db-kpi-icono">${k.icono}</span>
-        <div>
-          <div class="db-kpi-label">${k.label}</div>
-          <div class="db-kpi-valor" style="color:${k.color}">${k.valor}</div>
-        </div>
-      </div>`;
-    }).join("");
-
-    mostrarBloqueGraficosDashboard();
-    configurarTitulosGraficosDashboard("evaluaciones");
-
-    crearGraficoDashboard(
-      "graficoDashboard1",
-      "bar",
-      Object.keys(porResultado),
-      [{ label: "Evaluaciones", data: Object.values(porResultado), backgroundColor: "#059669", borderRadius: 6 }]
-    );
-
-    crearGraficoDashboard(
-      "graficoDashboard2",
-      "bar",
-      Object.keys(porTipo),
-      [{ label: "Evaluaciones", data: Object.values(porTipo), backgroundColor: "#2563eb", borderRadius: 6 }]
-    );
-
-    crearGraficoDashboard(
-      "graficoDashboard3",
-      "line",
-      fechas,
-      [{ label: "Evaluaciones", data: fechas.map(function(f) { return porFecha[f]; }), borderColor: "#059669", backgroundColor: "rgba(5,150,105,0.14)", fill: true, tension: 0.35 }]
-    );
-
-    crearGraficoDashboard(
-      "graficoDashboard4",
-      "bar",
-      porSede.map(function(item) { return item.etiqueta; }),
-      [{ label: "Evaluaciones", data: porSede.map(function(item) { return item.valor; }), backgroundColor: "#7c3aed", borderRadius: 6 }],
-      { indexAxis: "y", scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
-    );
-
-    const matriz = document.getElementById("dashboardMatrizResultados");
-    matriz.classList.remove("oculto");
-
-    if (!evaluaciones || evaluaciones.length === 0) {
-      matriz.innerHTML = "<p>No hay evaluaciones para los filtros seleccionados.</p>";
-      return;
-    }
-
-    let html = "<table>";
-    html += "<thead><tr>";
-    html += "<th>Fecha</th><th>Tipo</th><th>Estudiante</th><th>Centro sede</th><th>Grupo operativo</th><th>Resultado</th><th>Satisfactorios</th><th>Puntuación</th>";
-    html += "</tr></thead><tbody>";
-
-    evaluaciones.slice(0, 300).forEach(function(e) {
-      html += "<tr>";
-      html += `<td>${e.fechaEvaluacion || ""}</td>`;
-      html += `<td>${e.tipoPrueba || ""}</td>`;
-      html += `<td>${e.nombreEstudiante || ""}<span class="texto-pequeno">${e.idEstudiante || ""}</span></td>`;
-      html += `<td>${e.centroSede || ""}</td>`;
-      html += `<td>${grupoLegible(e.grupo) || ""}</td>`;
-      html += `<td>${e.grupoResultado || ""}</td>`;
-      html += `<td>${e.cantidadSatisfactorios ?? ""}</td>`;
-      html += `<td>${e.puntuacionTotal || ""}</td>`;
-      html += "</tr>";
-    });
-
-    html += "</tbody></table>";
-    if (evaluaciones.length > 300) html += `<p class="nota">Se muestran los primeros 300 registros de ${evaluaciones.length} encontrados.</p>`;
-    matriz.innerHTML = html;
-  }
-
-  function cargarDashboardAcompanamientos() {
-    const mensaje = document.getElementById("mensajeDashboard");
-    mensaje.textContent = "";
-    mensaje.className = "mensaje";
-    limpiarResultadosDashboard();
-
-    if (!usuarioActual) {
-      mensaje.textContent = "Debe iniciar sesión.";
-      mensaje.classList.add("error");
-      return;
-    }
-
-    mostrarSpinner("mensajeDashboard", "Cargando acompañamientos...");
-    const callbackName = "callbackDashboardAcompanamientos_" + Date.now();
-
-    window[callbackName] = function(respuesta) {
-      mensaje.textContent = "";
-      mensaje.className = "mensaje";
-
-      if (respuesta.ok) {
-        mostrarDashboardAcompanamientos(respuesta.acompanamientos || []);
-      } else {
-        mensaje.textContent = respuesta.mensaje || "No se pudo cargar el dashboard de acompañamientos.";
-        mensaje.classList.add("error");
-      }
-
-      delete window[callbackName];
-      script.remove();
-    };
-
-    const script = document.createElement("script");
-    script.src = URL_SCRIPT
-      + "?accion=dashboardAcompanamientos"
-      + parametrosDashboardComoQuery()
-      + "&callback=" + callbackName;
-
-    document.body.appendChild(script);
-  }
-
-  function clasificarCumplimientoDashboard(valor) {
-    const n = Number(valor || 0);
-    if (n >= 80) return "Alto (80%-100%)";
-    if (n >= 60) return "Medio (60%-79%)";
-    if (n > 0) return "Bajo (<60%)";
-    return "Sin dato";
-  }
-
-  function mostrarDashboardAcompanamientos(acompanamientos) {
-    const total = acompanamientos.length;
-    const porTipo = contarPorCampoDashboard(acompanamientos, "tipoAcompanamiento");
-    const porSeguimiento = contarPorCampoDashboard(acompanamientos, "estadoSeguimiento");
-    const porSede = ordenarConteoDashboard(contarPorCampoDashboard(acompanamientos, "centroSede"), 10);
-    const porCumplimiento = {};
-    let sumaCumplimiento = 0;
-    let conCumplimiento = 0;
-    let requiereSeguimiento = 0;
-
-    acompanamientos.forEach(function(a) {
-      const bucket = clasificarCumplimientoDashboard(a.porcentajeCumplimiento);
-      porCumplimiento[bucket] = (porCumplimiento[bucket] || 0) + 1;
-      const pct = Number(a.porcentajeCumplimiento || 0);
-      if (pct > 0) {
-        sumaCumplimiento += pct;
-        conCumplimiento++;
-      }
-      const req = normalizarTexto(a.requiereSeguimiento).toLowerCase();
-      if (req === "sí" || req === "si") requiereSeguimiento++;
-    });
-
-    const promedio = conCumplimiento > 0 ? Math.round(sumaCumplimiento / conCumplimiento) : 0;
-    const coord = porTipo["Coordinador de sede"] || porTipo.Coordinador || 0;
-    const fac = porTipo.Facilitador || 0;
-
-    const kpis = [
-      { icono: "🔍", label: "Acompañamientos", valor: total, color: "#0891b2" },
-      { icono: "🧑‍🏫", label: "A facilitadores", valor: fac, color: "#2563eb" },
-      { icono: "🏫", label: "A coordinadores", valor: coord, color: "#7c3aed" },
-      { icono: "⚠️", label: "Requieren seguimiento", valor: requiereSeguimiento, color: "#d97706" },
-      { icono: "✅", label: "Cumplimiento promedio", valor: promedio + "%", color: "#16a34a" }
-    ];
-
-    document.getElementById("resumenDashboard").innerHTML = kpis.map(function(k) {
-      return `<div class="db-kpi-card" style="border-left:5px solid ${k.color}">
-        <span class="db-kpi-icono">${k.icono}</span>
-        <div>
-          <div class="db-kpi-label">${k.label}</div>
-          <div class="db-kpi-valor" style="color:${k.color}">${k.valor}</div>
-        </div>
-      </div>`;
-    }).join("");
-
-    mostrarBloqueGraficosDashboard();
-    configurarTitulosGraficosDashboard("acompanamientos");
-
-    crearGraficoDashboard(
-      "graficoDashboard1",
-      "bar",
-      Object.keys(porTipo),
-      [{ label: "Acompañamientos", data: Object.values(porTipo), backgroundColor: "#0891b2", borderRadius: 6 }]
-    );
-
-    crearGraficoDashboard(
-      "graficoDashboard2",
-      "bar",
-      Object.keys(porSeguimiento),
-      [{ label: "Registros", data: Object.values(porSeguimiento), backgroundColor: "#d97706", borderRadius: 6 }]
-    );
-
-    crearGraficoDashboard(
-      "graficoDashboard3",
-      "bar",
-      Object.keys(porCumplimiento),
-      [{ label: "Acompañamientos", data: Object.values(porCumplimiento), backgroundColor: "#16a34a", borderRadius: 6 }]
-    );
-
-    crearGraficoDashboard(
-      "graficoDashboard4",
-      "bar",
-      porSede.map(function(item) { return item.etiqueta; }),
-      [{ label: "Acompañamientos", data: porSede.map(function(item) { return item.valor; }), backgroundColor: "#7c3aed", borderRadius: 6 }],
-      { indexAxis: "y", scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
-    );
-
-    const matriz = document.getElementById("dashboardMatrizResultados");
-    matriz.classList.remove("oculto");
-
-    if (!acompanamientos || acompanamientos.length === 0) {
-      matriz.innerHTML = "<p>No hay acompañamientos para los filtros seleccionados.</p>";
-      return;
-    }
-
-    let html = "<table>";
-    html += "<thead><tr>";
-    html += "<th>Fecha</th><th>Tipo</th><th>Persona acompañada</th><th>Centro sede</th><th>Grupo</th><th>% cumplimiento</th><th>Seguimiento</th><th>Estado</th>";
-    html += "</tr></thead><tbody>";
-
-    acompanamientos.slice(0, 300).forEach(function(a) {
-      html += "<tr>";
-      html += `<td>${a.fechaAcompanamiento || ""}</td>`;
-      html += `<td>${a.tipoAcompanamiento || ""}</td>`;
-      html += `<td>${a.personaAcompanada || ""}<span class="texto-pequeno">${a.cargoPersonaAcompanada || ""}</span></td>`;
-      html += `<td>${a.centroSede || ""}</td>`;
-      html += `<td>${grupoLegible(a.grupo) || ""}</td>`;
-      html += `<td>${a.porcentajeCumplimiento || 0}%</td>`;
-      html += `<td>${a.requiereSeguimiento || ""}</td>`;
-      html += `<td>${a.estadoSeguimiento || ""}</td>`;
-      html += "</tr>";
-    });
-
-    html += "</tbody></table>";
-    if (acompanamientos.length > 300) html += `<p class="nota">Se muestran los primeros 300 registros de ${acompanamientos.length} encontrados.</p>`;
-    matriz.innerHTML = html;
   }
 
   function cargarDashboardIncidencias() {
@@ -8434,38 +7932,6 @@
     return (puedeConsultarAsignaciones(usuarioActual) && !puedeModificarAsignaciones()) || esModoVistaSimulada();
   }
 
-  // El coordinador de sede en realidad coordina TODAS las sedes de su
-  // distrito (la misma persona cubre varias sedes), no solo la que tiene
-  // guardada en su ficha de USUARIOS.
-  // (Reutiliza esCoordinadorSede(), ya existente en el código.)
-
-  function renderizarPendientesSedeAsignacion() {
-    const bloque = document.getElementById("bloquePendientesSedeAsignacionEstudiantes");
-    const tabla = document.getElementById("tablaPendientesSedeAsignacionEstudiantes");
-    if (!bloque || !tabla) return;
-
-    const pendientes = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantesPendientesSede) || [];
-    if (!esCoordinadorSede() || !pendientes.length) {
-      bloque.classList.add("oculto");
-      tabla.innerHTML = "";
-      return;
-    }
-
-    bloque.classList.remove("oculto");
-    let html = "<table><thead><tr><th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Grado</th></tr></thead><tbody>";
-    pendientes.forEach(function(e) {
-      html += "<tr>"
-        + "<td>" + escapeHtml(e.idEstudiante || "") + "</td>"
-        + "<td>" + escapeHtml(e.nombre || "") + "</td>"
-        + "<td>" + escapeHtml(e.regional || "") + "</td>"
-        + "<td>" + escapeHtml(e.distrito || "") + "</td>"
-        + "<td>" + escapeHtml(e.grado || "") + "</td>"
-        + "</tr>";
-    });
-    html += "</tbody></table>";
-    tabla.innerHTML = html;
-  }
-
   function valoresUnicosOrdenados(lista) {
     return Array.from(new Set((lista || []).filter(function(v) { return normalizarTexto(v); }))).sort(function(a, b) {
       return String(a).localeCompare(String(b));
@@ -8534,24 +8000,12 @@
     const bloque = document.getElementById("bloqueFiltrosAsignacionEstudiantes");
     if (!bloque) return;
 
-    const esCoord = esCoordinadorSede();
-
-    if (!modoConsultaAsignaciones() && !esCoord) {
+    if (!modoConsultaAsignaciones()) {
       bloque.classList.add("oculto");
       return;
     }
 
     bloque.classList.remove("oculto");
-
-    // El coordinador solo elige sede dentro de su propio distrito; su
-    // regional y distrito son fijos, así que esos dos selectores se ocultan.
-    const selectRegional = document.getElementById("filtroRegionalAsignacionEstudiantes");
-    const selectDistrito = document.getElementById("filtroDistritoAsignacionEstudiantes");
-    const bloqueRegional = selectRegional ? selectRegional.closest("div") : null;
-    const bloqueDistrito = selectDistrito ? selectDistrito.closest("div") : null;
-    if (bloqueRegional) bloqueRegional.classList.toggle("oculto", esCoord);
-    if (bloqueDistrito) bloqueDistrito.classList.toggle("oculto", esCoord);
-
     const filtros = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.filtros) || [];
     const regionalSeleccionada = filtrosAsignacionEstudiantes.regional || "";
     const distritoSeleccionado = filtrosAsignacionEstudiantes.distrito || "";
@@ -8561,13 +8015,13 @@
       .filter(function(f) { return !regionalSeleccionada || normalizarTexto(f.regional) === normalizarTexto(regionalSeleccionada); })
       .map(function(f) { return f.distrito; }));
     const sedes = valoresUnicosOrdenados(filtros
-      .filter(function(f) { return esCoord || !regionalSeleccionada || normalizarTexto(f.regional) === normalizarTexto(regionalSeleccionada); })
-      .filter(function(f) { return esCoord || !distritoSeleccionado || normalizarTexto(f.distrito) === normalizarTexto(distritoSeleccionado); })
+      .filter(function(f) { return !regionalSeleccionada || normalizarTexto(f.regional) === normalizarTexto(regionalSeleccionada); })
+      .filter(function(f) { return !distritoSeleccionado || normalizarTexto(f.distrito) === normalizarTexto(distritoSeleccionado); })
       .map(function(f) { return f.centroSede; }));
 
     poblarSelectFiltroAsignacion("filtroRegionalAsignacionEstudiantes", regionales, filtrosAsignacionEstudiantes.regional, "Todas las regionales");
     poblarSelectFiltroAsignacion("filtroDistritoAsignacionEstudiantes", distritos, filtrosAsignacionEstudiantes.distrito, "Todos los distritos");
-    poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, esCoord ? "Seleccione su sede" : "Todas las sedes");
+    poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, "Todas las sedes");
   }
 
   function cambiarFiltroRegionalAsignacionEstudiantes() {
@@ -9021,7 +8475,6 @@
     mostrarModulo("moduloAsignacionEstudiantesGrupos");
 
     datosAsignacionEstudiantesGrupos = null;
-    borradorAsignacionEstudiantes = {};
 
     // Si hay una vista simulada activa, inicializar los filtros con su alcance
     if (esAdministradorReal() && localStorage.getItem("usuarioCampamentoVista")) {
@@ -9043,8 +8496,6 @@
     document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
     document.getElementById("mensajeAsignacionEstudiantesGrupos").textContent = "";
     document.getElementById("mensajeAsignacionEstudiantesGrupos").className = "mensaje";
-    const busquedaEstudiantes = document.getElementById("busquedaAsignacionEstudiantes");
-    if (busquedaEstudiantes) busquedaEstudiantes.value = "";
 
     cargarEstudiantesAsignacionGrupos();
   }
@@ -9058,7 +8509,6 @@
       const mensaje = document.getElementById("mensajeAsignacionEstudiantesGrupos");
       if (respuesta.ok) {
         datosAsignacionEstudiantesGrupos = respuesta;
-        borradorAsignacionEstudiantes = {};
         if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
         renderizarModuloAsignacionEstudiantesGrupos();
       } else {
@@ -9080,7 +8530,7 @@
       + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
       + vistaQueryString();
 
-    if (modoConsultaAsignaciones() || esCoordinadorSede()) {
+    if (modoConsultaAsignaciones()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionEstudiantes.regional || "")
         + "&filtroDistrito=" + encodeURIComponent(filtrosAsignacionEstudiantes.distrito || "")
         + "&filtroCentroSede=" + encodeURIComponent(filtrosAsignacionEstudiantes.centroSede || "");
@@ -9092,153 +8542,17 @@
     document.body.appendChild(script);
   }
 
-  function obtenerBusquedaAsignacionEstudiantes() {
-    const input = document.getElementById("busquedaAsignacionEstudiantes");
-    return input ? normalizarTexto(input.value || "") : "";
-  }
-
-  function estudianteCoincideBusquedaAsignacion(estudiante, busqueda) {
-    if (!busqueda) return true;
-    const texto = [
-      estudiante.nombre,
-      estudiante.regional,
-      estudiante.distrito,
-      estudiante.centroSede,
-      estudiante.grado
-    ].map(function(valor) { return normalizarTexto(valor); }).join(" ");
-    return normalizarTexto(texto).toLowerCase().indexOf(busqueda.toLowerCase()) !== -1;
-  }
-
-  function filtrarEstudiantesAsignacion(estudiantes) {
-    const busqueda = obtenerBusquedaAsignacionEstudiantes();
-    return (estudiantes || []).filter(function(estudiante) {
-      return estudianteCoincideBusquedaAsignacion(estudiante, busqueda);
-    });
-  }
-
-  function sincronizarBorradorAsignacionEstudiantes() {
-    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
-      borradorAsignacionEstudiantes[normalizarTexto(select.dataset.id)] = normalizarTexto(select.value);
-    });
-  }
-
-  function obtenerAsignacionesEstudiantesActuales() {
-    sincronizarBorradorAsignacionEstudiantes();
-    const estudiantes = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantes) || [];
-    const valoresVisibles = {};
-    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
-      valoresVisibles[normalizarTexto(select.dataset.id)] = normalizarTexto(select.value);
-    });
-
-    return estudiantes.map(function(estudiante) {
-      const id = normalizarTexto(estudiante.idEstudiante);
-      return {
-        idEstudiante: id,
-        grupo: Object.prototype.hasOwnProperty.call(valoresVisibles, id)
-          ? valoresVisibles[id]
-          : Object.prototype.hasOwnProperty.call(borradorAsignacionEstudiantes, id)
-          ? borradorAsignacionEstudiantes[id]
-          : normalizarTexto(estudiante.grupo),
-        estudiante: estudiante
-      };
-    });
-  }
-
-  function filasEstudiantesAsignacionExportar() {
-    const estudiantes = filtrarEstudiantesAsignacion((datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.estudiantes) || []);
-    const asignaciones = {};
-    obtenerAsignacionesEstudiantesActuales().forEach(function(item) {
-      asignaciones[normalizarTexto(item.idEstudiante)] = item.grupo;
-    });
-
-    return estudiantes.map(function(e) {
-      return {
-        Regional: e.regional || "",
-        Distrito: e.distrito || "",
-        "Centro sede": e.centroSede || ((datosAsignacionEstudiantesGrupos.sede || {}).centroSede) || "",
-        "ID estudiante": e.idEstudiante || "",
-        Estudiante: e.nombre || "",
-        Grado: e.grado || "",
-        "Nivel Lengua": e.nivelLengua || "Sin dato",
-        "Nivel Matemática": e.nivelMat || "Sin dato",
-        Grupo: grupoLegible(asignaciones[normalizarTexto(e.idEstudiante)] || e.grupo) || "Sin asignar"
-      };
-    });
-  }
-
-  function valorExcelHtml(valor) {
-    return String(valor == null ? "" : valor)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function descargarTablaExcel(nombreArchivo, filas) {
-    if (!filas.length) {
-      alert("No hay estudiantes para exportar con los filtros actuales.");
-      return;
-    }
-
-    const encabezados = Object.keys(filas[0]);
-    const tabla = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head><meta charset="UTF-8"></head>
-      <body>
-        <table>
-          <thead><tr>${encabezados.map(function(h) { return "<th>" + valorExcelHtml(h) + "</th>"; }).join("")}</tr></thead>
-          <tbody>
-            ${filas.map(function(fila) {
-              return "<tr>" + encabezados.map(function(h) { return "<td>" + valorExcelHtml(fila[h]) + "</td>"; }).join("") + "</tr>";
-            }).join("")}
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `;
-    const blob = new Blob(["\ufeff", tabla], { type: "application/vnd.ms-excel;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = nombreArchivo;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  function exportarEstudiantesAsignacionExcel() {
-    const filas = filasEstudiantesAsignacionExportar();
-    const fecha = new Date().toISOString().slice(0, 10);
-    descargarTablaExcel("estudiantes_asignacion_grupos_" + fecha + ".xls", filas);
-  }
-
   function renderizarModuloAsignacionEstudiantesGrupos() {
     if (!datosAsignacionEstudiantesGrupos) return;
-
-    renderizarPendientesSedeAsignacion();
 
     if (datosAsignacionEstudiantesGrupos.modoConsulta || modoConsultaAsignaciones()) {
       renderizarConsultaAsignacionEstudiantes();
       return;
     }
 
-    if (esCoordinadorSede()) {
-      actualizarFiltrosAsignacionEstudiantes();
-    }
-
     const sede = datosAsignacionEstudiantesGrupos.sede || {};
     const grupos = datosAsignacionEstudiantesGrupos.grupos || [];
     const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
-    const estudiantesFiltrados = filtrarEstudiantesAsignacion(estudiantes);
-    const hayBusqueda = !!normalizarTexto(obtenerBusquedaAsignacionEstudiantes());
-    const cuotaAsignacion = Number(datosAsignacionEstudiantesGrupos.cuota || 0);
-    const gruposDisponiblesCantidad = Number(
-      datosAsignacionEstudiantesGrupos.gruposDisponiblesCantidad ||
-      datosAsignacionEstudiantesGrupos.gruposEsperados ||
-      grupos.length ||
-      0
-    );
 
     const total = estudiantes.length;
     const sinAsignar = estudiantes.filter(function(e) { return !normalizarTexto(e.grupo); }).length;
@@ -9248,10 +8562,8 @@
       <div class="dato-asignacion"><span>Regional</span><strong>${escapeHtml(sede.regional || usuarioActual.regional || "")}</strong></div>
       <div class="dato-asignacion"><span>Distrito</span><strong>${escapeHtml(sede.distrito || usuarioActual.distrito || "")}</strong></div>
       <div class="dato-asignacion"><span>Centro sede</span><strong>${escapeHtml(sede.centroSede || usuarioActual.centroSede || "")}</strong></div>
-      <div class="dato-asignacion"><span>Cuota estudiantes</span><strong>${cuotaAsignacion > 0 ? cuotaAsignacion : "No definida"}</strong></div>
-      <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${gruposDisponiblesCantidad}</strong></div>
+      <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${escapeHtml(construirGruposOperativos(grupos.length).join(", ")) || "No definidos"}</strong></div>
       <div class="dato-asignacion"><span>Estudiantes</span><strong>${total}</strong></div>
-      ${hayBusqueda ? `<div class="dato-asignacion"><span>Mostrados</span><strong>${estudiantesFiltrados.length}</strong></div>` : ""}
       <div class="dato-asignacion"><span>Asignados</span><strong id="totalEstudiantesAsignados">${asignados}</strong></div>
       <div class="dato-asignacion"><span>Sin asignar</span><strong id="totalEstudiantesSinAsignar">${sinAsignar}</strong></div>
     `;
@@ -9275,58 +8587,33 @@
       return;
     }
 
-    if (!estudiantesFiltrados.length) {
-      const alerta = document.getElementById("alertaAsignacionEstudiantesGrupos");
-      alerta.classList.remove("oculto");
-      alerta.textContent = "No hay estudiantes que coincidan con la búsqueda indicada.";
-      document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
-      document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
-      return;
-    }
-
     document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
-    renderizarTablaAsignacionEstudiantes(grupos, estudiantesFiltrados);
+    renderizarTablaAsignacionEstudiantes(grupos, estudiantes);
   }
 
   function renderizarConsultaAsignacionEstudiantes() {
     const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
-    const estudiantesFiltrados = filtrarEstudiantesAsignacion(estudiantes);
-    const hayBusqueda = !!normalizarTexto(obtenerBusquedaAsignacionEstudiantes());
     const total = estudiantes.length;
-    const totalFiltrado = estudiantesFiltrados.length;
-    const asignados = estudiantesFiltrados.filter(function(e) { return normalizarTexto(e.grupo); }).length;
-    const sinAsignar = totalFiltrado - asignados;
+    const asignados = estudiantes.filter(function(e) { return normalizarTexto(e.grupo); }).length;
+    const sinAsignar = total - asignados;
 
     actualizarFiltrosAsignacionEstudiantes();
     document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
     document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
 
-    const cuotaConsulta = Number(datosAsignacionEstudiantesGrupos.cuota || 0);
-    const gruposConsulta = Number(
-      datosAsignacionEstudiantesGrupos.gruposDisponiblesCantidad ||
-      datosAsignacionEstudiantesGrupos.gruposEsperados ||
-      (datosAsignacionEstudiantesGrupos.grupos || []).length ||
-      0
-    );
-
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = `
-      <div class="dato-asignacion"><span>Cuota estudiantes</span><strong>${cuotaConsulta > 0 ? cuotaConsulta : "No definida"}</strong></div>
-      <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${gruposConsulta}</strong></div>
       <div class="dato-asignacion"><span>Total de estudiantes</span><strong>${total}</strong></div>
-      ${hayBusqueda ? `<div class="dato-asignacion"><span>Mostrados</span><strong>${totalFiltrado}</strong></div>` : ""}
       <div class="dato-asignacion"><span>Asignados</span><strong>${asignados}</strong></div>
       <div class="dato-asignacion"><span>Pendientes</span><strong>${sinAsignar}</strong></div>
     `;
 
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
 
-    if (!estudiantes.length || !estudiantesFiltrados.length) {
+    if (!estudiantes.length) {
       tabla.classList.add("oculto");
       const alerta = document.getElementById("alertaAsignacionEstudiantesGrupos");
       alerta.classList.remove("oculto");
-      alerta.textContent = estudiantes.length
-        ? "No hay estudiantes que coincidan con la búsqueda indicada."
-        : "No hay estudiantes activos dentro del alcance de consulta de este usuario.";
+      alerta.textContent = "No hay estudiantes activos dentro del alcance de consulta de este usuario.";
       return;
     }
 
@@ -9347,7 +8634,7 @@
         <tbody>
     `;
 
-    estudiantesFiltrados.forEach(function(e) {
+    estudiantes.forEach(function(e) {
       html += `
         <tr>
           <td>${escapeHtml(e.regional || "")}</td>
@@ -9370,31 +8657,70 @@
   function renderizarTablaAsignacionEstudiantes(grupos, estudiantes) {
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
 
-    // Los grupos que recibe y muestra este módulo ya deben ser semánticos:
-    // Exploradores, Creadores, Innovadores, Exploradores-1, etc.
-    // No se presentan al usuario nombres como "Grupo 1".
-    mapaGrupoSemanticoABackend = {};
-    mapaGrupoBackendASemantico = {};
-
-    const gruposUnicos = [];
-    const vistos = {};
-    (grupos || []).forEach(function(g) {
-      const limpio = normalizarTexto(g);
-      if (!limpio) return;
-      const key = limpio.toLowerCase();
-      if (vistos[key]) return;
-      vistos[key] = true;
-      gruposUnicos.push(limpio);
-      mapaGrupoSemanticoABackend[normalizarTexto(limpio)] = limpio;
-      mapaGrupoBackendASemantico[normalizarTexto(limpio)] = limpio;
+    // ── Calcular el nombre semántico de cada grupo por moda real de sus estudiantes ──
+    // Agrupar estudiantes asignados por su grupo del backend
+    const estudiantesPorGrupo = {};
+    grupos.forEach(function(g) { estudiantesPorGrupo[normalizarTexto(g)] = []; });
+    estudiantes.forEach(function(e) {
+      const k = normalizarTexto(e.grupo);
+      if (k && estudiantesPorGrupo[k] !== undefined) estudiantesPorGrupo[k].push(e);
     });
 
+    // Calcular moda por grupo (misma lógica que en ejecutarAsignacionAutomatica)
+    const NIVEL_JERARQUIA_R = { innovador: 3, creador: 2, explorador: 1 };
+    const NOMBRE_CATEGORIA_R = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
+
+    function modaGrupoR(lista) {
+      const cnt = { explorador: 0, creador: 0, innovador: 0 };
+      lista.forEach(function(e) {
+        const n = normalizarTexto(e.nivelLengua).toLowerCase();
+        if (cnt[n] !== undefined) cnt[n]++; else cnt.creador++;
+      });
+      return ["innovador", "creador", "explorador"].sort(function(a, b) {
+        if (cnt[b] !== cnt[a]) return cnt[b] - cnt[a];
+        return NIVEL_JERARQUIA_R[b] - NIVEL_JERARQUIA_R[a];
+      })[0];
+    }
+
+    // Contar cuántas veces aparece cada nombre base para asignar sufijos
+    const cuentaBaseR = {};
+    grupos.forEach(function(g) {
+      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
+      // Si no hay estudiantes asignados aún, usar posición como fallback
+      const base = lista.length > 0
+        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
+        : construirGruposOperativos(grupos.length)[grupos.indexOf(g)] || "Creadores";
+      cuentaBaseR[base] = (cuentaBaseR[base] || 0) + 1;
+    });
+
+    const contadorBaseR = {};
+    const mapaSemantico = {};    // backend → semántico (para preseleccionar selects)
+    mapaGrupoSemanticoABackend = {}; // semántico → backend (para guardar)
+
+    grupos.forEach(function(g) {
+      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
+      const idx = grupos.indexOf(g);
+      const base = lista.length > 0
+        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
+        : (construirGruposOperativos(grupos.length)[idx] || "Creadores");
+      contadorBaseR[base] = (contadorBaseR[base] || 0) + 1;
+      const nombreSem = cuentaBaseR[base] === 1 ? base : base + "-" + contadorBaseR[base];
+      mapaSemantico[normalizarTexto(g)] = nombreSem;
+      mapaGrupoSemanticoABackend[normalizarTexto(nombreSem)] = g;
+      mapaGrupoBackendASemantico[normalizarTexto(g)] = nombreSem;
+    });
+
+    // Persistir el mapa para que otros módulos lo usen sin depender de si el usuario
+    // visitó este módulo en la misma sesión
     const centroSede = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.sede)
       ? datosAsignacionEstudiantesGrupos.sede.centroSede
       : (usuarioActual && usuarioActual.centroSede);
     if (centroSede) guardarMapaGruposSede(centroSede);
 
-    const opcionesGrupo = gruposUnicos.map(function(g) {
+    // Opciones del select usando los nombres semánticos calculados
+    const gruposSemanticos = grupos.map(function(g) { return mapaSemantico[normalizarTexto(g)]; });
+    // Deduplicar por si el usuario tiene grupos con el mismo nombre semántico desde el backend
+    const opcionesGrupo = gruposSemanticos.map(function(g) {
       return `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`;
     }).join("");
 
@@ -9440,34 +8766,19 @@
     document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
       const id = normalizarTexto(select.dataset.id);
       const estudiante = estudiantes.find(function(e) { return normalizarTexto(e.idEstudiante) === id; });
-      const valorBorrador = Object.prototype.hasOwnProperty.call(borradorAsignacionEstudiantes, id)
-        ? normalizarTexto(borradorAsignacionEstudiantes[id])
-        : null;
       if (estudiante && estudiante.grupo) {
-        const nombreGrupo = normalizarTexto(estudiante.grupo);
-        if (nombreGrupo && !Array.from(select.options).some(function(op) { return op.value === nombreGrupo; })) {
+        // Traducir el nombre del backend al nombre semántico si corresponde
+        const nombreSemantico = mapaSemantico[normalizarTexto(estudiante.grupo)] || estudiante.grupo;
+        // Si el nombre semántico no está como opción (ej. nombre personalizado del backend), añadirlo
+        if (nombreSemantico && !Array.from(select.options).some(function(op) { return op.value === nombreSemantico; })) {
           const opt = document.createElement("option");
-          opt.value = nombreGrupo;
-          opt.textContent = nombreGrupo;
+          opt.value = nombreSemantico;
+          opt.textContent = nombreSemantico;
           select.appendChild(opt);
-          mapaGrupoSemanticoABackend[normalizarTexto(nombreGrupo)] = nombreGrupo;
-          mapaGrupoBackendASemantico[normalizarTexto(nombreGrupo)] = nombreGrupo;
         }
-        select.value = nombreGrupo;
+        select.value = nombreSemantico;
       }
-      if (valorBorrador !== null) {
-        if (valorBorrador && !Array.from(select.options).some(function(op) { return op.value === valorBorrador; })) {
-          const optBorrador = document.createElement("option");
-          optBorrador.value = valorBorrador;
-          optBorrador.textContent = valorBorrador;
-          select.appendChild(optBorrador);
-        }
-        select.value = valorBorrador;
-      }
-      select.addEventListener("change", function() {
-        borradorAsignacionEstudiantes[normalizarTexto(select.dataset.id)] = normalizarTexto(select.value);
-        actualizarResumenVisualAsignacionEstudiantes();
-      });
+      select.addEventListener("change", actualizarResumenVisualAsignacionEstudiantes);
     });
 
     if (puedeModificarAsignaciones()) {
@@ -9481,46 +8792,15 @@
   }
 
   function actualizarResumenVisualAsignacionEstudiantes() {
-    const asignaciones = obtenerAsignacionesEstudiantesActuales();
-    const total = asignaciones.length;
-    const asignados = asignaciones.filter(function(item) { return normalizarTexto(item.grupo); }).length;
+    const selects = Array.from(document.querySelectorAll(".select-asignacion-estudiante"));
+    const total = selects.length;
+    const asignados = selects.filter(function(s) { return normalizarTexto(s.value); }).length;
     const sinAsignar = total - asignados;
 
     const indicadorAsignados = document.getElementById("totalEstudiantesAsignados");
     const indicadorSinAsignar = document.getElementById("totalEstudiantesSinAsignar");
     if (indicadorAsignados) indicadorAsignados.textContent = asignados;
     if (indicadorSinAsignar) indicadorSinAsignar.textContent = sinAsignar;
-  }
-
-  function validarReglasAsignacionEstudiantesActual() {
-    const grupos = {};
-    obtenerAsignacionesEstudiantesActuales().forEach(function(item) {
-      const grupo = normalizarTexto(item.grupo);
-      if (!grupo) return;
-      if (!grupos[grupo]) grupos[grupo] = [];
-      grupos[grupo].push(item.estudiante || { idEstudiante: item.idEstudiante, nivelLengua: "" });
-    });
-
-    const disponibles = Number(
-      (datosAsignacionEstudiantesGrupos && (datosAsignacionEstudiantesGrupos.gruposDisponiblesCantidad || datosAsignacionEstudiantesGrupos.gruposEsperados)) || 0
-    );
-    const nombres = Object.keys(grupos);
-    if (disponibles > 0 && nombres.length > disponibles) {
-      return { ok: false, mensaje: "Está usando " + nombres.length + " grupos, pero la sede solo tiene " + disponibles + " grupos disponibles por cuota." };
-    }
-
-    for (const grupo of nombres) {
-      const lista = grupos[grupo];
-      if (lista.length > 25) {
-        return { ok: false, mensaje: "El grupo " + grupo + " tiene " + lista.length + " estudiantes. El máximo permitido es 25." };
-      }
-      const tieneExplorador = lista.some(function(e) { return normalizarNivelAsignacion(e.nivelLengua) === "explorador"; });
-      const tieneInnovador = lista.some(function(e) { return normalizarNivelAsignacion(e.nivelLengua) === "innovador"; });
-      if (tieneExplorador && tieneInnovador) {
-        return { ok: false, mensaje: "El grupo " + grupo + " mezcla estudiantes Exploradores con Innovadores. Esa combinación no está permitida." };
-      }
-    }
-    return { ok: true };
   }
 
   function guardarAsignacionEstudiantesGrupos() {
@@ -9539,22 +8819,21 @@
       return;
     }
 
-    const validacion = validarReglasAsignacionEstudiantesActual();
-    if (!validacion.ok) {
-      mensaje.textContent = validacion.mensaje;
-      mensaje.className = "mensaje error";
-      return;
-    }
-
     const asignaciones = [];
     let sinAsignar = 0;
 
-    obtenerAsignacionesEstudiantesActuales().forEach(function(item) {
-      const valorSelect = normalizarTexto(item.grupo);
-      if (!valorSelect) sinAsignar++;
+    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+      const valorSelect = normalizarTexto(select.value);
+      if (!valorSelect) {
+        sinAsignar++;
+        asignaciones.push({ idEstudiante: normalizarTexto(select.dataset.id), grupo: "" });
+        return;
+      }
+      // Traducir el nombre semántico al nombre que acepta el backend
+      const grupoBackend = mapaGrupoSemanticoABackend[valorSelect] || select.value;
       asignaciones.push({
-        idEstudiante: normalizarTexto(item.idEstudiante),
-        grupo: valorSelect
+        idEstudiante: normalizarTexto(select.dataset.id),
+        grupo: grupoBackend
       });
     });
 
@@ -9566,33 +8845,583 @@
     mensaje.textContent = "Guardando asignación de estudiantes...";
     mensaje.className = "mensaje";
 
+    // Deshabilitar el botón mientras se guarda para evitar doble envío
     const btn = document.getElementById("btnGuardarAsignacionEstudiantesGrupos");
     if (btn) btn.disabled = true;
 
-    const payload = {
-      cedulaCoordinador: usuarioActual.cedula,
-      centroSede: datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede
-        ? datosAsignacionEstudiantesGrupos.sede.centroSede
-        : (usuarioActual.centroSede || ""),
-      asignaciones: asignaciones
-    };
+    // El backend espera e.parameter.payload como JSON: { cedulaCoordinador, asignaciones }.
+    // Enviamos en lotes pequeños para no superar el límite de URL de Google Apps Script.
+    // Calculamos dinámicamente el tamaño de lote para que la URL no supere 1800 chars.
+    const URL_BASE_LEN = URL_SCRIPT.length + 80; // accion + callback overhead
+    const cedula = usuarioActual.cedula;
 
-    llamarBackendPost({
-      accion: "guardarAsignacionEstudiantesGrupos",
-      payload: JSON.stringify(payload)
-    }, function(respuesta) {
-      if (btn) btn.disabled = false;
-      if (!respuesta.ok) {
-        mensaje.textContent = respuesta.mensaje || "No se pudo guardar la asignación.";
-        mensaje.className = "mensaje error";
-        return;
+    function calcularLoteSeguro() {
+      // Estimar tamaño de un ítem de asignación: ~60 chars por estudiante en JSON
+      const CHARS_POR_ITEM = 65;
+      const CHARS_CEDULA = cedula.length + 30; // overhead del campo cedulaCoordinador
+      const LIMITE_URL = 1800;
+      const disponible = LIMITE_URL - URL_BASE_LEN - CHARS_CEDULA;
+      const lote = Math.max(1, Math.floor(disponible / CHARS_ITEM));
+      return Math.min(lote, 10); // máximo 10 por seguridad
+    }
+
+    // Usamos lote fijo de 10 — cabe siempre dentro del límite
+    const LOTE = 10;
+    const totalLotes = Math.max(1, Math.ceil(asignaciones.length / LOTE));
+    let loteActual = 0;
+
+    function enviarLote() {
+      const porcion = asignaciones.slice(loteActual * LOTE, (loteActual + 1) * LOTE);
+      const esUltimo = (loteActual === totalLotes - 1);
+
+      if (totalLotes > 1) {
+        mensaje.textContent = "Guardando\u2026 (" + (loteActual + 1) + " de " + totalLotes + ")";
       }
-      mensaje.textContent = respuesta.mensaje || "Asignación guardada correctamente.";
-      mensaje.className = "mensaje ok";
-      cargarAsignacionEstudiantesGrupos();
-    }, { timeout: 45000 });
+
+      // Construir payload exactamente como el backend lo espera:
+      // JSON.parse(e.parameter.payload) → { cedulaCoordinador, asignaciones }
+      const payloadStr = JSON.stringify({
+        cedulaCoordinador: cedula,
+        asignaciones: porcion
+      });
+
+      llamarBackend(
+        {
+          accion: "guardarAsignacionEstudiantesGrupos",
+          payload: payloadStr
+        },
+        function(respuesta) {
+          if (!respuesta.ok) {
+            if (btn) btn.disabled = false;
+            mensaje.textContent = respuesta.mensaje || "No se pudo guardar la asignación de estudiantes.";
+            mensaje.className = "mensaje error";
+            return;
+          }
+          if (esUltimo) {
+            if (btn) btn.disabled = false;
+            mensaje.textContent = respuesta.mensaje || "Asignación de estudiantes guardada correctamente.";
+            mensaje.className = "mensaje ok";
+            cargarEstudiantesAsignacionGrupos();
+          } else {
+            loteActual++;
+            enviarLote();
+          }
+        },
+        { timeout: 30000 }
+      );
+    }
+
+    enviarLote();
   }
 
+
+
+  // ─── ASIGNACIÓN AUTOMÁTICA ─────────────────────────────────────────────────
+
+  const NIVEL_ORDEN = { "innovador": 3, "creador": 2, "explorador": 1, "sin dato": 0, "": 0 };
+
+  function nivelPuntaje(nivel) {
+    return NIVEL_ORDEN[normalizarTexto(nivel).toLowerCase()] || 0;
+  }
+
+  function puntajeEstudiante(e) {
+    // Lengua Española tiene prioridad: peso 2, Matemática peso 1
+    return nivelPuntaje(e.nivelLengua) * 2 + nivelPuntaje(e.nivelMat);
+  }
+
+  function ejecutarAsignacionAutomatica() {
+    if (!datosAsignacionEstudiantesGrupos) return;
+
+    const gruposBackend = datosAsignacionEstudiantesGrupos.grupos || [];
+    const estudiantes   = datosAsignacionEstudiantesGrupos.estudiantes || [];
+
+    if (!gruposBackend.length) {
+      alert("No hay grupos disponibles para la sede.");
+      return;
+    }
+    if (!estudiantes.length) {
+      alert("No hay estudiantes para asignar.");
+      return;
+    }
+
+    // Paso 1: calcular con nombres provisionales (Exploradores, Creadores, Innovadores...)
+    const gruposProvisionales = construirGruposOperativos(gruposBackend.length);
+    const resultadoProvisional = calcularAsignacionHomogenea(gruposProvisionales, estudiantes);
+
+    // Paso 2: renombrar cada grupo según la moda real de nivelLengua de sus estudiantes.
+    // Si dos categorías empatan, gana la de mayor nivel (Innovador > Creador > Explorador).
+    // Si hay duplicados de nombre, se añade sufijo -1, -2, etc.
+    const NIVEL_JERARQUIA = { "innovador": 3, "creador": 2, "explorador": 1 };
+
+    function modaGrupo(lista) {
+      const cnt = { explorador: 0, creador: 0, innovador: 0 };
+      lista.forEach(function(e) {
+        const n = normalizarTexto(e.nivelLengua).toLowerCase();
+        if (cnt[n] !== undefined) cnt[n]++;
+        else cnt.creador++; // sin dato → Creador
+      });
+      // Ordenar por conteo desc, luego por jerarquía desc como desempate
+      return ["innovador", "creador", "explorador"].sort(function(a, b) {
+        if (cnt[b] !== cnt[a]) return cnt[b] - cnt[a];
+        return NIVEL_JERARQUIA[b] - NIVEL_JERARQUIA[a];
+      })[0];
+    }
+
+    function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1) + "es"; }
+    // "explorador" → "Exploradores", "creador" → "Creadores", "innovador" → "Innovadores"
+    const NOMBRE_CATEGORIA = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
+
+    // Contar cuántas veces aparece cada nombre base para asignar sufijos
+    const cuentaNombreBase = {};
+    gruposProvisionales.forEach(function(gProv) {
+      const lista = resultadoProvisional[gProv] || [];
+      const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
+      cuentaNombreBase[base] = (cuentaNombreBase[base] || 0) + 1;
+    });
+
+    const contadorNombre = {};
+    const mapaRenombrado = {}; // nombreProvisional → nombreFinal
+
+    gruposProvisionales.forEach(function(gProv) {
+      const lista = resultadoProvisional[gProv] || [];
+      const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
+      contadorNombre[base] = (contadorNombre[base] || 0) + 1;
+      const nombreFinal = cuentaNombreBase[base] === 1
+        ? base
+        : base + "-" + contadorNombre[base];
+      mapaRenombrado[gProv] = nombreFinal;
+    });
+
+    // Construir nuevo objeto asignacion con los nombres finales
+    const resultado = {};
+    gruposProvisionales.forEach(function(gProv) {
+      resultado[mapaRenombrado[gProv]] = resultadoProvisional[gProv] || [];
+    });
+    const grupos = gruposProvisionales.map(function(gProv) { return mapaRenombrado[gProv]; });
+
+    // Guardar el mapa nombre-semántico → nombre-backend para traducir al guardar.
+    // gruposProvisionales[i] → mapaRenombrado[gProv] = nombreFinal
+    // gruposBackend[i] = nombre original que acepta el backend
+    mapaGrupoSemanticoABackend = {};
+    mapaGrupoBackendASemantico = {};
+    gruposProvisionales.forEach(function(gProv, i) {
+      const nombreFinal = mapaRenombrado[gProv];
+      mapaGrupoSemanticoABackend[normalizarTexto(nombreFinal)] = gruposBackend[i];
+      mapaGrupoBackendASemantico[normalizarTexto(gruposBackend[i])] = nombreFinal;
+    });
+
+    // Persistir el mapa para que asistencia y facilitadores lo usen.
+    // ▼ CORRECCIÓN: antes se usaba usuarioActual.centroSede, que es la sede
+    // del PERFIL de quien inició sesión. Eso funciona si un coordinador
+    // reparte su propia sede, pero falla cuando un administrador, técnico
+    // nacional, regional o distrital ejecuta el reparto automático para la
+    // sede de OTRA persona (su propio centroSede está vacío o es distinto).
+    // En ese caso el mapa se guardaba bajo la clave equivocada (o no se
+    // guardaba), y por eso Pase de lista e Incidencias mostraban "Grupo 1"
+    // en vez del nombre semántico, aunque la asignación sí se hubiera hecho.
+    // Ahora se usa el centroSede de la SEDE que realmente se está repartiendo
+    // (datosAsignacionEstudiantesGrupos.sede.centroSede), que es la misma
+    // fuente que ya usan correctamente otras partes de este módulo.
+    const centroSedeAuto = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede)
+      || (usuarioActual && usuarioActual.centroSede);
+    if (centroSedeAuto) guardarMapaGruposSede(centroSedeAuto);
+
+    mostrarModalAsignacionAutomatica(resultado, grupos, mapaGrupoSemanticoABackend);
+  }
+
+  function calcularAsignacionHomogenea(grupos, estudiantes) {
+    /*
+      REGLA PRINCIPAL (basada en nivel de Lengua Española):
+        - Cada grupo solo puede contener niveles ADYACENTES:
+            · Explorador + Creador   → permitido solo si es inevitable
+            · Creador   + Innovador  → permitido solo si es inevitable
+            · Explorador + Innovador → PROHIBIDO siempre
+            · Un solo nivel          → PREFERIDO (grupos puros primero)
+        - Máximo 25 estudiantes por grupo.
+        - PRIORIDAD: grupos puros (E, C, I) antes que mezclas.
+          Solo se mezcla el sobrante que no llena un grupo entero por sí solo.
+
+      ESTRATEGIA:
+        1. Separar en bandas E, C, I (Sin dato → Creador).
+        2. Calcular grupos puros para cada banda.
+           - Si la banda llena exactamente sus grupos → puramente puros.
+           - Si sobran estudiantes que no llenan otro grupo, son "sobrantes".
+        3. Agrupar los sobrantes:
+           - Sobrante E + sobrante C → van a un grupo EC mixto.
+           - Sobrante C + sobrante I → van a un grupo CI mixto.
+           - Si hay sobrante de los tres: E+C en un grupo, I en otro CI si cabe.
+           - Si el sobrante mixto supera 25, crear grupos adicionales de mezcla.
+        4. Asignar grupos concretos y repartir en serpentina.
+    */
+
+    const MAX_POR_GRUPO = 25;
+    const numGrupos = grupos.length;
+
+    // ── 1. Separar por nivel de Lengua ──────────────────────────────────────
+    const bandaE  = [];
+    const bandaC  = [];
+    const bandaI  = [];
+    const bandaSD = [];
+
+    estudiantes.forEach(function(e) {
+      const n = normalizarTexto(e.nivelLengua).toLowerCase();
+      if      (n === "explorador") bandaE.push(e);
+      else if (n === "creador")    bandaC.push(e);
+      else if (n === "innovador")  bandaI.push(e);
+      else                         bandaSD.push(e);
+    });
+
+    function ordenarBanda(arr) {
+      return arr.slice().sort(function(a, b) {
+        return puntajeEstudiante(b) - puntajeEstudiante(a);
+      });
+    }
+
+    const E = ordenarBanda(bandaE);
+    const C = ordenarBanda(bandaC.concat(bandaSD)); // Sin dato ≡ Creador
+    const I = ordenarBanda(bandaI);
+
+    const totE = E.length, totC = C.length, totI = I.length;
+    const totTotal = totE + totC + totI;
+
+    // ── 2. Calcular grupos PUROS para cada banda ─────────────────────────────
+    // Grupos completos de 25 que puede formar cada banda sola
+    const gEpuro = Math.floor(totE / MAX_POR_GRUPO);
+    const gCpuro = Math.floor(totC / MAX_POR_GRUPO);
+    const gIpuro = Math.floor(totI / MAX_POR_GRUPO);
+
+    // Sobrantes que no llenan un grupo completo
+    let sobranteE = totE - gEpuro * MAX_POR_GRUPO;
+    let sobranteC = totC - gCpuro * MAX_POR_GRUPO;
+    let sobranteI = totI - gIpuro * MAX_POR_GRUPO;
+
+    // ── 3. Resolver sobrantes con mezcla mínima ──────────────────────────────
+    /*
+      Orden de prioridad para absorber sobrantes:
+        a) Si sobranteE + sobranteC <= MAX → un grupo EC mixto.
+           Si excede MAX, crear grupos EC adicionales.
+        b) Si sobranteI + sobranteC_restante <= MAX → un grupo CI mixto.
+        c) Si solo sobra uno de los tres → añadir al grupo puro correspondiente
+           (el último grupo de esa banda tendrá menos de 25, lo cual es válido).
+
+      Nota: "grupo puro" puede tener < 25 estudiantes; lo importante es que
+      todos son del mismo nivel. Eso es preferible a mezclar.
+    */
+
+    // Cuántos estudiantes de E van a grupos puros vs mezcla
+    let eEnPuro  = gEpuro * MAX_POR_GRUPO + sobranteE; // todos E van a grupos E
+    let cEnPuro  = gCpuro * MAX_POR_GRUPO;              // C completos en puros
+    let iEnPuro  = gIpuro * MAX_POR_GRUPO + sobranteI;  // todos I van a grupos I
+    let cEnMezcla = sobranteC;                           // sobrante C va a mezcla
+
+    // Grupos de mezcla necesarios para el sobrante C
+    // El sobrante C se distribuye entre grupos EC y CI según haya sobrante E/I
+    let cParaEC = 0, cParaCI = 0;
+    let gEC = 0, gCI = 0;
+
+    if (sobranteE > 0 && sobranteC > 0) {
+      // Mezclar sobrante E con parte del sobrante C
+      const totalEC = sobranteE + Math.min(sobranteC, MAX_POR_GRUPO - sobranteE);
+      cParaEC = Math.min(sobranteC, MAX_POR_GRUPO - sobranteE);
+      gEC = Math.ceil((sobranteE + cParaEC) / MAX_POR_GRUPO);
+    } else if (sobranteE > 0) {
+      // Solo sobrante E, sin C sobrante: va a su propio grupo (incompleto pero puro)
+      // ya está contado en eEnPuro
+      gEC = 0;
+    }
+
+    const cRestante = sobranteC - cParaEC;
+
+    if (sobranteI > 0 && cRestante > 0) {
+      cParaCI = Math.min(cRestante, MAX_POR_GRUPO - sobranteI);
+      gCI = Math.ceil((sobranteI + cParaCI) / MAX_POR_GRUPO);
+    } else if (sobranteI > 0) {
+      gCI = 0;
+    }
+
+    const cRestante2 = cRestante - cParaCI;
+    // Si aún queda sobrante C sin mezclar, añadirlo al último grupo C puro
+    // (ese grupo tendrá < 25 pero será puro)
+    const cTotalPuro = cEnPuro + cRestante2;
+    const gCpuroFinal = Math.ceil(cTotalPuro / MAX_POR_GRUPO);
+
+    // Si E/I no tienen sobrante pero sí tienen estudiantes → grupo puro incompleto
+    const gEpuroFinal = sobranteE > 0 && gEC === 0
+      ? Math.ceil(totE / MAX_POR_GRUPO)   // sobrante E va a su propio grupo puro
+      : gEpuro;
+    const gIpuroFinal = sobranteI > 0 && gCI === 0
+      ? Math.ceil(totI / MAX_POR_GRUPO)
+      : gIpuro;
+
+    // ── 4. Verificar que tenemos suficientes grupos ──────────────────────────
+    let totalNecesario = gEpuroFinal + gEC + gCpuroFinal + gCI + gIpuroFinal;
+
+    // Si hay más grupos disponibles que los necesarios, repartir sobrante en C
+    // Si hay menos, comprimir: algunos grupos puros tendrán más de 25 (inevitable)
+    let gCExtra = 0;
+    if (totalNecesario < numGrupos) {
+      gCExtra = numGrupos - totalNecesario;
+    }
+
+    // ── 5. Asignar grupos concretos a cada partición ─────────────────────────
+    // Los grupos ya vienen con nombres semánticos desde construirGruposOperativos.
+    // Los distribuimos en el orden E → EC → C → CI → I.
+    // Si la partición calcula más grupos de los disponibles, comprimir eliminando
+    // primero grupos extra de C, luego mezclas, para respetar numGrupos exacto.
+
+    let nE  = gEpuroFinal;
+    let nEC = gEC;
+    let nC  = gCpuroFinal + gCExtra;
+    let nCI = gCI;
+    let nI  = gIpuroFinal;
+
+    const totalCalculado = nE + nEC + nC + nCI + nI;
+    if (totalCalculado > numGrupos) {
+      let exceso = totalCalculado - numGrupos;
+      const qC  = Math.min(gCExtra, exceso); nC  -= qC;  exceso -= qC;
+      const qCI = Math.min(nCI,     exceso); nCI -= qCI; exceso -= qCI;
+      const qEC = Math.min(nEC,     exceso); nEC -= qEC; exceso -= qEC;
+      const qCp = Math.min(nC,      exceso); nC  -= qCp; exceso -= qCp;
+      const qI  = Math.min(nI,      exceso); nI  -= qI;  exceso -= qI;
+      const qE  = Math.min(nE,      exceso); nE  -= qE;
+    }
+    const suma = nE + nEC + nC + nCI + nI;
+    if (suma < numGrupos) nC += (numGrupos - suma);
+
+    const particionGrupos = { E: [], EC: [], C: [], CI: [], I: [] };
+    let gi = 0;
+    for (let k = 0; k < nE;  k++) particionGrupos.E.push(grupos[gi++]);
+    for (let k = 0; k < nEC; k++) particionGrupos.EC.push(grupos[gi++]);
+    for (let k = 0; k < nC;  k++) particionGrupos.C.push(grupos[gi++]);
+    for (let k = 0; k < nCI; k++) particionGrupos.CI.push(grupos[gi++]);
+    for (let k = 0; k < nI;  k++) particionGrupos.I.push(grupos[gi++]);
+
+    // ── 6. Repartir estudiantes en serpentina ────────────────────────────────
+    const asignacion = {};
+    grupos.forEach(function(g) { asignacion[g] = []; });
+
+    function repartirSerpentina(listaEstudiantes, listaGrupos) {
+      if (!listaGrupos.length || !listaEstudiantes.length) return;
+      const n = listaGrupos.length;
+      let idx = 0, fw = true;
+      listaEstudiantes.forEach(function(est) {
+        let intentos = 0;
+        while (asignacion[listaGrupos[idx]].length >= MAX_POR_GRUPO && intentos < n) {
+          if (fw) { idx++; if (idx >= n) { idx = n - 1; fw = false; } }
+          else    { idx--; if (idx < 0)  { idx = 0;     fw = true;  } }
+          intentos++;
+        }
+        asignacion[listaGrupos[idx]].push(est);
+        if (fw) { idx++; if (idx >= n) { idx = n - 1; fw = false; } }
+        else    { idx--; if (idx < 0)  { idx = 0;     fw = true;  } }
+      });
+    }
+
+    function intercalarDos(listaA, listaB, listaGrupos) {
+      if (!listaGrupos.length) return;
+      const combinado = [];
+      const maxLen = Math.max(listaA.length, listaB.length);
+      for (let k = 0; k < maxLen; k++) {
+        if (k < listaA.length) combinado.push(listaA[k]);
+        if (k < listaB.length) combinado.push(listaB[k]);
+      }
+      repartirSerpentina(combinado, listaGrupos);
+    }
+
+    // Distribuir E puros
+    // Si gEC > 0: los primeros (gEpuroFinal * MAX) van a grupos E, el sobrante a EC
+    const eEnGruposPuros = gEpuroFinal * MAX_POR_GRUPO;
+    repartirSerpentina(E.slice(0, eEnGruposPuros), particionGrupos.E);
+    const eSobrante = E.slice(eEnGruposPuros); // sobrante E para grupos EC
+
+    // Distribuir C puros (grupos enteros + sobrante C sin mezcla)
+    const cEnGruposPuros = cTotalPuro; // todos los C que van a grupos puros
+    repartirSerpentina(C.slice(0, cEnGruposPuros), particionGrupos.C);
+
+    // Distribuir I puros
+    const iEnGruposPuros = gIpuroFinal * MAX_POR_GRUPO;
+    repartirSerpentina(I.slice(0, iEnGruposPuros), particionGrupos.I);
+    const iSobrante = I.slice(iEnGruposPuros);
+
+    // Distribuir mezclas (solo si hay grupos EC/CI)
+    const cParaECArr = C.slice(cTotalPuro, cTotalPuro + cParaEC);
+    intercalarDos(eSobrante, cParaECArr, particionGrupos.EC);
+
+    const cParaCIArr = C.slice(cTotalPuro + cParaEC, cTotalPuro + cParaEC + cParaCI);
+    intercalarDos(iSobrante, cParaCIArr, particionGrupos.CI);
+
+    // ── Rescate: estudiantes que quedaron sin asignar por compresión de particiones.
+    // Se distribuyen en serpentina entre todos los grupos disponibles.
+    const asignados = new Set();
+    grupos.forEach(function(g) {
+      (asignacion[g] || []).forEach(function(e) { asignados.add(e.idEstudiante); });
+    });
+    const sinAsignar = estudiantes.filter(function(e) { return !asignados.has(e.idEstudiante); });
+    if (sinAsignar.length > 0) {
+      repartirSerpentina(sinAsignar, grupos);
+    }
+
+    return asignacion;
+  }
+
+  function contarNiveles(lista) {
+    const cnt = { innovador: 0, creador: 0, explorador: 0, sinDato: 0 };
+    lista.forEach(function(e) {
+      const n = normalizarTexto(e.nivelLengua).toLowerCase();
+      if (n === "innovador") cnt.innovador++;
+      else if (n === "creador") cnt.creador++;
+      else if (n === "explorador") cnt.explorador++;
+      else cnt.sinDato++;
+    });
+    return cnt;
+  }
+
+  function tipoGrupoLabel(cnt) {
+    const tieneE = cnt.explorador > 0;
+    const tieneC = cnt.creador > 0;
+    const tieneI = cnt.innovador > 0;
+    if (tieneE && tieneC && !tieneI) return { texto: "Explorador + Creador", color: "#0891b2" };
+    if (!tieneE && tieneC && tieneI) return { texto: "Creador + Innovador",  color: "#7c3aed" };
+    if (tieneE && !tieneC && !tieneI) return { texto: "Solo Explorador",     color: "#16a34a" };
+    if (!tieneE && tieneC && !tieneI) return { texto: "Solo Creador",        color: "#ca8a04" };
+    if (!tieneE && !tieneC && tieneI) return { texto: "Solo Innovador",      color: "#6d28d9" };
+    if (!tieneE && !tieneC && !tieneI) return { texto: "Sin estudiantes",    color: "#94a3b8" };
+    return { texto: "Mixto",                                                  color: "#ef4444" };
+  }
+
+  function mostrarModalAsignacionAutomatica(asignacion, grupos, mapaBackend) {
+    // Eliminar modal anterior si existe
+    const anterior = document.getElementById("modalAsignacionAuto");
+    if (anterior) anterior.remove();
+
+    // Guardar asignación y mapa en variable temporal
+    window._asignacionAutoPendiente = asignacion;
+    window._mapaBackendPendiente = mapaBackend || {};
+
+    let cardsHTML = "";
+    grupos.forEach(function(g) {
+      const lista = asignacion[g] || [];
+      const cnt = contarNiveles(lista);
+      const total = lista.length;
+      const pctInn = total ? Math.round(cnt.innovador / total * 100) : 0;
+      const pctCre = total ? Math.round(cnt.creador / total * 100) : 0;
+      const pctExp = total ? Math.round(cnt.explorador / total * 100) : 0;
+      const pctSD  = total ? (100 - pctInn - pctCre - pctExp) : 0;
+      const tipo   = tipoGrupoLabel(cnt);
+
+      cardsHTML += `
+        <div class="grupo-preview-card">
+          <h4>${escapeHtml(g)} <span style="font-weight:normal;color:#64748b;font-size:13px;">(${total} estudiantes)</span></h4>
+          <div style="margin-bottom:6px;">
+            <span style="display:inline-block;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:999px;background:${tipo.color}22;color:${tipo.color};border:1px solid ${tipo.color}55;">${tipo.texto}</span>
+          </div>
+          <div>
+            ${cnt.innovador ? `<span class="nivel-badge innovador">Innovador: ${cnt.innovador}</span>` : ""}
+            ${cnt.creador   ? `<span class="nivel-badge creador">Creador: ${cnt.creador}</span>` : ""}
+            ${cnt.explorador? `<span class="nivel-badge explorador">Explorador: ${cnt.explorador}</span>` : ""}
+            ${cnt.sinDato   ? `<span class="nivel-badge sin-dato">Sin dato: ${cnt.sinDato}</span>` : ""}
+          </div>
+          <div class="grupo-preview-barra" title="Distribución de niveles">
+            <div class="barra-segmento" style="width:${pctInn}%;background:#7c3aed;"></div>
+            <div class="barra-segmento" style="width:${pctCre}%;background:#ca8a04;"></div>
+            <div class="barra-segmento" style="width:${pctExp}%;background:#16a34a;"></div>
+            <div class="barra-segmento" style="width:${pctSD}%;background:#94a3b8;"></div>
+          </div>
+        </div>
+      `;
+    });
+
+    const totalEst = grupos.reduce(function(s, g) { return s + (asignacion[g] || []).length; }, 0);
+
+    const modal = document.createElement("div");
+    modal.id = "modalAsignacionAuto";
+    modal.className = "modal-overlay";
+    modal.innerHTML = `
+      <div class="modal-asignacion">
+        <h3>Vista previa de la asignación automática</h3>
+        <p class="nota">Se distribuyeron <strong>${totalEst} estudiantes</strong> en <strong>${grupos.length} grupos</strong> respetando la regla de niveles adyacentes en Lengua Española: cada grupo contiene únicamente Exploradores, Exploradores+Creadores, Creadores, Creadores+Innovadores o Innovadores. Los grupos no exceden 25 estudiantes. Puede confirmar y ajustar manualmente antes de guardar.</p>
+
+        <div class="grupos-preview">${cardsHTML}</div>
+
+        <p class="nota" style="font-size:13px;color:#7c3aed;">
+          <strong>Nota:</strong> Al confirmar, los selects de la tabla se actualizarán con esta distribución. Podrá hacer cambios manuales antes de guardar.
+        </p>
+
+        <div class="acciones-modal">
+          <button type="button" class="btn-secundario" onclick="cerrarModalAsignacion()">Cancelar</button>
+          <button type="button" class="btn-confirmar-asignacion" onclick="aplicarAsignacionAutomatica()">Confirmar y aplicar</button>
+        </div>
+      </div>
+    `;
+
+    // Guardar asignación en variable temporal (ya se asigna al inicio de la función)
+
+    document.body.appendChild(modal);
+
+    // Cerrar al hacer clic en el overlay (fuera del modal)
+    modal.addEventListener("click", function(e) {
+      if (e.target === modal) cerrarModalAsignacion();
+    });
+  }
+
+  function cerrarModalAsignacion() {
+    const modal = document.getElementById("modalAsignacionAuto");
+    if (modal) modal.remove();
+    window._asignacionAutoPendiente = null;
+    window._mapaBackendPendiente = null;
+  }
+
+  function aplicarAsignacionAutomatica() {
+    const asignacion = window._asignacionAutoPendiente;
+    if (!asignacion) return;
+
+    // Actualizar el mapa semántico→backend con los nombres por moda
+    if (window._mapaBackendPendiente) {
+      Object.assign(mapaGrupoSemanticoABackend, window._mapaBackendPendiente);
+    }
+
+    // Los grupos ya tienen nombres semánticos (son las claves del objeto asignacion)
+    const grupos = Object.keys(asignacion);
+
+    // Crear mapa de idEstudiante → nombre de grupo
+    const mapaGrupo = {};
+    grupos.forEach(function(grupo) {
+      (asignacion[grupo] || []).forEach(function(e) {
+        mapaGrupo[normalizarTexto(e.idEstudiante)] = grupo;
+      });
+    });
+
+    // Asegurar que cada select tenga las opciones semánticas antes de asignar
+    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+      const opcionesActuales = new Set(
+        Array.from(select.options).map(function(op) { return op.value; }).filter(Boolean)
+      );
+      grupos.forEach(function(g) {
+        if (!opcionesActuales.has(g)) {
+          const opt = document.createElement("option");
+          opt.value = g;
+          opt.textContent = g;
+          select.appendChild(opt);
+        }
+      });
+    });
+
+    // Aplicar el grupo en cada select
+    document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+      const id = normalizarTexto(select.dataset.id);
+      const grupo = mapaGrupo[id];
+      if (grupo) select.value = grupo;
+    });
+
+    actualizarResumenVisualAsignacionEstudiantes();
+    cerrarModalAsignacion();
+
+    const mensaje = document.getElementById("mensajeAsignacionEstudiantesGrupos");
+    mensaje.textContent = "Asignación automática aplicada. Puede hacer ajustes manuales y luego guardar.";
+    mensaje.className = "mensaje ok";
+  }
+
+  // Mostrar/ocultar el botón de asignación automática según permisos
   function actualizarVisibilidadBtnAsignacionAuto() {
     const btn = document.getElementById("btnAsignacionAutomatica");
     if (!btn) return;
@@ -9623,346 +9452,28 @@
     });
   }
 
-
-
-  // ═══ GESTIÓN DE SEDES (ADMINISTRADOR) ═════════════════════════════════════
-  let sedesGestionAdminCache = [];
-
-  function abrirModuloGestionSedes() {
-    if (!esAdministradorReal()) {
-      alert("Este módulo solo está disponible para el Administrador.");
-      return;
-    }
-    mostrarModulo("moduloGestionSedes");
-    limpiarFormularioSedeAdmin();
-    listarSedesAdmin();
-  }
-
-  function listarSedesAdmin() {
-    if (!esAdministradorReal()) return;
-    const mensaje = document.getElementById("mensajeSedeAdmin");
-    const resumen = document.getElementById("resumenSedesAdmin");
-    if (mensaje) { mensaje.textContent = "Cargando sedes..."; mensaje.className = "mensaje"; }
-    if (resumen) resumen.textContent = "";
-
-    llamarBackend(
-      { accion: "listarSedesAdmin", cedula: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula },
-      function(resp) {
-        if (resp && resp.ok) {
-          sedesGestionAdminCache = resp.sedes || [];
-          llenarDatalistSedesAdmin();
-          renderizarTablaSedesAdmin();
-          if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
-        } else {
-          sedesGestionAdminCache = [];
-          renderizarTablaSedesAdmin();
-          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudieron cargar las sedes."; mensaje.className = "mensaje error"; }
-        }
-      },
-      { timeout: 20000 }
-    );
-  }
-
-  function llenarDatalistSedesAdmin() {
-    const listaReg = document.getElementById("listaRegionalesSedesAdmin");
-    const listaDis = document.getElementById("listaDistritosSedesAdmin");
-    if (listaReg) {
-      listaReg.innerHTML = "";
-      obtenerValoresUnicos(sedesGestionAdminCache, "regional").forEach(function(regional) {
-        const opt = document.createElement("option");
-        opt.value = regional;
-        listaReg.appendChild(opt);
-      });
-    }
-    if (listaDis) {
-      listaDis.innerHTML = "";
-      obtenerValoresUnicos(sedesGestionAdminCache, "distrito").forEach(function(distrito) {
-        const opt = document.createElement("option");
-        opt.value = distrito;
-        listaDis.appendChild(opt);
-      });
-    }
-  }
-
-  function sedesAdminFiltradas() {
-    const filtro = normalizarRol(document.getElementById("filtroSedesAdmin").value || "");
-    if (!filtro) return sedesGestionAdminCache.slice();
-    return sedesGestionAdminCache.filter(function(s) {
-      const texto = [s.regional, s.distrito, s.codigoSede, s.centroSede, s.coordinador, s.telefono, s.estado]
-        .map(function(v) { return normalizarRol(v); })
-        .join(" ");
-      return texto.indexOf(filtro) >= 0;
-    });
-  }
-
-  function renderizarTablaSedesAdmin() {
-    const cont = document.getElementById("tablaSedesAdmin");
-    const resumen = document.getElementById("resumenSedesAdmin");
-    if (!cont) return;
-
-    const sedes = sedesAdminFiltradas();
-    if (resumen) resumen.textContent = sedes.length + " sede(s) mostrada(s) de " + sedesGestionAdminCache.length + " registrada(s).";
-
-    if (!sedes.length) {
-      cont.classList.add("oculto");
-      cont.innerHTML = "";
-      return;
-    }
-
-    let html = '<table class="tabla-sedes-admin"><thead><tr>' +
-      '<th>Regional</th><th>Distrito</th><th>Código</th><th>Centro sede</th><th>Cuota</th><th>Grupos</th><th>Coordinador</th><th>Teléfono</th><th>Estado</th><th>Acciones</th>' +
-      '</tr></thead><tbody>';
-
-    sedes.forEach(function(s) {
-      const estadoNorm = normalizarRol(s.estado || "Activo") === "inactivo" ? "Inactivo" : "Activo";
-      const claseEstado = estadoNorm === "Activo" ? "estado-sede-activa" : "estado-sede-inactiva";
-      html += '<tr>' +
-        '<td>' + escapeHtml(s.regional) + '</td>' +
-        '<td>' + escapeHtml(s.distrito) + '</td>' +
-        '<td>' + escapeHtml(s.codigoSede) + '</td>' +
-        '<td>' + escapeHtml(s.centroSede) + '</td>' +
-        '<td>' + escapeHtml(s.cuota) + '</td>' +
-        '<td>' + escapeHtml(s.gruposEsperados) + '</td>' +
-        '<td>' + escapeHtml(s.coordinador) + '</td>' +
-        '<td>' + escapeHtml(s.telefono) + '</td>' +
-        '<td><span class="' + claseEstado + '">' + estadoNorm + '</span></td>' +
-        '<td><div class="acciones-tabla">' +
-          '<button type="button" onclick="editarSedeAdmin(\'' + escapeJs(s.centroSede) + '\')">Editar</button>' +
-          '<button type="button" class="btn-peligro" onclick="cambiarEstadoSedeAdmin(\'' + escapeJs(s.centroSede) + '\', \'' + (estadoNorm === "Activo" ? "Inactivo" : "Activo") + '\')">' + (estadoNorm === "Activo" ? "Inactivar" : "Activar") + '</button>' +
-        '</div></td>' +
-      '</tr>';
-    });
-
-    html += '</tbody></table>';
-    cont.innerHTML = html;
-    cont.classList.remove("oculto");
-  }
-
-  function limpiarFormularioSedeAdmin() {
-    ["sedeAdminCentroOriginal", "sedeAdminRegional", "sedeAdminDistrito", "sedeAdminCodigo", "sedeAdminCentro", "sedeAdminCuota", "sedeAdminCoordinador", "sedeAdminTelefono"].forEach(function(id) {
-      const el = document.getElementById(id); if (el) el.value = "";
-    });
-    const estado = document.getElementById("sedeAdminEstado");
-    if (estado) estado.value = "Activo";
-    const titulo = document.getElementById("tituloFormularioSedeAdmin");
-    if (titulo) titulo.textContent = "Crear sede";
-    const mensaje = document.getElementById("mensajeSedeAdmin");
-    if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
-  }
-
-  function editarSedeAdmin(centroSede) {
-    const s = sedesGestionAdminCache.find(function(x) { return normalizarTexto(x.centroSede) === normalizarTexto(centroSede); });
-    if (!s) return;
-    document.getElementById("sedeAdminCentroOriginal").value = s.centroSede || "";
-    document.getElementById("sedeAdminRegional").value = s.regional || "";
-    document.getElementById("sedeAdminDistrito").value = s.distrito || "";
-    document.getElementById("sedeAdminCodigo").value = s.codigoSede || "";
-    document.getElementById("sedeAdminCentro").value = s.centroSede || "";
-    document.getElementById("sedeAdminCuota").value = String(s.cuota ?? "");
-    document.getElementById("sedeAdminCoordinador").value = s.coordinador || "";
-    document.getElementById("sedeAdminTelefono").value = s.telefono || "";
-    document.getElementById("sedeAdminEstado").value = normalizarRol(s.estado || "Activo") === "inactivo" ? "Inactivo" : "Activo";
-
-    const titulo = document.getElementById("tituloFormularioSedeAdmin");
-    if (titulo) titulo.textContent = "Editar sede";
-    const mensaje = document.getElementById("mensajeSedeAdmin");
-    if (mensaje) { mensaje.textContent = "Editando sede: " + (s.centroSede || ""); mensaje.className = "mensaje"; }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function construirPayloadSedeAdmin() {
-    return {
-      cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
-      centroSedeOriginal: document.getElementById("sedeAdminCentroOriginal").value.trim(),
-      regional: document.getElementById("sedeAdminRegional").value.trim(),
-      distrito: document.getElementById("sedeAdminDistrito").value.trim(),
-      codigoSede: document.getElementById("sedeAdminCodigo").value.trim(),
-      centroSede: document.getElementById("sedeAdminCentro").value.trim(),
-      cuota: document.getElementById("sedeAdminCuota").value.trim(),
-      coordinador: document.getElementById("sedeAdminCoordinador").value.trim(),
-      telefono: document.getElementById("sedeAdminTelefono").value.trim(),
-      estado: document.getElementById("sedeAdminEstado").value
-    };
-  }
-
-  function validarPayloadSedeAdmin(p) {
-    if (!p.regional) return "Debe indicar la regional.";
-    if (!p.distrito) return "Debe indicar el distrito.";
-    if (!p.centroSede) return "Debe indicar el centro sede.";
-    const cuota = Number(p.cuota || 0);
-    if (!Number.isFinite(cuota) || cuota < 0) return "La cuota debe ser un número mayor o igual que cero.";
-    if (p.estado !== "Activo" && p.estado !== "Inactivo") return "Estado no válido.";
-    return "";
-  }
-
-  function guardarSedeAdmin() {
-    if (!esAdministradorReal()) return;
-    const mensaje = document.getElementById("mensajeSedeAdmin");
-    const payload = construirPayloadSedeAdmin();
-    const error = validarPayloadSedeAdmin(payload);
-    if (error) {
-      if (mensaje) { mensaje.textContent = error; mensaje.className = "mensaje error"; }
-      return;
-    }
-
-    if (mensaje) { mensaje.textContent = "Guardando sede..."; mensaje.className = "mensaje"; }
-    llamarBackend(
-      { accion: "guardarSede", payload: JSON.stringify(payload) },
-      function(resp) {
-        if (resp && resp.ok) {
-          if (mensaje) { mensaje.textContent = resp.mensaje || "Sede guardada correctamente."; mensaje.className = "mensaje ok"; }
-          invalidarCacheSedes();
-          limpiarFormularioSedeAdmin();
-          listarSedesAdmin();
-        } else {
-          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudo guardar la sede."; mensaje.className = "mensaje error"; }
-        }
-      },
-      { timeout: 22000 }
-    );
-  }
-
-  function cambiarEstadoSedeAdmin(centroSede, nuevoEstado) {
-    if (!esAdministradorReal()) return;
-    if (!confirm("¿Desea cambiar el estado de esta sede a " + nuevoEstado + "?")) return;
-    const mensaje = document.getElementById("mensajeSedeAdmin");
-    if (mensaje) { mensaje.textContent = "Actualizando sede..."; mensaje.className = "mensaje"; }
-    llamarBackend(
-      {
-        accion: "cambiarEstadoSede",
-        payload: JSON.stringify({
-          cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
-          centroSede: centroSede,
-          estado: nuevoEstado
-        })
-      },
-      function(resp) {
-        if (resp && resp.ok) {
-          if (mensaje) { mensaje.textContent = resp.mensaje || "Estado actualizado."; mensaje.className = "mensaje ok"; }
-          invalidarCacheSedes();
-          listarSedesAdmin();
-        } else {
-          if (mensaje) { mensaje.textContent = (resp && resp.mensaje) || "No se pudo actualizar el estado."; mensaje.className = "mensaje error"; }
-        }
-      },
-      { timeout: 18000 }
-    );
-  }
-
   /* ============================ MÓDULO INSCRIPCIÓN ======================== */
 
-  // Administrador, Técnico regional y Coordinador de sede pueden gestionar inscripción/desinscripción.
+  // Solo Administrador y Técnico regional.
   function puedeInscribirEstudiantes() {
     const rol = normalizarRol(usuarioSesion && usuarioSesion.rol);
-    return rol === "administrador" || rol === "tecnico regional" || rol === "coordinador sede";
+    return rol === "administrador" || rol === "tecnico regional";
   }
 
   let sedesInscripcion = [];
 
   function abrirModuloInscripcion() {
     if (!puedeInscribirEstudiantes()) {
-      alert("Este módulo solo está disponible para el Administrador, el Técnico regional y el Coordinador de sede.");
+      alert("Este módulo solo está disponible para el Administrador y el Técnico regional.");
       return;
     }
     mostrarModulo("moduloInscripcion");
     limpiarInscripcion();
     cargarSedesInscripcion();
-    cargarListadoInscripcion();
   }
 
-  // Carga el listado de estudiantes correspondiente al alcance del usuario.
-  // El coordinador de sede ve todo su distrito (varias sedes son la misma
-  // persona), incluyendo estudiantes que todavía no tienen centro sede.
-  let estudiantesInscripcionListado = [];
-
-  function cargarListadoInscripcion() {
-    const mensaje = document.getElementById("mensajeListadoInscripcion");
-    const tabla = document.getElementById("tablaListadoInscripcion");
-    if (mensaje) { mensaje.textContent = "Cargando listado de estudiantes..."; mensaje.className = "mensaje"; }
-    if (tabla) tabla.innerHTML = "";
-
-    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
-
-    llamarBackend(
-      { accion: "listarEstudiantesInscripcion", cedula: cedula },
-      function(resp) {
-        if (!resp || !resp.ok) {
-          estudiantesInscripcionListado = [];
-          if (mensaje) {
-            mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo cargar el listado de estudiantes.";
-            mensaje.className = "mensaje error";
-          }
-          renderizarListadoInscripcion();
-          return;
-        }
-        estudiantesInscripcionListado = resp.estudiantes || [];
-        if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
-        renderizarListadoInscripcion();
-      },
-      { timeout: 20000 }
-    );
-  }
-
-  function renderizarListadoInscripcion() {
-    const tabla = document.getElementById("tablaListadoInscripcion");
-    if (!tabla) return;
-
-    const busqueda = normalizarTexto((document.getElementById("busquedaListadoInscripcion") || {}).value || "").toLowerCase();
-    const lista = estudiantesInscripcionListado.filter(function(e) {
-      if (!busqueda) return true;
-      const texto = [e.idEstudiante, e.nombre, e.regional, e.distrito, e.centroSede, e.grado]
-        .map(function(v) { return normalizarTexto(v); }).join(" ").toLowerCase();
-      return texto.indexOf(busqueda) !== -1;
-    });
-
-    if (!estudiantesInscripcionListado.length) {
-      tabla.innerHTML = "<p class=\"nota\">No hay estudiantes para mostrar dentro de su alcance.</p>";
-      return;
-    }
-    if (!lista.length) {
-      tabla.innerHTML = "<p class=\"nota\">No hay estudiantes que coincidan con la búsqueda.</p>";
-      return;
-    }
-
-    const puedeDesinscribirAqui = esCoordinadorSede() || esTecnicoRegional() || esAdministradorReal();
-
-    let html = "<table><thead><tr><th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grupo</th><th>Grado</th>" + (puedeDesinscribirAqui ? "<th>Acción</th>" : "") + "</tr></thead><tbody>";
-    lista.forEach(function(e) {
-      const idJs = escapeJs(e.idEstudiante || "");
-      html += "<tr class=\"fila-clicable\" onclick=\"seleccionarEstudianteDelListadoInscripcion('" + idJs + "')\">"
-        + "<td>" + escapeHtml(e.idEstudiante || "") + "</td>"
-        + "<td>" + escapeHtml(e.nombre || "") + "</td>"
-        + "<td>" + escapeHtml(e.regional || "") + "</td>"
-        + "<td>" + escapeHtml(e.distrito || "") + "</td>"
-        + "<td>" + (e.centroSede ? escapeHtml(e.centroSede) : "<em>Sin sede</em>") + "</td>"
-        + "<td>" + escapeHtml(e.grupo || "") + "</td>"
-        + "<td>" + escapeHtml(e.grado || "") + "</td>";
-      if (puedeDesinscribirAqui) {
-        html += "<td><button type=\"button\" class=\"btn-peligro\" style=\"padding:4px 10px;font-size:12px;\" onclick=\"event.stopPropagation(); desinscribirDesdeListadoInscripcion('" + idJs + "')\">Desinscribir</button></td>";
-      }
-      html += "</tr>";
-    });
-    html += "</tbody></table>";
-    tabla.innerHTML = html;
-  }
-
-  function desinscribirDesdeListadoInscripcion(idEstudiante) {
-    const input = document.getElementById("inscID");
-    if (!input) return;
-    input.value = idEstudiante;
-    confirmarDesinscripcionEstudiante();
-  }
-
-  function seleccionarEstudianteDelListadoInscripcion(idEstudiante) {
-    const input = document.getElementById("inscID");
-    if (!input) return;
-    input.value = idEstudiante;
-    buscarEstudianteInscripcion();
-    input.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-
-  // Carga las sedes permitidas del usuario: administrador ve todas; técnico regional ve su regional;
-  // coordinador de sede ve su propia sede.
+  // Carga las sedes permitidas del usuario (el técnico regional solo verá las
+  // de su regional; el administrador, todas) para el selector de centro sede.
   function cargarSedesInscripcion() {
     const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
     llamarBackend(
@@ -10032,37 +9543,27 @@
           return;
         }
 
-        const e = resp.estudiante || {};
-        const inscrito = resp.inscripcion || {};
-        document.getElementById("inscNombre").value = e.nombre || inscrito.nombre || "";
-        document.getElementById("inscGrado").value = e.grado || inscrito.grado || "";
-        document.getElementById("inscRegional").value = e.regional || inscrito.regional || "";
-        document.getElementById("inscDistrito").value = e.distrito || inscrito.distrito || "";
+        const e = resp.estudiante;
+        document.getElementById("inscNombre").value = e.nombre || "";
+        document.getElementById("inscGrado").value = e.grado || "";
+        document.getElementById("inscRegional").value = e.regional || "";
+        document.getElementById("inscDistrito").value = e.distrito || "";
         document.getElementById("inscNacionalidad").value = e.nacionalidad || "";
         document.getElementById("inscSexo").value = e.sexo || "";
-        document.getElementById("inscCentroActual").value = inscrito.centroSede || "";
-        document.getElementById("inscEstadoActual").value = inscrito.estado || (resp.yaInscrito ? "Activo" : "No inscrito");
-        document.getElementById("inscGrupoActual").value = inscrito.grupo || "";
 
-        // En la inscripción no se solicita centro sede.
-        // El CentroSede se completará cuando el facilitador registre la evaluación.
+        // El catálogo no trae centro sede: el técnico la elige entre las de su regional.
+        poblarSelectSedesInscripcion(e.regional);
 
         bloqueDatos.classList.remove("oculto");
 
-        const btnInscribir = document.getElementById("btnConfirmarInscripcion");
-        const btnDesinscribir = document.getElementById("btnDesinscribirEstudiante");
-        if (resp.yaInscrito && (inscrito.estado || "Activo") === "Activo") {
-          mensaje.className = "mensaje ok";
-          mensaje.textContent = "Este estudiante está inscrito. Puede desinscribirlo si corresponde a su alcance.";
-          btnInscribir.disabled = true;
-          btnDesinscribir.classList.remove("oculto");
-          btnDesinscribir.disabled = false;
+        if (resp.yaInscrito) {
+          mensaje.className = "mensaje error";
+          mensaje.textContent = "Atención: este estudiante YA está inscrito. No se puede inscribir de nuevo.";
+          document.getElementById("btnConfirmarInscripcion").disabled = true;
         } else {
           mensaje.className = "mensaje ok";
-          mensaje.textContent = "Estudiante encontrado. Puede completar la inscripción. El centro sede se asignará al registrar la evaluación.";
-          btnInscribir.disabled = false;
-          btnDesinscribir.classList.add("oculto");
-          btnDesinscribir.disabled = true;
+          mensaje.textContent = "Estudiante encontrado. Confirme el centro sede y complete la inscripción.";
+          document.getElementById("btnConfirmarInscripcion").disabled = false;
         }
       },
       function() {
@@ -10094,18 +9595,20 @@
 
   function confirmarInscripcion() {
     const id = document.getElementById("inscID").value.trim();
+    const centro = document.getElementById("inscCentro").value.trim();
     const mensaje = document.getElementById("mensajeInscripcion");
     mensaje.className = "mensaje";
     mensaje.textContent = "";
 
     if (!id) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe buscar un estudiante primero."; return; }
+    if (!centro) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe seleccionar el centro sede."; return; }
 
     const boton = document.getElementById("btnConfirmarInscripcion");
     boton.disabled = true;
     mensaje.textContent = "Inscribiendo...";
 
     const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
-    const payload = { cedula: cedula, idEstudiante: id };
+    const payload = { cedula: cedula, idEstudiante: id, centroSede: centro };
 
     llamarBackend(
       { accion: "inscribirEstudiante", payload: JSON.stringify(payload) },
@@ -10116,7 +9619,6 @@
           document.getElementById("bloqueDatosInscripcion").classList.add("oculto");
           document.getElementById("inscID").value = "";
           document.getElementById("mensajeBusquedaInscripcion").textContent = "";
-          cargarListadoInscripcion();
         } else {
           boton.disabled = false;
           mensaje.className = "mensaje error";
@@ -10132,60 +9634,11 @@
     );
   }
 
-  function confirmarDesinscripcionEstudiante() {
-    const id = document.getElementById("inscID").value.trim();
-    const mensaje = document.getElementById("mensajeInscripcion");
-    mensaje.className = "mensaje";
-    mensaje.textContent = "";
-
-    if (!id) {
-      mensaje.className = "mensaje error";
-      mensaje.textContent = "Debe buscar un estudiante primero.";
-      return;
-    }
-
-    const observacion = prompt("Motivo u observación de la desinscripción (opcional):", "Desinscripción registrada desde la plataforma");
-    if (observacion === null) return;
-
-    if (!confirm("¿Está seguro de desinscribir este estudiante? Dejará de aparecer como activo en asistencia, asignación y demás listados operativos.")) {
-      return;
-    }
-
-    const boton = document.getElementById("btnDesinscribirEstudiante");
-    boton.disabled = true;
-    mensaje.textContent = "Desinscribiendo estudiante...";
-
-    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
-    const payload = { cedula: cedula, idEstudiante: id, observacion: observacion || "" };
-
-    llamarBackend(
-      { accion: "desinscribirEstudiante", payload: JSON.stringify(payload) },
-      function(resp) {
-        if (resp && resp.ok) {
-          mensaje.className = "mensaje ok";
-          mensaje.textContent = resp.mensaje || "Estudiante desinscrito correctamente.";
-          limpiarInscripcion();
-          document.getElementById("inscID").value = id;
-          cargarListadoInscripcion();
-        } else {
-          boton.disabled = false;
-          mensaje.className = "mensaje error";
-          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo desinscribir el estudiante.";
-        }
-      },
-      function() {
-        boton.disabled = false;
-        mensaje.className = "mensaje error";
-        mensaje.textContent = "No se pudo desinscribir. Verifique la conexión.";
-      },
-      { timeout: 14000 }
-    );
-  }
-
   function limpiarInscripcion() {
-    const ids = ["inscID","inscNombre","inscGrado","inscRegional","inscDistrito","inscNacionalidad","inscSexo","inscCentroActual","inscEstadoActual","inscGrupoActual"];
+    const ids = ["inscID","inscNombre","inscGrado","inscRegional","inscDistrito","inscNacionalidad","inscSexo"];
     ids.forEach(function(x){ const el = document.getElementById(x); if (el) el.value = ""; });
-    // No hay selector de centro sede en inscripción; se asigna desde Evaluaciones.
+    const sel = document.getElementById("inscCentro");
+    if (sel) sel.innerHTML = '<option value="">Seleccione el centro sede</option>';
     const bd = document.getElementById("bloqueDatosInscripcion");
     if (bd) bd.classList.add("oculto");
     ["mensajeBusquedaInscripcion","mensajeInscripcion"].forEach(function(x){
@@ -10193,8 +9646,293 @@
     });
     const btn = document.getElementById("btnConfirmarInscripcion");
     if (btn) btn.disabled = false;
-    const btnDes = document.getElementById("btnDesinscribirEstudiante");
-    if (btnDes) { btnDes.disabled = true; btnDes.classList.add("oculto"); }
+  }
+
+  /* ============================ MÓDULO CONTRATOS =========================== */
+  // Genera, en el navegador (jsPDF + JSZip), las cartas compromiso de los
+  // facilitadores y coordinadores de sede activos de un distrito, y las
+  // entrega como un único archivo .zip con un PDF por persona.
+
+  function puedeGenerarContratos() {
+    const rol = normalizarRol(usuarioActual && usuarioActual.rol);
+    return rol === "administrador" || rol === "tecnico regional";
+  }
+
+  function abrirModuloContratos() {
+    if (!puedeGenerarContratos()) {
+      alert("Este módulo solo está disponible para el Administrador y el Técnico regional.");
+      return;
+    }
+    mostrarModulo("moduloContratos");
+    document.getElementById("resumenContratos").textContent = "";
+    document.getElementById("mensajeContratos").textContent = "";
+    document.getElementById("mensajeContratos").className = "mensaje";
+    cargarDistritosContratos();
+  }
+
+  function cargarDistritosContratos() {
+    const select = document.getElementById("contratosDistrito");
+    select.innerHTML = '<option value="">Cargando distritos...</option>';
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+
+    llamarBackend(
+      { accion: "distritosParaContratos", cedula: cedula },
+      function(resp) {
+        select.innerHTML = '<option value="">Seleccione un distrito</option>';
+        if (!resp || !resp.ok) {
+          document.getElementById("mensajeContratos").className = "mensaje error";
+          document.getElementById("mensajeContratos").textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudieron cargar los distritos.";
+          return;
+        }
+        (resp.distritos || []).forEach(function(d) {
+          const opt = document.createElement("option");
+          opt.value = d.distrito;
+          opt.textContent = d.distrito;
+          select.appendChild(opt);
+        });
+      },
+      function() {
+        select.innerHTML = '<option value="">Seleccione un distrito</option>';
+        document.getElementById("mensajeContratos").className = "mensaje error";
+        document.getElementById("mensajeContratos").textContent = "No se pudo conectar para cargar los distritos.";
+      },
+      { timeout: 14000 }
+    );
+  }
+
+  function generarContratosDistrito() {
+    const distrito = document.getElementById("contratosDistrito").value;
+    const mensaje = document.getElementById("mensajeContratos");
+    const resumen = document.getElementById("resumenContratos");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "";
+    resumen.textContent = "";
+
+    if (!distrito) {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "Debe seleccionar un distrito.";
+      return;
+    }
+    if (typeof window.jspdf === "undefined" || typeof window.JSZip === "undefined") {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "No se pudieron cargar las librerías de generación de PDF. Verifique su conexión e intente de nuevo.";
+      return;
+    }
+
+    const boton = document.getElementById("btnGenerarContratos");
+    boton.disabled = true;
+    mensaje.textContent = "Buscando facilitadores y coordinadores del distrito...";
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+
+    llamarBackend(
+      { accion: "personalParaContratos", cedula: cedula, distrito: distrito },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          boton.disabled = false;
+          mensaje.className = "mensaje error";
+          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo obtener el personal del distrito.";
+          return;
+        }
+        const personas = resp.personas || [];
+        if (personas.length === 0) {
+          boton.disabled = false;
+          mensaje.className = "mensaje error";
+          mensaje.textContent = "No hay facilitadores ni coordinadores activos registrados en este distrito.";
+          return;
+        }
+
+        mensaje.textContent = "Generando " + personas.length + " contrato(s)...";
+
+        try {
+          construirZipContratos(personas, distrito, function(nombreArchivo) {
+            boton.disabled = false;
+            mensaje.className = "mensaje ok";
+            mensaje.textContent = "Listo. Se descargó " + nombreArchivo + " con " + personas.length + " contrato(s).";
+          });
+        } catch (e) {
+          boton.disabled = false;
+          mensaje.className = "mensaje error";
+          mensaje.textContent = "Ocurrió un error generando los PDF: " + (e && e.message ? e.message : e);
+        }
+
+        const facilitadores = personas.filter(function(p) { return normalizarTexto(p.rol).toLowerCase() === "facilitador"; }).length;
+        const coordinadores = personas.length - facilitadores;
+        resumen.textContent = "Distrito " + distrito + ": " + facilitadores + " facilitador(es), " + coordinadores + " coordinador(es) de sede.";
+      },
+      function() {
+        boton.disabled = false;
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo conectar para generar los contratos.";
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  // Construye el texto de la carta compromiso (Facilitador o Coordinador de
+  // sede) en párrafos, listos para imprimir con jsPDF.splitTextToSize.
+  // El horario refleja jornada de lunes a jueves de 8:00 a.m. a 3:30 p.m. y
+  // los viernes de 8:00 a.m. a 12:00 m. No incluye Teléfono ni Correo
+  // electrónico, porque el sistema no almacena esos datos.
+  function construirParrafosContrato(rol, nombre, cedula) {
+    const esFacilitador = normalizarTexto(rol).toLowerCase() === "facilitador";
+    const rolTitulo = esFacilitador ? "Facilitador/a" : "Coordinador/a de sede";
+    const rolFirma = esFacilitador ? "EL/LA FACILITADOR/A" : "EL/LA COORDINADOR/A DE SEDE";
+
+    const intro = "Yo, " + (nombre || "______________________________") +
+      ", portador/a de la cédula de identidad y electoral núm. " + (cedula || "______________________________") +
+      ", designado/a como " + rolTitulo + " del Campamento \u201cAprender es Divertido 2026\u201d, declaro que acepto " +
+      "participar en esta iniciativa organizada por el Ministerio de Educación de la República Dominicana, MINERD, " +
+      "a través de la Dirección de Educación Primaria.";
+
+    const horario = "Me comprometo a prestar mis servicios durante el período comprendido entre el 1 y el 31 de julio " +
+      "de 2026, en horario de lunes a jueves de 8:00 a. m. a 3:30 p. m., y los viernes de 8:00 a. m. a 12:00 m., " +
+      "cumpliendo con responsabilidad, puntualidad, ética y compromiso las funciones asignadas para el buen " +
+      "desarrollo del campamento.";
+
+    const funciones = esFacilitador
+      ? ("Como Facilitador/a, asumo el compromiso de participar en las jornadas de formación u orientación, conocer " +
+         "y aplicar la guía oficial del campamento, preparar actividades y materiales de apoyo, organizar un ambiente " +
+         "de aprendizaje seguro e inclusivo, recibir diariamente a los estudiantes, desarrollar actividades educativas, " +
+         "recreativas, lúdicas y formativas, fortalecer los aprendizajes en lectura, escritura y matemáticas, promover " +
+         "la participación de todos los estudiantes y brindar atención a quienes presenten mayores necesidades de apoyo.")
+      : ("Como Coordinador/a de sede, asumo el compromiso de organizar el funcionamiento diario del campamento, " +
+         "verificar las condiciones de los espacios, materiales y recursos, coordinar la distribución de los " +
+         "estudiantes y facilitadores, dar seguimiento a la asistencia, atender situaciones logísticas o pedagógicas, " +
+         "mantener comunicación prudente con las familias cuando corresponda y garantizar la implementación de las " +
+         "orientaciones establecidas.");
+
+    const parrafoExtra = esFacilitador
+      ? ("Me comprometo también a aplicar la evaluación de entrada y la evaluación de salida a los estudiantes bajo mi " +
+         "responsabilidad, conforme a los instrumentos y orientaciones establecidos, y a registrar oportunamente sus " +
+         "resultados en la plataforma oficial aprenderesdivertido.net.")
+      : ("Asimismo, me comprometo a realizar acompañamiento pedagógico, organizativo y formativo a los facilitadores, " +
+         "orientándolos en la aplicación de la guía oficial, el manejo de los grupos, el uso de los recursos, el " +
+         "registro de informaciones y la atención adecuada a los estudiantes.");
+
+    const plataforma = esFacilitador
+      ? ("Reconozco que la gestión del campamento se realizará a través de dicha plataforma, por lo que me " +
+         "comprometo a registrar de manera responsable, completa y veraz la asistencia, participación, incidencias, " +
+         "resultados de evaluación y demás informaciones requeridas sobre los estudiantes asignados.")
+      : ("Reconozco que la gestión del campamento se realizará a través de la plataforma oficial " +
+         "aprenderesdivertido.net, por lo que me comprometo a utilizarla de manera responsable, oportuna y veraz " +
+         "para el registro y seguimiento de asistencia, incidencias, acompañamientos, asignación de facilitadores, " +
+         "distribución de estudiantes en grupos y demás informaciones requeridas.");
+
+    const acompanamiento = esFacilitador
+      ? ("Asimismo, me comprometo a participar en los procesos de acompañamiento y retroalimentación realizados " +
+         "por el/la coordinador/a de sede, técnicos distritales, regionales o nacionales; a cuidar los materiales, " +
+         "equipos y espacios asignados; y a entregar las evidencias, registros o informes que me sean solicitados.")
+      : null;
+
+    const proteccion = "Me comprometo, además, a proteger la integridad física, emocional y moral de los niños, " +
+      "niñas y adolescentes participantes; actuar con respeto, buen trato e inclusión; mantener la confidencialidad " +
+      "de las informaciones a las que tenga acceso; no compartir usuarios, contraseñas ni datos institucionales con " +
+      "personas no autorizadas; y reportar oportunamente cualquier situación de riesgo, incidencia o dificultad que " +
+      "afecte el desarrollo del campamento.";
+
+    const pago = "Por los servicios prestados durante el período indicado, recibiré la suma total de sesenta mil " +
+      "pesos dominicanos con 00/100 (RD$60,000.00), conforme a los procedimientos administrativos establecidos y " +
+      "sujeto al cumplimiento de las responsabilidades asumidas.";
+
+    const cierre = "Firmo la presente carta compromiso en señal de aceptación.";
+
+    const lugarFecha = "En ______________________________, República Dominicana, a los ____ días del mes de " +
+      "______________________ del año 2026.";
+
+    const parrafos = [intro, horario, funciones, parrafoExtra, plataforma];
+    if (acompanamiento) parrafos.push(acompanamiento);
+    parrafos.push(proteccion, pago, cierre, lugarFecha);
+
+    return { parrafos: parrafos, rolTitulo: rolTitulo, rolFirma: rolFirma };
+  }
+
+  // Dibuja un único contrato en un documento jsPDF ya creado.
+  function dibujarContratoPDF(doc, rol, nombre, cedula) {
+    const c = construirParrafosContrato(rol, nombre, cedula);
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    const altoPagina = doc.internal.pageSize.getHeight();
+    const margen = 22;
+    const anchoTexto = anchoPagina - margen * 2;
+    let y = 20;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("REPÚBLICA DOMINICANA", anchoPagina / 2, y, { align: "center" }); y += 5;
+    doc.text("MINISTERIO DE EDUCACIÓN", anchoPagina / 2, y, { align: "center" }); y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Dirección de Educación Primaria", anchoPagina / 2, y, { align: "center" }); y += 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("CARTA COMPROMISO", anchoPagina / 2, y, { align: "center" }); y += 7;
+    doc.setFontSize(12);
+    doc.text(c.rolTitulo, anchoPagina / 2, y, { align: "center" }); y += 6;
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(10);
+    doc.text("Campamento \u201cAprender es Divertido 2026\u201d", anchoPagina / 2, y, { align: "center" }); y += 10;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
+    c.parrafos.forEach(function(parrafo) {
+      const lineas = doc.splitTextToSize(parrafo, anchoTexto);
+      const alturaBloque = lineas.length * 5;
+      if (y + alturaBloque > altoPagina - 20) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(lineas, margen, y);
+      y += alturaBloque + 4;
+    });
+
+    // El bloque de firmas necesita ~50mm seguidos; si no caben, nueva página.
+    if (y > altoPagina - 50) { doc.addPage(); y = 20; }
+
+    y += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.text(c.rolFirma, margen, y); y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.text("Nombre: " + (nombre || ""), margen, y); y += 6;
+    doc.text("Cédula: " + (cedula || ""), margen, y); y += 6;
+    doc.text("Firma: ____________________________________________", margen, y); y += 12;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Por la Dirección de Educación Primaria / MINERD", margen, y); y += 7;
+    doc.setFont("helvetica", "normal");
+    doc.text("Nombre: ____________________________________________", margen, y); y += 6;
+    doc.text("Cargo: _____________________________________________", margen, y); y += 6;
+    doc.text("Firma: ____________________________________________", margen, y);
+  }
+
+  // Genera un PDF por persona y los empaqueta en un .zip que se descarga.
+  function construirZipContratos(personas, distrito, alTerminar) {
+    const jsPDFCtor = window.jspdf.jsPDF;
+    const zip = new window.JSZip();
+
+    personas.forEach(function(p) {
+      const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+      dibujarContratoPDF(doc, p.rol, p.nombre, p.cedula);
+      const blob = doc.output("blob");
+      const rolArchivo = normalizarTexto(p.rol).toLowerCase() === "facilitador" ? "Facilitador" : "Coordinador";
+      const nombreLimpio = normalizarTexto(p.nombre).replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_") || "SinNombre";
+      const archivo = "Carta_Compromiso_" + rolArchivo + "_" + nombreLimpio + "_" + (p.cedula || "") + ".pdf";
+      zip.file(archivo, blob);
+    });
+
+    zip.generateAsync({ type: "blob" }).then(function(contenidoZip) {
+      const nombreZip = "Contratos_" + normalizarTexto(distrito).replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_") + ".zip";
+      const url = URL.createObjectURL(contenidoZip);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombreZip;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      if (alTerminar) alTerminar(nombreZip);
+    });
   }
 
   function cargarSedesGestionUsuarios(callback) {
@@ -10300,20 +10038,17 @@
     const requiereRegional = rol === "Técnico regional" || rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
     const requiereDistrito = rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
     const requiereSede = rol === "Coordinador sede" || rol === "Facilitador";
-    // El grupo no se asigna al crear el usuario; queda como dato operativo
-    // posterior, administrado desde el módulo de asignación de grupos.
+    const requiereGrupo = rol === "Facilitador";
 
     if (regional) regional.disabled = !requiereRegional;
     if (distrito) distrito.disabled = !requiereDistrito;
     if (sede) sede.disabled = !requiereSede;
-    if (grupo) {
-      grupo.disabled = true;
-      grupo.title = "El grupo se asigna posteriormente desde el módulo de asignación.";
-    }
+    if (grupo) grupo.disabled = !requiereGrupo;
 
     if (!requiereRegional && regional) regional.value = "";
     if (!requiereDistrito && distrito) distrito.value = "";
     if (!requiereSede && sede) sede.value = "";
+    if (!requiereGrupo && grupo) grupo.value = "";
   }
 
   function listarUsuariosAdmin() {
@@ -10358,9 +10093,7 @@
 
     const usuarios = usuariosAdminFiltrados();
     if (resumen) {
-      const inactivosVisibles = usuarios.filter(function(u) { return normalizarRol(u.estado) !== "activo"; }).length;
-      const inactivosTotales = usuariosAdminCache.filter(function(u) { return normalizarRol(u.estado) !== "activo"; }).length;
-      resumen.textContent = usuarios.length + " usuario(s) mostrado(s) de " + usuariosAdminCache.length + " registrado(s). Inactivos visibles: " + inactivosVisibles + ". Inactivos totales: " + inactivosTotales + ".";
+      resumen.textContent = usuarios.length + " usuario(s) mostrado(s) de " + usuariosAdminCache.length + " registrado(s).";
     }
 
     if (!usuarios.length) {
@@ -10421,7 +10154,6 @@
 
     const cedula = document.getElementById("usuarioAdminCedula");
     if (cedula) cedula.disabled = false;
-    ultimaCedulaConsultadaPersonalMinerd = "";
 
     const mensaje = document.getElementById("mensajeUsuarioAdmin");
     if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
@@ -10448,9 +10180,7 @@
       document.getElementById("usuarioAdminDistrito").value = u.distrito || "";
       cargarSedesUsuarioAdmin();
       document.getElementById("usuarioAdminCentroSede").value = u.centroSede || "";
-      const selectGrupoUsuario = document.getElementById("usuarioAdminGrupo");
-      asegurarOpcionGrupo(selectGrupoUsuario, u.grupo || "");
-      if (selectGrupoUsuario) selectGrupoUsuario.value = u.grupo || "";
+      document.getElementById("usuarioAdminGrupo").value = u.grupo || "";
       actualizarAlcanceFormularioUsuarioAdmin();
     });
 
@@ -10501,41 +10231,14 @@
     const requiereRegional = p.rol === "Técnico regional" || p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
     const requiereDistrito = p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
     const requiereSede = p.rol === "Coordinador sede" || p.rol === "Facilitador";
+    const requiereGrupo = p.rol === "Facilitador";
 
     if (requiereRegional && !p.regional) return "Para este rol debe seleccionar una regional.";
     if (requiereDistrito && !p.distrito) return "Para este rol debe seleccionar un distrito.";
     if (requiereSede && !p.centroSede) return "Para este rol debe seleccionar un centro sede.";
+    if (requiereGrupo && !p.grupo) return "Para el rol Facilitador debe seleccionar un grupo.";
     if (p.password && p.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
     return "";
-  }
-
-  // Autocompleta el nombre desde el padrón de personal del MINERD en cuanto
-  // se completan los 11 dígitos de la cédula (###-#######-#), sin esperar a
-  // que el campo pierda el foco. Si no se encuentra, no hace nada: el nombre
-  // sigue siendo editable para digitarlo a mano.
-  let ultimaCedulaConsultadaPersonalMinerd = "";
-
-  function autocompletarNombrePersonalMinerd() {
-    const inputCedula = document.getElementById("usuarioAdminCedula");
-    const inputNombre = document.getElementById("usuarioAdminNombre");
-    if (!inputCedula || !inputNombre || inputCedula.disabled) return;
-
-    const cedulaLimpia = inputCedula.value.replace(/\D/g, "");
-    if (cedulaLimpia.length < 11) return;
-    if (cedulaLimpia === ultimaCedulaConsultadaPersonalMinerd) return;
-    ultimaCedulaConsultadaPersonalMinerd = cedulaLimpia;
-
-    const cedulaAdmin = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
-
-    llamarBackend(
-      { accion: "buscarPersonalPorCedula", cedula: cedulaAdmin, cedulaBuscar: cedulaLimpia },
-      function(resp) {
-        if (resp && resp.ok && resp.encontrado && resp.nombre) {
-          inputNombre.value = resp.nombre;
-        }
-      },
-      { timeout: 10000 }
-    );
   }
 
   function guardarUsuarioAdmin() {
@@ -10592,62 +10295,6 @@
     );
   }
 
-
-  function reactivarUsuariosInactivosFiltradosAdmin() {
-    if (!esAdministradorReal()) return;
-
-    const mensaje = document.getElementById("mensajeUsuarioAdmin");
-    const filtro = document.getElementById("filtroUsuariosAdmin");
-    const textoFiltro = filtro ? String(filtro.value || "").trim() : "";
-    const usuarios = usuariosAdminFiltrados().filter(function(u) {
-      return normalizarRol(u.estado) !== "activo";
-    });
-
-    if (!usuarios.length) {
-      if (mensaje) {
-        mensaje.textContent = "No hay usuarios inactivos en el listado actual para reactivar.";
-        mensaje.className = "mensaje";
-      }
-      return;
-    }
-
-    const alcance = textoFiltro
-      ? "los usuarios inactivos que coinciden con el filtro actual"
-      : "todos los usuarios inactivos registrados";
-
-    if (!confirm("Se reactivarán " + usuarios.length + " usuario(s) inactivo(s) de " + alcance + ". ¿Desea continuar?")) return;
-
-    if (mensaje) {
-      mensaje.textContent = "Reactivando usuarios inactivos...";
-      mensaje.className = "mensaje";
-    }
-
-    llamarBackendPost(
-      {
-        accion: "reactivarUsuariosMasivo",
-        payload: JSON.stringify({
-          cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
-          cedulas: usuarios.map(function(u) { return u.cedula; })
-        })
-      },
-      function(resp) {
-        if (resp && resp.ok) {
-          if (mensaje) {
-            mensaje.textContent = resp.mensaje || "Usuarios reactivados correctamente.";
-            mensaje.className = "mensaje ok";
-          }
-          listarUsuariosAdmin();
-        } else {
-          if (mensaje) {
-            mensaje.textContent = (resp && resp.mensaje) || "No se pudo completar la reactivación masiva.";
-            mensaje.className = "mensaje error";
-          }
-        }
-      },
-      { timeout: 30000 }
-    );
-  }
-
   function escapeJs(valor) {
     return String(valor || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, " ").replace(/\r/g, " ");
   }
@@ -10677,7 +10324,6 @@
     personaSeleccionadaAcompanamiento = null;
     sedesIncidencias = [];
     sedeSeleccionadaIncidencia = null;
-    sedesGestionAdminCache = [];
     invalidarCacheSedes();
 
     localStorage.removeItem("usuarioCampamento");
@@ -11400,317 +11046,6 @@ const respuestasTexto = {
       });
     });
   }
-
-  // ═══ CARGA MASIVA DE USUARIOS Y ESTUDIANTES ═══════════════════════════════
-
-  function csvEscaparValor(valor) {
-    const s = String(valor == null ? "" : valor);
-    if (/[",\n\r;]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-    return s;
-  }
-
-  function descargarCsv(nombreArchivo, encabezados, filas) {
-    const lineas = [];
-    lineas.push(encabezados.map(csvEscaparValor).join(","));
-    (filas || []).forEach(function(fila) {
-      lineas.push(encabezados.map(function(h) { return csvEscaparValor(fila[h] || ""); }).join(","));
-    });
-    const contenido = "\ufeff" + lineas.join("\r\n");
-    const blob = new Blob([contenido], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = nombreArchivo;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function() {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 0);
-  }
-
-  function descargarPlantillaUsuariosCSV() {
-    descargarCsv("plantilla_carga_usuarios.csv",
-      ["Cedula","Nombre","Rol","Regional","Distrito","CentroSede","Estado","Password"],
-      [
-        {
-          Cedula: "00100000001",
-          Nombre: "María Pérez",
-          Rol: "Facilitador",
-          Regional: "01 - BARAHONA",
-          Distrito: "0101 - PEDERNALES",
-          CentroSede: "02334 - HERNANDO GORJON",
-          Estado: "Activo",
-          Password: ""
-        },
-        {
-          Cedula: "00100000002",
-          Nombre: "Juan Gómez",
-          Rol: "Técnico regional",
-          Regional: "01 - BARAHONA",
-          Distrito: "",
-          CentroSede: "",
-          Estado: "Activo",
-          Password: ""
-        }
-      ]
-    );
-  }
-
-  function descargarPlantillaEstudiantesCSV() {
-    descargarCsv("plantilla_carga_estudiantes.csv",
-      ["IdEstudiante","NombreCompleto","Regional","Distrito","Grado","Nacionalidad","Sexo"],
-      [
-        {
-          IdEstudiante: "33578410",
-          NombreCompleto: "",
-          Regional: "",
-          Distrito: "",
-          Grado: "",
-          Nacionalidad: "",
-          Sexo: ""
-        },
-        {
-          IdEstudiante: "33578411",
-          NombreCompleto: "Ana Rodríguez",
-          Regional: "01 - BARAHONA",
-          Distrito: "0101 - PEDERNALES",
-          Grado: "3-Tercero",
-          Nacionalidad: "DOMINICANA",
-          Sexo: "F"
-        }
-      ]
-    );
-  }
-
-  function parsearCsvCargaMasiva(texto) {
-    const filas = [];
-    let fila = [];
-    let campo = "";
-    let dentroComillas = false;
-
-    texto = String(texto || "").replace(/^\ufeff/, "");
-
-    for (let i = 0; i < texto.length; i++) {
-      const c = texto[i];
-      const sig = texto[i + 1];
-
-      if (c === '"') {
-        if (dentroComillas && sig === '"') {
-          campo += '"';
-          i++;
-        } else {
-          dentroComillas = !dentroComillas;
-        }
-      } else if ((c === "," || c === ";") && !dentroComillas) {
-        fila.push(campo);
-        campo = "";
-      } else if ((c === "\n" || c === "\r") && !dentroComillas) {
-        if (c === "\r" && sig === "\n") i++;
-        fila.push(campo);
-        if (fila.some(function(v) { return String(v || "").trim() !== ""; })) filas.push(fila);
-        fila = [];
-        campo = "";
-      } else {
-        campo += c;
-      }
-    }
-
-    fila.push(campo);
-    if (fila.some(function(v) { return String(v || "").trim() !== ""; })) filas.push(fila);
-
-    if (!filas.length) return [];
-    const encabezados = filas[0].map(normalizarEncabezadoCarga);
-    return filas.slice(1).map(function(cols) {
-      const obj = {};
-      encabezados.forEach(function(h, idx) {
-        obj[h] = String(cols[idx] == null ? "" : cols[idx]).trim();
-      });
-      return obj;
-    }).filter(function(obj) {
-      return Object.keys(obj).some(function(k) { return String(obj[k] || "").trim() !== ""; });
-    });
-  }
-
-  function normalizarEncabezadoCarga(texto) {
-    return String(texto || "")
-      .trim()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-  }
-
-  function valorCarga(fila, aliases) {
-    for (let i = 0; i < aliases.length; i++) {
-      const clave = normalizarEncabezadoCarga(aliases[i]);
-      if (Object.prototype.hasOwnProperty.call(fila, clave)) {
-        return String(fila[clave] == null ? "" : fila[clave]).trim();
-      }
-    }
-    return "";
-  }
-
-  function leerArchivoCsv(inputId, callback, mensajeId) {
-    const input = document.getElementById(inputId);
-    const mensaje = mensajeId ? document.getElementById(mensajeId) : null;
-    if (!input || !input.files || !input.files.length) {
-      if (mensaje) { mensaje.textContent = "Debe seleccionar un archivo CSV."; mensaje.className = "mensaje error"; }
-      return;
-    }
-
-    const archivo = input.files[0];
-    const lector = new FileReader();
-    lector.onload = function(e) {
-      try {
-        const filas = parsearCsvCargaMasiva(e.target.result || "");
-        callback(filas);
-      } catch (err) {
-        if (mensaje) {
-          mensaje.textContent = "No se pudo leer el archivo CSV: " + (err && err.message ? err.message : err);
-          mensaje.className = "mensaje error";
-        }
-      }
-    };
-    lector.onerror = function() {
-      if (mensaje) { mensaje.textContent = "No se pudo leer el archivo."; mensaje.className = "mensaje error"; }
-    };
-    lector.readAsText(archivo, "UTF-8");
-  }
-
-  function mostrarResultadoCargaMasiva(resp, mensajeId, detalleId) {
-    const mensaje = document.getElementById(mensajeId);
-    const detalle = document.getElementById(detalleId);
-    const okParcial = resp && (resp.ok || Number(resp.creados || 0) + Number(resp.actualizados || 0) + Number(resp.inscritos || 0) + Number(resp.reinscritos || 0) > 0);
-
-    if (mensaje) {
-      mensaje.className = okParcial ? "mensaje ok" : "mensaje error";
-      mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo completar la carga masiva.";
-    }
-
-    if (detalle) {
-      const errores = (resp && Array.isArray(resp.errores)) ? resp.errores : [];
-      let html = "";
-      if (resp) {
-        html += "Procesados: " + (resp.procesados || 0) +
-          ". Creados/inscritos: " + ((resp.creados || 0) + (resp.inscritos || 0)) +
-          ". Actualizados/reinscritos: " + ((resp.actualizados || 0) + (resp.reinscritos || 0)) +
-          ". Omitidos: " + (resp.omitidos || 0) +
-          ". Errores: " + errores.length + ".";
-      }
-      if (errores.length) {
-        html += "<br><strong>Primeros errores:</strong><br>";
-        html += errores.slice(0, 10).map(function(e) {
-          return "Fila " + escapeHtml(e.fila || "") + ": " + escapeHtml(e.mensaje || "");
-        }).join("<br>");
-        if (errores.length > 10) html += "<br>... y " + (errores.length - 10) + " error(es) más.";
-      }
-      detalle.innerHTML = html;
-    }
-  }
-
-  function cargarMasivaUsuariosAdmin() {
-    if (!esAdministradorReal()) return;
-    const mensaje = document.getElementById("mensajeCargaUsuariosAdmin");
-    const detalle = document.getElementById("detalleCargaUsuariosAdmin");
-    if (mensaje) { mensaje.textContent = "Leyendo archivo..."; mensaje.className = "mensaje"; }
-    if (detalle) detalle.innerHTML = "";
-
-    leerArchivoCsv("archivoCargaUsuarios", function(filasCrudas) {
-      const usuarios = filasCrudas.map(function(f) {
-        return {
-          cedula: valorCarga(f, ["Cedula", "Cédula"]),
-          nombre: valorCarga(f, ["Nombre", "NombreCompleto", "Nombre completo"]),
-          rol: valorCarga(f, ["Rol"]),
-          regional: valorCarga(f, ["Regional"]),
-          distrito: valorCarga(f, ["Distrito"]),
-          centroSede: valorCarga(f, ["CentroSede", "Centro sede"]),
-          estado: valorCarga(f, ["Estado"]) || "Activo",
-          password: valorCarga(f, ["Password", "Contraseña", "Contrasena"])
-        };
-      }).filter(function(u) {
-        return u.cedula || u.nombre || u.rol;
-      });
-
-      if (!usuarios.length) {
-        if (mensaje) { mensaje.textContent = "El archivo no contiene usuarios para cargar."; mensaje.className = "mensaje error"; }
-        return;
-      }
-
-      if (!confirm("Se procesarán " + usuarios.length + " usuario(s). ¿Desea continuar?")) {
-        if (mensaje) { mensaje.textContent = "Carga cancelada."; mensaje.className = "mensaje"; }
-        return;
-      }
-
-      if (mensaje) { mensaje.textContent = "Procesando carga masiva de usuarios..."; mensaje.className = "mensaje"; }
-
-      llamarBackendPost(
-        {
-          accion: "cargaMasivaUsuarios",
-          payload: JSON.stringify({
-            cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
-            usuarios: usuarios
-          })
-        },
-        function(resp) {
-          mostrarResultadoCargaMasiva(resp, "mensajeCargaUsuariosAdmin", "detalleCargaUsuariosAdmin");
-          if (resp && (resp.ok || resp.creados || resp.actualizados)) listarUsuariosAdmin();
-        },
-        { timeout: 90000 }
-      );
-    }, "mensajeCargaUsuariosAdmin");
-  }
-
-  function cargarMasivaEstudiantes() {
-    const mensaje = document.getElementById("mensajeCargaEstudiantes");
-    const detalle = document.getElementById("detalleCargaEstudiantes");
-    if (mensaje) { mensaje.textContent = "Leyendo archivo..."; mensaje.className = "mensaje"; }
-    if (detalle) detalle.innerHTML = "";
-
-    leerArchivoCsv("archivoCargaEstudiantes", function(filasCrudas) {
-      const estudiantes = filasCrudas.map(function(f) {
-        return {
-          idEstudiante: valorCarga(f, ["IdEstudiante", "ID estudiante", "Id estudiante", "ID"]),
-          nombreCompleto: valorCarga(f, ["NombreCompleto", "Nombre completo", "Nombre"]),
-          regional: valorCarga(f, ["Regional"]),
-          distrito: valorCarga(f, ["Distrito"]),
-          grado: valorCarga(f, ["Grado"]),
-          nacionalidad: valorCarga(f, ["Nacionalidad"]),
-          sexo: valorCarga(f, ["Sexo"])
-        };
-      }).filter(function(e) {
-        return e.idEstudiante || e.nombreCompleto;
-      });
-
-      if (!estudiantes.length) {
-        if (mensaje) { mensaje.textContent = "El archivo no contiene estudiantes para cargar."; mensaje.className = "mensaje error"; }
-        return;
-      }
-
-      if (!confirm("Se procesarán " + estudiantes.length + " estudiante(s). No se cargará centro sede. ¿Desea continuar?")) {
-        if (mensaje) { mensaje.textContent = "Carga cancelada."; mensaje.className = "mensaje"; }
-        return;
-      }
-
-      if (mensaje) { mensaje.textContent = "Procesando carga masiva de estudiantes..."; mensaje.className = "mensaje"; }
-
-      llamarBackendPost(
-        {
-          accion: "cargaMasivaEstudiantes",
-          payload: JSON.stringify({
-            cedula: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
-            estudiantes: estudiantes
-          })
-        },
-        function(resp) {
-          mostrarResultadoCargaMasiva(resp, "mensajeCargaEstudiantes", "detalleCargaEstudiantes");
-          if (resp && (resp.ok || resp.creados || resp.inscritos)) cargarListadoInscripcion();
-        },
-        { timeout: 90000 }
-      );
-    }, "mensajeCargaEstudiantes");
-  }
-
-
 </script>
 
 </body>
