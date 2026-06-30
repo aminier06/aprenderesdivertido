@@ -4858,14 +4858,14 @@
       else tileInscripcion.classList.add("oculto");
     }
 
-    // Contratos: misma regla que Inscripción (Administrador y Técnico regional).
+    // Contratos: Administrador y Técnico nacional.
     const tileContratos = document.getElementById("tileContratos");
     if (tileContratos) {
       const rolVistaC = normalizarTexto(usuario && usuario.rol).toLowerCase();
       const rolRealC = normalizarRol(usuarioSesion && usuarioSesion.rol);
       const puedeContratos = esAdministradorReal() ||
-        rolRealC === "tecnico regional" ||
-        rolVistaC === "administrador" || rolVistaC === "técnico regional" || rolVistaC === "tecnico regional";
+        rolRealC === "tecnico nacional" ||
+        rolVistaC === "administrador" || rolVistaC === "técnico nacional" || rolVistaC === "tecnico nacional";
       if (puedeContratos) tileContratos.classList.remove("oculto");
       else tileContratos.classList.add("oculto");
     }
@@ -9755,12 +9755,12 @@
 
   function puedeGenerarContratos() {
     const rol = normalizarRol(usuarioActual && usuarioActual.rol);
-    return rol === "administrador" || rol === "tecnico regional";
+    return rol === "administrador" || rol === "tecnico nacional";
   }
 
   function abrirModuloContratos() {
     if (!puedeGenerarContratos()) {
-      alert("Este módulo solo está disponible para el Administrador y el Técnico regional.");
+      alert("Este módulo solo está disponible para el Administrador y el Técnico nacional.");
       return;
     }
     mostrarModulo("moduloContratos");
