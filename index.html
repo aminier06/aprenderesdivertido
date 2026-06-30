@@ -2352,6 +2352,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -3400,6 +3401,26 @@
     </div>
 
     <div id="mensajeInscripcion" class="mensaje"></div>
+
+    <div class="bloque-formulario" style="margin-top:24px;">
+      <h3>Carga masiva desde plantilla</h3>
+      <p class="nota">Descargue la plantilla, llénela con los ID de los estudiantes a inscribir y súbala aquí. Solo se necesita la columna ID; el resto de los datos se completan desde el catálogo.</p>
+      <div class="form-grid-3">
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" class="btn-secundario" onclick="descargarPlantillaInscripcionMasiva()">Descargar plantilla (.xlsx)</button>
+        </div>
+        <div>
+          <label for="inscripcionMasivaArchivo">Archivo lleno (.xlsx o .csv)</label>
+          <input type="file" id="inscripcionMasivaArchivo" accept=".xlsx,.xls,.csv">
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" id="btnProcesarInscripcionMasiva" onclick="procesarInscripcionMasiva()">Inscribir desde archivo</button>
+        </div>
+      </div>
+      <div id="progresoInscripcionMasiva" class="nota oculto"></div>
+      <div id="mensajeInscripcionMasiva" class="mensaje"></div>
+      <div id="resumenInscripcionMasiva" class="oculto"></div>
+    </div>
 
     <div class="bloque-formulario" style="margin-top:24px;">
       <h3>Estudiantes inscritos</h3>
@@ -9584,6 +9605,14 @@
     document.getElementById("mensajeInscritos").className = "mensaje";
     document.getElementById("tablaInscritos").innerHTML = "";
     document.getElementById("tablaInscritos").classList.add("oculto");
+
+    const inputArchivo = document.getElementById("inscripcionMasivaArchivo");
+    if (inputArchivo) inputArchivo.value = "";
+    document.getElementById("mensajeInscripcionMasiva").textContent = "";
+    document.getElementById("mensajeInscripcionMasiva").className = "mensaje";
+    document.getElementById("progresoInscripcionMasiva").classList.add("oculto");
+    document.getElementById("resumenInscripcionMasiva").classList.add("oculto");
+    document.getElementById("resumenInscripcionMasiva").innerHTML = "";
   }
 
   function buscarEstudianteInscripcion() {
@@ -9801,6 +9830,181 @@
       },
       { timeout: 14000 }
     );
+  }
+
+  // ── Carga masiva desde plantilla ───────────────────────────────────────────
+
+  function descargarPlantillaInscripcionMasiva() {
+    if (typeof XLSX === "undefined") {
+      alert("No se pudo cargar la librería para generar el archivo. Verifique su conexión e intente de nuevo.");
+      return;
+    }
+    const datos = [
+      ["ID"],
+      ["Ej: 33578410"],
+    ];
+    const hoja = XLSX.utils.aoa_to_sheet(datos);
+    hoja["!cols"] = [{ wch: 20 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Plantilla");
+    XLSX.writeFile(libro, "Plantilla_Inscripcion_Estudiantes.xlsx");
+  }
+
+  // Lee el archivo subido (.xlsx, .xls o .csv) y devuelve la lista de IDs
+  // encontrados en la primera columna que parezca contener IDs (acepta que
+  // la columna se llame "ID", "IdEstudiante" o similar; si no encuentra
+  // encabezado reconocible, toma la primera columna de todas formas).
+  function leerIdsDeArchivo(archivo, callback) {
+    const lector = new FileReader();
+    lector.onload = function(e) {
+      try {
+        const datos = new Uint8Array(e.target.result);
+        const libro = XLSX.read(datos, { type: "array" });
+        const hoja = libro.Sheets[libro.SheetNames[0]];
+        const filas = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: "" });
+
+        if (!filas.length) { callback([]); return; }
+
+        let indiceColumna = 0;
+        const primeraFila = filas[0].map(function(v) { return normalizarTexto(v).toLowerCase(); });
+        const candidatos = ["id", "idestudiante", "id estudiante", "cedula", "id_estudiante"];
+        const idxEncontrado = primeraFila.findIndex(function(v) { return candidatos.indexOf(v) !== -1; });
+        const tieneEncabezado = idxEncontrado !== -1;
+        if (tieneEncabezado) indiceColumna = idxEncontrado;
+
+        const ids = [];
+        for (let i = tieneEncabezado ? 1 : 0; i < filas.length; i++) {
+          const valor = normalizarTexto(filas[i][indiceColumna]);
+          if (valor) ids.push(valor);
+        }
+        callback(ids);
+      } catch (err) {
+        callback(null, err);
+      }
+    };
+    lector.onerror = function() { callback(null, new Error("No se pudo leer el archivo.")); };
+    lector.readAsArrayBuffer(archivo);
+  }
+
+  function procesarInscripcionMasiva() {
+    const input = document.getElementById("inscripcionMasivaArchivo");
+    const mensaje = document.getElementById("mensajeInscripcionMasiva");
+    const progreso = document.getElementById("progresoInscripcionMasiva");
+    const resumenDiv = document.getElementById("resumenInscripcionMasiva");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "";
+    progreso.classList.add("oculto");
+    resumenDiv.classList.add("oculto");
+    resumenDiv.innerHTML = "";
+
+    if (typeof XLSX === "undefined") {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "No se pudo cargar la librería para leer el archivo. Verifique su conexión e intente de nuevo.";
+      return;
+    }
+    if (!input.files || !input.files[0]) {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "Debe seleccionar un archivo primero.";
+      return;
+    }
+
+    const boton = document.getElementById("btnProcesarInscripcionMasiva");
+    boton.disabled = true;
+    mensaje.textContent = "Leyendo archivo...";
+
+    leerIdsDeArchivo(input.files[0], function(ids, error) {
+      if (error || ids === null) {
+        boton.disabled = false;
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo leer el archivo. Verifique que sea un Excel o CSV válido.";
+        return;
+      }
+      const idsUnicos = Array.from(new Set(ids));
+      if (idsUnicos.length === 0) {
+        boton.disabled = false;
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se encontró ningún ID en el archivo.";
+        return;
+      }
+
+      const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+      const LOTE = 80; // suficientemente chico para no exceder el límite de la URL
+      const totalLotes = Math.ceil(idsUnicos.length / LOTE);
+      let loteActual = 0;
+      const acumulado = { total: 0, inscritos: 0, reinscritos: 0, yaActivos: 0, noEnCatalogo: 0, fueraDeRegional: 0 };
+      const detalleAcumulado = { noEnCatalogo: [], fueraDeRegional: [] };
+
+      progreso.classList.remove("oculto");
+
+      function enviarLote() {
+        const porcion = idsUnicos.slice(loteActual * LOTE, (loteActual + 1) * LOTE);
+        progreso.textContent = "Procesando lote " + (loteActual + 1) + " de " + totalLotes + " (" + porcion.length + " estudiante(s))...";
+
+        const payload = { cedula: cedula, ids: porcion };
+        llamarBackend(
+          { accion: "inscribirEstudiantesMasivo", payload: JSON.stringify(payload) },
+          function(resp) {
+            if (!resp || !resp.ok) {
+              boton.disabled = false;
+              mensaje.className = "mensaje error";
+              mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo procesar el lote " + (loteActual + 1) + ".";
+              return;
+            }
+            const r = resp.resumen || {};
+            acumulado.total += r.total || 0;
+            acumulado.inscritos += r.inscritos || 0;
+            acumulado.reinscritos += r.reinscritos || 0;
+            acumulado.yaActivos += r.yaActivos || 0;
+            acumulado.noEnCatalogo += r.noEnCatalogo || 0;
+            acumulado.fueraDeRegional += r.fueraDeRegional || 0;
+            if (resp.detalle) {
+              detalleAcumulado.noEnCatalogo = detalleAcumulado.noEnCatalogo.concat(resp.detalle.noEnCatalogo || []);
+              detalleAcumulado.fueraDeRegional = detalleAcumulado.fueraDeRegional.concat(resp.detalle.fueraDeRegional || []);
+            }
+
+            loteActual++;
+            if (loteActual < totalLotes) {
+              enviarLote();
+            } else {
+              boton.disabled = false;
+              progreso.classList.add("oculto");
+              mensaje.className = "mensaje ok";
+              mensaje.textContent = "Carga masiva terminada.";
+              mostrarResumenInscripcionMasiva(acumulado, detalleAcumulado);
+              buscarInscritosLista();
+            }
+          },
+          function() {
+            boton.disabled = false;
+            mensaje.className = "mensaje error";
+            mensaje.textContent = "No se pudo conectar mientras se procesaba el lote " + (loteActual + 1) + ". Los lotes ya procesados quedaron guardados; puede volver a subir el archivo, los que ya están inscritos se omiten automáticamente.";
+          },
+          { timeout: 30000 }
+        );
+      }
+
+      enviarLote();
+    });
+  }
+
+  function mostrarResumenInscripcionMasiva(r, detalle) {
+    const div = document.getElementById("resumenInscripcionMasiva");
+    let html = "<div class=\"dato-asignacion\"><span>Total en el archivo</span><strong>" + r.total + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>Inscritos nuevos</span><strong>" + r.inscritos + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>Reinscritos</span><strong>" + r.reinscritos + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>Ya estaban inscritos</span><strong>" + r.yaActivos + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>No encontrados en el catálogo</span><strong>" + r.noEnCatalogo + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>Fuera de su regional</span><strong>" + r.fueraDeRegional + "</strong></div>";
+
+    if (detalle.noEnCatalogo.length) {
+      html += "<div class=\"nota\" style=\"margin-top:8px;\">IDs no encontrados en el catálogo: " + detalle.noEnCatalogo.map(escapeHtml).join(", ") + "</div>";
+    }
+    if (detalle.fueraDeRegional.length) {
+      html += "<div class=\"nota\" style=\"margin-top:8px;\">IDs de otra regional (no se inscribieron): " + detalle.fueraDeRegional.map(escapeHtml).join(", ") + "</div>";
+    }
+
+    div.innerHTML = html;
+    div.classList.remove("oculto");
   }
 
   /* ============================ MÓDULO CONTRATOS =========================== */
