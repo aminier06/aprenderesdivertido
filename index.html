@@ -2675,6 +2675,12 @@
         </div>
       </div>
 
+      <div id="usuarioAdminCentroSedeMultipleWrap" class="oculto" style="margin-bottom:14px;">
+        <label>Centros sede del coordinador</label>
+        <p class="nota" style="margin-top:2px;">Marque uno o varios. La mayoría de los coordinadores solo tiene una sede; marque más de una únicamente cuando esta persona realmente coordina varias sedes del mismo distrito.</p>
+        <div id="usuarioAdminCentroSedeMultiple" style="display:flex; flex-wrap:wrap; gap:6px 16px; border:1px solid #d8dee9; border-radius:8px; padding:10px; max-height:170px; overflow-y:auto;"></div>
+      </div>
+
       <div class="form-grid-3">
         <div>
           <label for="usuarioAdminGrupo">Grupo</label>
@@ -3236,6 +3242,17 @@
       </div>
     </div>
 
+    <div id="bloqueSedeCoordinadorGrupos" class="bloque-formulario oculto">
+      <h3>Centro sede a gestionar</h3>
+      <p class="nota">Usted coordina más de una sede. Elija con cuál desea trabajar ahora.</p>
+      <div class="form-grid-3">
+        <div>
+          <label for="selectorSedeCoordinadorGrupos">Centro sede</label>
+          <select id="selectorSedeCoordinadorGrupos" onchange="cambiarSedeCoordinadorGrupos(this.value)"></select>
+        </div>
+      </div>
+    </div>
+
     <div id="resumenAsignacionGrupos" class="resumen-asignacion"></div>
 
     <div id="bloqueCuotaManual" class="bloque-formulario oculto">
@@ -3288,6 +3305,17 @@
           <select id="filtroSedeAsignacionEstudiantes" onchange="filtrosAsignacionEstudiantes.centroSede=this.value; cargarEstudiantesAsignacionGrupos()">
             <option value="">Todas las sedes</option>
           </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="bloqueSedeCoordinadorEstudiantes" class="bloque-formulario oculto">
+      <h3>Centro sede a gestionar</h3>
+      <p class="nota">Usted coordina más de una sede. Elija con cuál desea trabajar ahora.</p>
+      <div class="form-grid-3">
+        <div>
+          <label for="selectorSedeCoordinadorEstudiantes">Centro sede</label>
+          <select id="selectorSedeCoordinadorEstudiantes" onchange="cambiarSedeCoordinadorEstudiantes(this.value)"></select>
         </div>
       </div>
     </div>
@@ -4340,6 +4368,11 @@
   let datosAsignacionEstudiantesGrupos = null;
   let filtrosAsignacionGrupos = { regional: "", distrito: "", centroSede: "" };
   let filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
+  // Para coordinadores con varias sedes: cuál de sus sedes está gestionando
+  // ahora mismo en cada uno de los dos módulos operativos. Vacío = que el
+  // backend decida (su primera sede), que es lo normal para todos los demás.
+  let sedeCoordinadorEstudiantesSeleccionada = "";
+  let sedeCoordinadorGruposSeleccionada = "";
   // Mapa de nombre semántico → nombre del backend para traducir al guardar
   let mapaGrupoSemanticoABackend = {};
   // Mapa de nombre del backend → nombre semántico para mostrar al usuario
@@ -8051,6 +8084,8 @@
     mostrarModulo("moduloAsignacionGrupos");
 
     datosAsignacionGrupos = null;
+    sedeCoordinadorGruposSeleccionada = "";
+    document.getElementById("bloqueSedeCoordinadorGrupos").classList.add("oculto");
 
     // Si hay una vista simulada activa, inicializar los filtros con su alcance
     if (esAdministradorReal() && localStorage.getItem("usuarioCampamentoVista")) {
@@ -8091,6 +8126,7 @@
       if (respuesta.ok) {
         datosAsignacionGrupos = respuesta;
         if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
+        actualizarSelectorSedeCoordinadorGrupos(respuesta);
         renderizarModuloAsignacionGrupos();
       } else {
         if (mensaje) {
@@ -8109,6 +8145,10 @@
       + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
       + vistaQueryString();
 
+    if (sedeCoordinadorGruposSeleccionada) {
+      url += "&centroSedeCoordinador=" + encodeURIComponent(sedeCoordinadorGruposSeleccionada);
+    }
+
     if (modoConsultaAsignaciones()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionGrupos.regional || "")
         + "&filtroDistrito=" + encodeURIComponent(filtrosAsignacionGrupos.distrito || "")
@@ -8119,6 +8159,33 @@
       + "&callback=" + callbackName;
 
     document.body.appendChild(script);
+  }
+
+  // Muestra/oculta y rellena el selector de sede para coordinadores con
+  // varias sedes asignadas. Si solo tiene una (caso normal), el selector
+  // permanece oculto y nada cambia respecto al comportamiento de siempre.
+  function actualizarSelectorSedeCoordinadorGrupos(respuesta) {
+    const bloque = document.getElementById("bloqueSedeCoordinadorGrupos");
+    const select = document.getElementById("selectorSedeCoordinadorGrupos");
+    const sedes = respuesta.sedesCoordinador || [];
+    if (!bloque || !select) return;
+    if (sedes.length <= 1) { bloque.classList.add("oculto"); return; }
+
+    select.innerHTML = "";
+    sedes.forEach(function(s) {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      select.appendChild(opt);
+    });
+    select.value = respuesta.centroSedeActual || sedes[0];
+    sedeCoordinadorGruposSeleccionada = select.value;
+    bloque.classList.remove("oculto");
+  }
+
+  function cambiarSedeCoordinadorGrupos(valor) {
+    sedeCoordinadorGruposSeleccionada = valor;
+    cargarFacilitadoresSede();
   }
 
   function renderizarModuloAsignacionGrupos() {
@@ -8431,6 +8498,7 @@
 
     const payload = {
       cedulaCoordinador: usuarioActual.cedula,
+      centroSede: sedeCoordinadorGruposSeleccionada || (datosAsignacionGrupos.sede && datosAsignacionGrupos.sede.centroSede) || "",
       cuota: datosAsignacionGrupos.cuota || document.getElementById("cuotaManualAsignacion").value || "",
       asignaciones: asignaciones
     };
@@ -8475,6 +8543,8 @@
     mostrarModulo("moduloAsignacionEstudiantesGrupos");
 
     datosAsignacionEstudiantesGrupos = null;
+    sedeCoordinadorEstudiantesSeleccionada = "";
+    document.getElementById("bloqueSedeCoordinadorEstudiantes").classList.add("oculto");
 
     // Si hay una vista simulada activa, inicializar los filtros con su alcance
     if (esAdministradorReal() && localStorage.getItem("usuarioCampamentoVista")) {
@@ -8510,6 +8580,7 @@
       if (respuesta.ok) {
         datosAsignacionEstudiantesGrupos = respuesta;
         if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
+        actualizarSelectorSedeCoordinadorEstudiantes(respuesta);
         renderizarModuloAsignacionEstudiantesGrupos();
       } else {
         document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
@@ -8530,6 +8601,10 @@
       + "&cedula=" + encodeURIComponent(usuarioActual.cedula)
       + vistaQueryString();
 
+    if (sedeCoordinadorEstudiantesSeleccionada) {
+      url += "&centroSedeCoordinador=" + encodeURIComponent(sedeCoordinadorEstudiantesSeleccionada);
+    }
+
     if (modoConsultaAsignaciones()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionEstudiantes.regional || "")
         + "&filtroDistrito=" + encodeURIComponent(filtrosAsignacionEstudiantes.distrito || "")
@@ -8540,6 +8615,30 @@
       + "&callback=" + callbackName;
 
     document.body.appendChild(script);
+  }
+
+  function actualizarSelectorSedeCoordinadorEstudiantes(respuesta) {
+    const bloque = document.getElementById("bloqueSedeCoordinadorEstudiantes");
+    const select = document.getElementById("selectorSedeCoordinadorEstudiantes");
+    const sedes = respuesta.sedesCoordinador || [];
+    if (!bloque || !select) return;
+    if (sedes.length <= 1) { bloque.classList.add("oculto"); return; }
+
+    select.innerHTML = "";
+    sedes.forEach(function(s) {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      select.appendChild(opt);
+    });
+    select.value = respuesta.centroSedeActual || sedes[0];
+    sedeCoordinadorEstudiantesSeleccionada = select.value;
+    bloque.classList.remove("oculto");
+  }
+
+  function cambiarSedeCoordinadorEstudiantes(valor) {
+    sedeCoordinadorEstudiantesSeleccionada = valor;
+    cargarEstudiantesAsignacionGrupos();
   }
 
   function renderizarModuloAsignacionEstudiantesGrupos() {
@@ -8882,6 +8981,7 @@
       // JSON.parse(e.parameter.payload) → { cedulaCoordinador, asignaciones }
       const payloadStr = JSON.stringify({
         cedulaCoordinador: cedula,
+        centroSede: sedeCoordinadorEstudiantesSeleccionada || (datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede) || "",
         asignaciones: porcion
       });
 
@@ -10013,11 +10113,13 @@
     const sedeAnterior = selectSede.value;
     selectSede.innerHTML = '<option value="">Todas</option>';
 
-    sedesGestionUsuarios.filter(function(s) {
+    const sedesFiltradas = sedesGestionUsuarios.filter(function(s) {
       if (regional && normalizarTexto(s.regional) !== normalizarTexto(regional)) return false;
       if (distrito && normalizarTexto(s.distrito) !== normalizarTexto(distrito)) return false;
       return true;
-    }).forEach(function(sede) {
+    });
+
+    sedesFiltradas.forEach(function(sede) {
       const opt = document.createElement("option");
       opt.value = sede.centroSede;
       opt.textContent = sede.codigoSede ? (sede.codigoSede + " - " + sede.centroSede) : sede.centroSede;
@@ -10025,7 +10127,42 @@
     });
 
     if (sedeAnterior) selectSede.value = sedeAnterior;
+
+    // Mismo conjunto de sedes, como checkboxes, para el caso Coordinador de sede.
+    const previamenteMarcadas = sedesSeleccionadasUsuarioAdmin();
+    const contenedor = document.getElementById("usuarioAdminCentroSedeMultiple");
+    if (contenedor) {
+      contenedor.innerHTML = "";
+      sedesFiltradas.forEach(function(sede) {
+        const etiqueta = sede.codigoSede ? (sede.codigoSede + " - " + sede.centroSede) : sede.centroSede;
+        const id = "chkSede_" + sede.centroSede.replace(/[^a-zA-Z0-9]/g, "_");
+        const wrap = document.createElement("label");
+        wrap.style.cssText = "display:flex; align-items:center; gap:6px; font-weight:400; white-space:nowrap;";
+        wrap.innerHTML = '<input type="checkbox" id="' + id + '" value="' + escapeHtml(sede.centroSede) + '"> ' + escapeHtml(etiqueta);
+        contenedor.appendChild(wrap);
+      });
+      // Reaplicar lo que estuviera marcado antes de repoblar (p. ej. al editar un usuario).
+      previamenteMarcadas.forEach(function(centro) {
+        const chk = contenedor.querySelector('input[value="' + CSS.escape(centro) + '"]');
+        if (chk) chk.checked = true;
+      });
+    }
+
     actualizarAlcanceFormularioUsuarioAdmin();
+  }
+
+  function sedesSeleccionadasUsuarioAdmin() {
+    const contenedor = document.getElementById("usuarioAdminCentroSedeMultiple");
+    if (!contenedor) return [];
+    return Array.from(contenedor.querySelectorAll('input[type="checkbox"]:checked')).map(function(c) { return c.value; });
+  }
+
+  function marcarSedesUsuarioAdmin(lista) {
+    const contenedor = document.getElementById("usuarioAdminCentroSedeMultiple");
+    if (!contenedor) return;
+    contenedor.querySelectorAll('input[type="checkbox"]').forEach(function(c) {
+      c.checked = (lista || []).some(function(s) { return normalizarTexto(s) === normalizarTexto(c.value); });
+    });
   }
 
   function actualizarAlcanceFormularioUsuarioAdmin() {
@@ -10034,6 +10171,7 @@
     const distrito = document.getElementById("usuarioAdminDistrito");
     const sede = document.getElementById("usuarioAdminCentroSede");
     const grupo = document.getElementById("usuarioAdminGrupo");
+    const esCoordinador = rol === "Coordinador sede";
 
     const requiereRegional = rol === "Técnico regional" || rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
     const requiereDistrito = rol === "Técnico distrital" || rol === "Coordinador sede" || rol === "Facilitador";
@@ -10042,13 +10180,21 @@
 
     if (regional) regional.disabled = !requiereRegional;
     if (distrito) distrito.disabled = !requiereDistrito;
-    if (sede) sede.disabled = !requiereSede;
+    // Para Coordinador de sede, la selección se hace con los checkboxes de
+    // abajo; el select único se deshabilita y se oculta en ese caso.
+    if (sede) sede.disabled = !requiereSede || esCoordinador;
     if (grupo) grupo.disabled = !requiereGrupo;
 
     if (!requiereRegional && regional) regional.value = "";
     if (!requiereDistrito && distrito) distrito.value = "";
     if (!requiereSede && sede) sede.value = "";
     if (!requiereGrupo && grupo) grupo.value = "";
+
+    const sedeCampo = sede ? sede.closest("div") : null;
+    const multipleWrap = document.getElementById("usuarioAdminCentroSedeMultipleWrap");
+    if (sedeCampo) sedeCampo.classList.toggle("oculto", esCoordinador);
+    if (multipleWrap) multipleWrap.classList.toggle("oculto", !esCoordinador);
+    if (!esCoordinador) marcarSedesUsuarioAdmin([]);
   }
 
   function listarUsuariosAdmin() {
@@ -10182,6 +10328,10 @@
       document.getElementById("usuarioAdminCentroSede").value = u.centroSede || "";
       document.getElementById("usuarioAdminGrupo").value = u.grupo || "";
       actualizarAlcanceFormularioUsuarioAdmin();
+      // Marcar las sedes del coordinador (lista completa si tiene varias;
+      // si no hay lista guardada, su única sede de siempre).
+      const sedesDelCoordinador = (u.sedesCoordinador && u.sedesCoordinador.length) ? u.sedesCoordinador : (u.centroSede ? [u.centroSede] : []);
+      marcarSedesUsuarioAdmin(sedesDelCoordinador);
     });
 
     const titulo = document.getElementById("tituloFormularioUsuarioAdmin");
@@ -10208,15 +10358,21 @@
   }
 
   function construirPayloadUsuarioAdmin() {
+    const rol = document.getElementById("usuarioAdminRol").value;
+    const sedesMarcadas = sedesSeleccionadasUsuarioAdmin();
     return {
       cedulaAdmin: (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
       cedulaOriginal: document.getElementById("usuarioAdminCedulaOriginal").value.trim(),
       cedula: document.getElementById("usuarioAdminCedula").value.trim(),
       nombre: document.getElementById("usuarioAdminNombre").value.trim(),
-      rol: document.getElementById("usuarioAdminRol").value,
+      rol: rol,
       regional: document.getElementById("usuarioAdminRegional").value,
       distrito: document.getElementById("usuarioAdminDistrito").value,
-      centroSede: document.getElementById("usuarioAdminCentroSede").value,
+      // Para Coordinador de sede, centroSede queda vacío aquí: el backend usa
+      // la primera de sedesCoordinador como sede principal. Para los demás
+      // roles (Facilitador, etc.) se sigue usando el select de siempre.
+      centroSede: rol === "Coordinador sede" ? "" : document.getElementById("usuarioAdminCentroSede").value,
+      sedesCoordinador: rol === "Coordinador sede" ? sedesMarcadas : [],
       grupo: document.getElementById("usuarioAdminGrupo").value,
       estado: document.getElementById("usuarioAdminEstado").value,
       password: document.getElementById("usuarioAdminPassword").value.trim()
@@ -10230,12 +10386,14 @@
 
     const requiereRegional = p.rol === "Técnico regional" || p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
     const requiereDistrito = p.rol === "Técnico distrital" || p.rol === "Coordinador sede" || p.rol === "Facilitador";
-    const requiereSede = p.rol === "Coordinador sede" || p.rol === "Facilitador";
     const requiereGrupo = p.rol === "Facilitador";
 
     if (requiereRegional && !p.regional) return "Para este rol debe seleccionar una regional.";
     if (requiereDistrito && !p.distrito) return "Para este rol debe seleccionar un distrito.";
-    if (requiereSede && !p.centroSede) return "Para este rol debe seleccionar un centro sede.";
+    if (p.rol === "Coordinador sede" && (!p.sedesCoordinador || p.sedesCoordinador.length === 0)) {
+      return "Para el rol Coordinador de sede debe marcar al menos un centro sede.";
+    }
+    if (p.rol === "Facilitador" && !p.centroSede) return "Para este rol debe seleccionar un centro sede.";
     if (requiereGrupo && !p.grupo) return "Para el rol Facilitador debe seleccionar un grupo.";
     if (p.password && p.password.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
     return "";
