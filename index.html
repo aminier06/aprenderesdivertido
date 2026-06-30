@@ -3345,7 +3345,7 @@
     <div class="encabezado-modulo">
       <div>
         <h2>Inscripción de estudiantes</h2>
-        <p class="nota">Digite el ID del estudiante para buscarlo en el catálogo. Si existe, confirme el centro sede y complete la inscripción.</p>
+        <p class="nota">Digite el ID del estudiante para buscarlo en el catálogo. La sede se define después, al registrar su primera evaluación.</p>
       </div>
     </div>
 
@@ -3392,17 +3392,6 @@
         </div>
       </div>
 
-      <h3 style="margin-top:18px;">Centro sede de inscripción</h3>
-      <p class="nota">Elija el centro sede donde quedará inscrito el estudiante.</p>
-      <div class="form-grid-3">
-        <div>
-          <label for="inscCentro">Centro sede</label>
-          <select id="inscCentro">
-            <option value="">Seleccione el centro sede</option>
-          </select>
-        </div>
-      </div>
-
       <div class="acciones-asignacion" style="margin-top:18px;">
         <button type="button" id="btnConfirmarInscripcion" onclick="confirmarInscripcion()">Confirmar inscripción</button>
         <button type="button" class="btn-secundario" onclick="limpiarInscripcion()">Limpiar</button>
@@ -3411,6 +3400,26 @@
     </div>
 
     <div id="mensajeInscripcion" class="mensaje"></div>
+
+    <div class="bloque-formulario" style="margin-top:24px;">
+      <h3>Estudiantes inscritos</h3>
+      <p class="nota">Busque por ID, por nombre o por distrito para ver los estudiantes ya inscritos y, si hace falta, desinscribirlos.</p>
+      <div class="form-grid-3">
+        <div>
+          <label for="inscritosTexto">ID o nombre</label>
+          <input type="text" id="inscritosTexto" placeholder="Ej. 33578410 o Juan Pérez" autocomplete="off">
+        </div>
+        <div>
+          <label for="inscritosDistrito">Distrito (opcional)</label>
+          <input type="text" id="inscritosDistrito" placeholder="Ej. 0101 - Pedernales" autocomplete="off">
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button type="button" onclick="buscarInscritosLista()">Buscar inscritos</button>
+        </div>
+      </div>
+      <div id="mensajeInscritos" class="mensaje"></div>
+      <div id="tablaInscritos" class="tabla-contenedor oculto"></div>
+    </div>
   </section>
 
 
@@ -9569,46 +9578,12 @@
     }
     mostrarModulo("moduloInscripcion");
     limpiarInscripcion();
-    cargarSedesInscripcion();
-  }
-
-  // Carga las sedes permitidas del usuario (el técnico regional solo verá las
-  // de su regional; el administrador, todas) para el selector de centro sede.
-  function cargarSedesInscripcion() {
-    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
-    llamarBackend(
-      { accion: "sedesPermitidas", cedula: cedula },
-      function(resp) {
-        sedesInscripcion = (resp && resp.ok && resp.sedes) ? resp.sedes : [];
-      },
-      { timeout: 14000 }
-    );
-  }
-
-  function poblarSelectSedesInscripcion(regionalDelNino) {
-    const select = document.getElementById("inscCentro");
-    select.innerHTML = '<option value="">Seleccione el centro sede</option>';
-
-    // El administrador podría tener sedes de varias regionales; mostramos las
-    // de la regional del niño para mantener coherencia. El técnico regional
-    // ya solo tiene las suyas.
-    let lista = sedesInscripcion.slice();
-    if (regionalDelNino) {
-      const objetivo = normalizarTexto(regionalDelNino).toLowerCase();
-      const filtradas = lista.filter(function(s) {
-        return normalizarTexto(s.centroSede ? s.regional : s.Regional).toLowerCase() === objetivo;
-      });
-      if (filtradas.length) lista = filtradas;
-    }
-
-    lista.forEach(function(s) {
-      const nombre = s.centroSede || s.CentroSede || "";
-      if (!nombre) return;
-      const opt = document.createElement("option");
-      opt.value = nombre;
-      opt.textContent = nombre;
-      select.appendChild(opt);
-    });
+    document.getElementById("inscritosTexto").value = "";
+    document.getElementById("inscritosDistrito").value = "";
+    document.getElementById("mensajeInscritos").textContent = "";
+    document.getElementById("mensajeInscritos").className = "mensaje";
+    document.getElementById("tablaInscritos").innerHTML = "";
+    document.getElementById("tablaInscritos").classList.add("oculto");
   }
 
   function buscarEstudianteInscripcion() {
@@ -9651,18 +9626,19 @@
         document.getElementById("inscNacionalidad").value = e.nacionalidad || "";
         document.getElementById("inscSexo").value = e.sexo || "";
 
-        // El catálogo no trae centro sede: el técnico la elige entre las de su regional.
-        poblarSelectSedesInscripcion(e.regional);
-
         bloqueDatos.classList.remove("oculto");
 
         if (resp.yaInscrito) {
           mensaje.className = "mensaje error";
           mensaje.textContent = "Atención: este estudiante YA está inscrito. No se puede inscribir de nuevo.";
           document.getElementById("btnConfirmarInscripcion").disabled = true;
+        } else if (resp.desinscrito) {
+          mensaje.className = "mensaje";
+          mensaje.textContent = "Este estudiante fue desinscrito anteriormente. Puede reinscribirlo.";
+          document.getElementById("btnConfirmarInscripcion").disabled = false;
         } else {
           mensaje.className = "mensaje ok";
-          mensaje.textContent = "Estudiante encontrado. Confirme el centro sede y complete la inscripción.";
+          mensaje.textContent = "Estudiante encontrado. Puede completar la inscripción.";
           document.getElementById("btnConfirmarInscripcion").disabled = false;
         }
       },
@@ -9675,40 +9651,23 @@
     );
   }
 
-  // Si la sede del catálogo no está en la lista permitida, la agregamos para
-  // que el usuario la vea preseleccionada (el backend revalidará al guardar).
-  function asegurarOpcionSedeInscripcion(centro) {
-    const select = document.getElementById("inscCentro");
-    let existe = false;
-    for (let i = 0; i < select.options.length; i++) {
-      if (normalizarTexto(select.options[i].value).toLowerCase() === normalizarTexto(centro).toLowerCase()) {
-        existe = true; select.selectedIndex = i; break;
-      }
-    }
-    if (!existe) {
-      const opt = document.createElement("option");
-      opt.value = centro; opt.textContent = centro;
-      select.appendChild(opt);
-      select.value = centro;
-    }
-  }
-
   function confirmarInscripcion() {
     const id = document.getElementById("inscID").value.trim();
-    const centro = document.getElementById("inscCentro").value.trim();
     const mensaje = document.getElementById("mensajeInscripcion");
     mensaje.className = "mensaje";
     mensaje.textContent = "";
 
     if (!id) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe buscar un estudiante primero."; return; }
-    if (!centro) { mensaje.className = "mensaje error"; mensaje.textContent = "Debe seleccionar el centro sede."; return; }
 
     const boton = document.getElementById("btnConfirmarInscripcion");
     boton.disabled = true;
     mensaje.textContent = "Inscribiendo...";
 
     const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
-    const payload = { cedula: cedula, idEstudiante: id, centroSede: centro };
+    // La sede ya NO se elige aquí: queda vacía hasta que el estudiante se
+    // evalúe por primera vez, momento en que se define en el módulo de
+    // Evaluaciones.
+    const payload = { cedula: cedula, idEstudiante: id };
 
     llamarBackend(
       { accion: "inscribirEstudiante", payload: JSON.stringify(payload) },
@@ -9737,8 +9696,6 @@
   function limpiarInscripcion() {
     const ids = ["inscID","inscNombre","inscGrado","inscRegional","inscDistrito","inscNacionalidad","inscSexo"];
     ids.forEach(function(x){ const el = document.getElementById(x); if (el) el.value = ""; });
-    const sel = document.getElementById("inscCentro");
-    if (sel) sel.innerHTML = '<option value="">Seleccione el centro sede</option>';
     const bd = document.getElementById("bloqueDatosInscripcion");
     if (bd) bd.classList.add("oculto");
     ["mensajeBusquedaInscripcion","mensajeInscripcion"].forEach(function(x){
@@ -9746,6 +9703,104 @@
     });
     const btn = document.getElementById("btnConfirmarInscripcion");
     if (btn) btn.disabled = false;
+  }
+
+  // ── Listado de inscritos + desinscribir ───────────────────────────────────
+
+  function buscarInscritosLista() {
+    const texto = document.getElementById("inscritosTexto").value.trim();
+    const distrito = document.getElementById("inscritosDistrito").value.trim();
+    const mensaje = document.getElementById("mensajeInscritos");
+    const tabla = document.getElementById("tablaInscritos");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "";
+    tabla.innerHTML = "";
+    tabla.classList.add("oculto");
+
+    if (!texto && !distrito) {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "Indique un ID, un nombre o un distrito para buscar.";
+      return;
+    }
+
+    mensaje.textContent = "Buscando...";
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+
+    llamarBackend(
+      { accion: "buscarInscritos", cedula: cedula, texto: texto, distrito: distrito },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.className = "mensaje error";
+          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo realizar la búsqueda.";
+          return;
+        }
+        const inscritos = resp.inscritos || [];
+        if (inscritos.length === 0) {
+          mensaje.className = "mensaje";
+          mensaje.textContent = "No se encontraron estudiantes inscritos con ese criterio.";
+          return;
+        }
+        mensaje.className = "mensaje ok";
+        mensaje.textContent = inscritos.length + " estudiante(s) encontrado(s).";
+        renderizarTablaInscritos(inscritos);
+      },
+      function() {
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo conectar para buscar inscritos.";
+      },
+      { timeout: 14000 }
+    );
+  }
+
+  function renderizarTablaInscritos(inscritos) {
+    const tabla = document.getElementById("tablaInscritos");
+    let html = "<table><thead><tr>"
+      + "<th>ID</th><th>Nombre</th><th>Regional</th><th>Distrito</th><th>Centro sede</th><th>Grado</th><th></th>"
+      + "</tr></thead><tbody>";
+    inscritos.forEach(function(e) {
+      html += "<tr>"
+        + "<td>" + escapeHtml(e.idEstudiante) + "</td>"
+        + "<td>" + escapeHtml(e.nombre) + "</td>"
+        + "<td>" + escapeHtml(e.regional) + "</td>"
+        + "<td>" + escapeHtml(e.distrito) + "</td>"
+        + "<td>" + (e.centroSede ? escapeHtml(e.centroSede) : '<span class="nota">Sin sede (aún no evaluado)</span>') + "</td>"
+        + "<td>" + escapeHtml(e.grado) + "</td>"
+        + '<td><button type="button" class="btn-secundario" onclick="desinscribirEstudianteAccion(\'' + e.idEstudiante.replace(/'/g, "\\'") + '\')">Desinscribir</button></td>'
+        + "</tr>";
+    });
+    html += "</tbody></table>";
+    tabla.innerHTML = html;
+    tabla.classList.remove("oculto");
+  }
+
+  function desinscribirEstudianteAccion(idEstudiante) {
+    if (!confirm("¿Desea desinscribir al estudiante con ID " + idEstudiante + "? Podrá volver a inscribirlo más adelante si hace falta.")) return;
+
+    const mensaje = document.getElementById("mensajeInscritos");
+    mensaje.className = "mensaje";
+    mensaje.textContent = "Desinscribiendo...";
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+    const payload = { cedula: cedula, idEstudiante: idEstudiante };
+
+    llamarBackend(
+      { accion: "desinscribirEstudiante", payload: JSON.stringify(payload) },
+      function(resp) {
+        if (resp && resp.ok) {
+          mensaje.className = "mensaje ok";
+          mensaje.textContent = resp.mensaje || "Estudiante desinscrito correctamente.";
+          buscarInscritosLista();
+        } else {
+          mensaje.className = "mensaje error";
+          mensaje.textContent = (resp && resp.mensaje) ? resp.mensaje : "No se pudo desinscribir el estudiante.";
+        }
+      },
+      function() {
+        mensaje.className = "mensaje error";
+        mensaje.textContent = "No se pudo conectar para desinscribir.";
+      },
+      { timeout: 14000 }
+    );
   }
 
   /* ============================ MÓDULO CONTRATOS =========================== */
