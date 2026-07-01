@@ -8887,27 +8887,6 @@
         if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
         actualizarSelectorSedeCoordinadorEstudiantes(respuesta);
         renderizarModuloAsignacionEstudiantesGrupos();
-
-        // DIAGNÓSTICO TEMPORAL: mostrar los valores reales del backend
-        if (respuesta._debug) {
-          const d = respuesta._debug;
-          const resumenEl = document.getElementById("resumenAsignacionEstudiantesGrupos");
-          if (resumenEl) {
-            resumenEl.innerHTML += `<div class="dato-asignacion" style="grid-column:1/-1;border-color:#c0392b">
-              <span style="color:#c0392b">DIAGNÓSTICO (temporal)</span>
-              <strong style="font-size:13px;line-height:1.7">
-                usuario.distrito: "${escapeHtml(d.usuarioDistrito || '')}" |
-                usuario.regional: "${escapeHtml(d.usuarioRegional || '')}" |
-                distritoEfectivo: "${escapeHtml(d.distritoEfectivo || '')}" |
-                fDistrito: "${escapeHtml(d.fDistrito || '')}" |
-                fDisN: "${escapeHtml(d.fDisN || '')}" |
-                fCenN: "${escapeHtml(d.fCenN || '')}" |
-                centroOperativo: "${escapeHtml(d.centroOperativo || '')}" |
-                filas devueltas: ${d.totalFilas}
-              </strong>
-            </div>`;
-          }
-        }
       } else {
         document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
         document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
