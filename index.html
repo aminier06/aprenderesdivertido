@@ -8161,7 +8161,9 @@
     const bloque = document.getElementById("bloqueFiltrosAsignacionEstudiantes");
     if (!bloque) return;
 
-    if (!modoConsultaAsignaciones()) {
+    const esCoordActual = normalizarRol(usuarioActual && usuarioActual.rol) === "coordinador sede";
+
+    if (!modoConsultaAsignaciones() && !esCoordActual) {
       bloque.classList.add("oculto");
       return;
     }
@@ -8178,11 +8180,16 @@
     const sedes = valoresUnicosOrdenados(filtros
       .filter(function(f) { return !regionalSeleccionada || normalizarTexto(f.regional) === normalizarTexto(regionalSeleccionada); })
       .filter(function(f) { return !distritoSeleccionado || normalizarTexto(f.distrito) === normalizarTexto(distritoSeleccionado); })
-      .map(function(f) { return f.centroSede; }));
+      .map(function(f) { return f.centroSede; }).filter(function(v) { return !!v; }));
 
     poblarSelectFiltroAsignacion("filtroRegionalAsignacionEstudiantes", regionales, filtrosAsignacionEstudiantes.regional, "Todas las regionales");
     poblarSelectFiltroAsignacion("filtroDistritoAsignacionEstudiantes", distritos, filtrosAsignacionEstudiantes.distrito, "Todos los distritos");
-    poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, "Todas las sedes");
+    // El selector de sede incluye una opción explícita para "Sin sede asignada"
+    // que permite al coordinador filtrar solo los estudiantes pendientes de evaluación.
+    const selectSede = document.getElementById("filtroSedeAsignacionEstudiantes");
+    if (selectSede) {
+      poblarSelectFiltroAsignacion("filtroSedeAsignacionEstudiantes", sedes, filtrosAsignacionEstudiantes.centroSede, "Todas las sedes (incl. sin sede)");
+    }
   }
 
   function cambiarFiltroRegionalAsignacionEstudiantes() {
@@ -8686,6 +8693,8 @@
     sedeCoordinadorEstudiantesSeleccionada = "";
     document.getElementById("bloqueSedeCoordinadorEstudiantes").classList.add("oculto");
 
+    const esCoord = normalizarRol(usuarioActual && usuarioActual.rol) === "coordinador sede";
+
     // Si hay una vista simulada activa, inicializar los filtros con su alcance
     if (esAdministradorReal() && localStorage.getItem("usuarioCampamentoVista")) {
       filtrosAsignacionEstudiantes = {
@@ -8693,11 +8702,20 @@
         distrito:   usuarioActual.distrito   || "",
         centroSede: usuarioActual.centroSede || ""
       };
+    } else if (esCoord) {
+      // El coordinador ve filtros preapuntados a su propio distrito, con sede
+      // en blanco para que aparezcan también los estudiantes sin sede.
+      filtrosAsignacionEstudiantes = {
+        regional:   usuarioActual.regional || "",
+        distrito:   usuarioActual.distrito || "",
+        centroSede: ""
+      };
     } else {
       filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
     }
     const bloqueFiltrosEst = document.getElementById("bloqueFiltrosAsignacionEstudiantes");
-    if (bloqueFiltrosEst) bloqueFiltrosEst.classList.toggle("oculto", !modoConsultaAsignaciones());
+    // Mostrar filtros tanto para técnicos (modo consulta) como para coordinadores.
+    if (bloqueFiltrosEst) bloqueFiltrosEst.classList.toggle("oculto", !(modoConsultaAsignaciones() || esCoord));
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = "";
     document.getElementById("tablaAsignacionEstudiantesGrupos").innerHTML = "";
     document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
@@ -8745,7 +8763,9 @@
       url += "&centroSedeCoordinador=" + encodeURIComponent(sedeCoordinadorEstudiantesSeleccionada);
     }
 
-    if (modoConsultaAsignaciones()) {
+    const esCoordEnUrl = normalizarRol(usuarioActual && usuarioActual.rol) === "coordinador sede";
+
+    if (modoConsultaAsignaciones() || esCoordEnUrl) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionEstudiantes.regional || "")
         + "&filtroDistrito=" + encodeURIComponent(filtrosAsignacionEstudiantes.distrito || "")
         + "&filtroCentroSede=" + encodeURIComponent(filtrosAsignacionEstudiantes.centroSede || "");
@@ -8796,6 +8816,9 @@
     const total = estudiantes.length;
     const sinAsignar = estudiantes.filter(function(e) { return !normalizarTexto(e.grupo); }).length;
     const asignados = total - sinAsignar;
+
+    // Actualizar los filtros para que el coordinador pueda refinar por sede.
+    actualizarFiltrosAsignacionEstudiantes();
 
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = `
       <div class="dato-asignacion"><span>Regional</span><strong>${escapeHtml(sede.regional || usuarioActual.regional || "")}</strong></div>
