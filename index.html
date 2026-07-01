@@ -4969,8 +4969,10 @@
       const rolVista = normalizarTexto(usuario && usuario.rol).toLowerCase();
       const rolReal = normalizarRol(usuarioSesion && usuarioSesion.rol);
       const puedeInscribir = esAdministradorReal() ||
-        rolReal === "tecnico regional" ||
-        rolVista === "administrador" || rolVista === "técnico regional" || rolVista === "tecnico regional";
+        rolReal === "tecnico regional" || rolReal === "tecnico distrital" || rolReal === "coordinador sede" ||
+        rolVista === "administrador" || rolVista === "técnico regional" || rolVista === "tecnico regional" ||
+        rolVista === "técnico distrital" || rolVista === "tecnico distrital" ||
+        rolVista === "coordinador sede";
       if (puedeInscribir) tileInscripcion.classList.remove("oculto");
       else tileInscripcion.classList.add("oculto");
     }
@@ -5695,6 +5697,10 @@
     // filtros). Aquí solo se deja el select en su estado neutro de partida.
 
     cargarSedesPermitidasDashboard();
+    // Para el dashboard de evaluaciones, cargar datos inmediatamente al abrir.
+    if (tipo === "evaluaciones") {
+      setTimeout(cargarDashboardEvaluaciones, 400);
+    }
   }
 
   function actualizarMenuDashboardActivo(tipo) {
@@ -5915,7 +5921,148 @@
       return;
     }
 
+    if (dashboardActual === "evaluaciones") {
+      cargarDashboardEvaluaciones();
+      return;
+    }
+
     mostrarMatrizDashboardBasica(dashboardActual);
+  }
+
+  function cargarDashboardEvaluaciones() {
+    limpiarResultadosDashboard();
+    const contenido = document.getElementById("dashboardContenido");
+    if (contenido) contenido.classList.remove("oculto");
+
+    const titulo = document.getElementById("tituloDashboardSeleccionado");
+    const desc   = document.getElementById("descripcionDashboardSeleccionado");
+    if (titulo) titulo.textContent = "Dashboard de Evaluaciones";
+    if (desc) desc.textContent = "Cobertura por área y distribución de niveles de desempeño (Lengua y Matemática).";
+
+    const msg = document.getElementById("mensajeDashboard");
+    if (msg) { msg.className = "mensaje"; msg.textContent = "Cargando datos de evaluaciones…"; }
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+    const payload = {
+      accion:            "dashboardEvaluaciones",
+      cedula:            cedula,
+      filtroRegional:    document.getElementById("regionalDashboard").value  || "",
+      filtroDistrito:    document.getElementById("distritoDashboard").value  || "",
+      filtroCentroSede:  document.getElementById("sedeDashboard").value      || "",
+      fechaDesde:        document.getElementById("fechaInicioDashboard").value || "",
+      fechaHasta:        document.getElementById("fechaFinDashboard").value   || "",
+    };
+
+    llamarBackend(
+      payload,
+      function(resp) {
+        if (!resp || !resp.ok) {
+          if (msg) { msg.className = "mensaje error"; msg.textContent = (resp && resp.mensaje) || "No se pudieron cargar los datos de evaluaciones."; }
+          return;
+        }
+        if (msg) { msg.className = "mensaje"; msg.textContent = ""; }
+        renderizarDashboardEvaluaciones(resp);
+      },
+      function() {
+        if (msg) { msg.className = "mensaje error"; msg.textContent = "No se pudo conectar para cargar el dashboard de evaluaciones."; }
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  function renderizarDashboardEvaluaciones(resp) {
+    const k   = resp.kpis || {};
+    const len = resp.lengua || {};
+    const mat = resp.matematica || {};
+
+    // ── KPIs ──────────────────────────────────────────────────────────────────
+    const resumen = document.getElementById("resumenDashboard");
+    if (resumen) {
+      const pct = (v, total) => total > 0 ? Math.round(v * 100 / total) + "%" : "—";
+      resumen.innerHTML = [
+        { lbl:"Estudiantes inscritos",         val: k.totalInscritos || 0,      cls:"" },
+        { lbl:"Evaluados (al menos una área)", val: k.totalEvaluados || 0,      cls:"", sub: pct(k.totalEvaluados, k.totalInscritos) + " del total" },
+        { lbl:"Evaluados en Lengua",           val: k.evaluadosLengua || 0,     cls:"" },
+        { lbl:"Evaluados en Matemática",       val: k.evaluadosMatematica || 0, cls:"" },
+        { lbl:"Con ambas evaluaciones",        val: k.evaluadosAmbas || 0,      cls:"" },
+        { lbl:"Pendientes de evaluar",         val: k.pendientesPorEvaluar || 0,cls: k.pendientesPorEvaluar > 0 ? "db-kpi-alerta" : "" },
+      ].map(function(d) {
+        return '<div class="db-kpi ' + (d.cls || "") + '">'
+          + '<div class="db-kpi-valor">' + d.val + '</div>'
+          + '<div class="db-kpi-label">' + d.lbl + '</div>'
+          + (d.sub ? '<div class="db-kpi-sub">' + d.sub + '</div>' : '')
+          + '</div>';
+      }).join("");
+    }
+
+    // ── GRÁFICOS DE DONA ──────────────────────────────────────────────────────
+    const gridGraficos = document.getElementById("graficosDashboard");
+    if (gridGraficos) gridGraficos.classList.remove("oculto");
+
+    const colores = {
+      Explorador: "#4e79a7",
+      Creador:    "#f28e2b",
+      Innovador:  "#59a14f",
+      Otro:       "#bab0ac",
+    };
+
+    function dibujarDonaEval(canvasId, tituloId, titulo, datos) {
+      const canvas = document.getElementById(canvasId);
+      const tituloEl = document.getElementById(tituloId);
+      if (tituloEl) tituloEl.textContent = titulo;
+      if (!canvas || typeof Chart === "undefined") return;
+      const etiquetas = Object.keys(datos).filter(function(k) { return datos[k] > 0; });
+      const valores   = etiquetas.map(function(k) { return datos[k]; });
+      const coloresData = etiquetas.map(function(k) { return colores[k] || "#aaa"; });
+      const existente = Chart.getChart(canvasId);
+      if (existente) existente.destroy();
+      new Chart(canvas, {
+        type: "doughnut",
+        data: {
+          labels:   etiquetas,
+          datasets: [{ data: valores, backgroundColor: coloresData, borderWidth: 2 }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                  const pct = total > 0 ? Math.round(ctx.parsed * 100 / total) : 0;
+                  return " " + ctx.label + ": " + ctx.parsed + " (" + pct + "%)";
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    dibujarDonaEval("graficoDashboard1", "tituloGraficoDashboard1", "Niveles de desempeño — Lengua",      len);
+    dibujarDonaEval("graficoDashboard2", "tituloGraficoDashboard2", "Niveles de desempeño — Matemática",  mat);
+
+    // ── TABLA DE DETALLE ──────────────────────────────────────────────────────
+    const matrizDiv = document.getElementById("dashboardMatrizResultados");
+    if (!matrizDiv) return;
+
+    const niveles = ["Explorador","Creador","Innovador","Otro"];
+    let html = '<table><thead><tr><th>Nivel de desempeño</th><th>Lengua</th><th>%</th><th>Matemática</th><th>%</th></tr></thead><tbody>';
+    const totLen = Object.values(len).reduce(function(a, b) { return a + b; }, 0);
+    const totMat = Object.values(mat).reduce(function(a, b) { return a + b; }, 0);
+    const pct = function(v, t) { return t > 0 ? Math.round(v * 100 / t) + "%" : "—"; };
+
+    niveles.forEach(function(n) {
+      const vl = len[n] || 0, vm = mat[n] || 0;
+      html += '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (colores[n] || "#aaa") + ';margin-right:6px;"></span>' + n + '</td>'
+        + '<td style="text-align:center">' + vl + '</td><td style="text-align:center">' + pct(vl, totLen) + '</td>'
+        + '<td style="text-align:center">' + vm + '</td><td style="text-align:center">' + pct(vm, totMat) + '</td></tr>';
+    });
+    html += '<tr style="font-weight:bold"><td>Total evaluados</td><td style="text-align:center">' + totLen + '</td><td></td><td style="text-align:center">' + totMat + '</td><td></td></tr>';
+    html += '</tbody></table>';
+    matrizDiv.innerHTML = html;
+    matrizDiv.classList.remove("oculto");
   }
 
   function limpiarResultadosDashboard() {
@@ -8740,6 +8887,27 @@
         if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
         actualizarSelectorSedeCoordinadorEstudiantes(respuesta);
         renderizarModuloAsignacionEstudiantesGrupos();
+
+        // DIAGNÓSTICO TEMPORAL: mostrar los valores reales del backend
+        if (respuesta._debug) {
+          const d = respuesta._debug;
+          const resumenEl = document.getElementById("resumenAsignacionEstudiantesGrupos");
+          if (resumenEl) {
+            resumenEl.innerHTML += `<div class="dato-asignacion" style="grid-column:1/-1;border-color:#c0392b">
+              <span style="color:#c0392b">DIAGNÓSTICO (temporal)</span>
+              <strong style="font-size:13px;line-height:1.7">
+                usuario.distrito: "${escapeHtml(d.usuarioDistrito || '')}" |
+                usuario.regional: "${escapeHtml(d.usuarioRegional || '')}" |
+                distritoEfectivo: "${escapeHtml(d.distritoEfectivo || '')}" |
+                fDistrito: "${escapeHtml(d.fDistrito || '')}" |
+                fDisN: "${escapeHtml(d.fDisN || '')}" |
+                fCenN: "${escapeHtml(d.fCenN || '')}" |
+                centroOperativo: "${escapeHtml(d.centroOperativo || '')}" |
+                filas devueltas: ${d.totalFilas}
+              </strong>
+            </div>`;
+          }
+        }
       } else {
         document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
         document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
@@ -10027,17 +10195,17 @@
 
   /* ============================ MÓDULO INSCRIPCIÓN ======================== */
 
-  // Solo Administrador y Técnico regional.
   function puedeInscribirEstudiantes() {
     const rol = normalizarRol(usuarioSesion && usuarioSesion.rol);
-    return rol === "administrador" || rol === "tecnico regional";
+    return rol === "administrador" || rol === "tecnico regional" ||
+      rol === "tecnico distrital" || rol === "coordinador sede";
   }
 
   let sedesInscripcion = [];
 
   function abrirModuloInscripcion() {
     if (!puedeInscribirEstudiantes()) {
-      alert("Este módulo solo está disponible para el Administrador y el Técnico regional.");
+      alert("Este módulo está disponible para Administrador, Técnico regional, Técnico distrital y Coordinador de sede.");
       return;
     }
     mostrarModulo("moduloInscripcion");
