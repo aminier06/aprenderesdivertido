@@ -8804,7 +8804,12 @@
   function renderizarModuloAsignacionEstudiantesGrupos() {
     if (!datosAsignacionEstudiantesGrupos) return;
 
-    if (datosAsignacionEstudiantesGrupos.modoConsulta || modoConsultaAsignaciones()) {
+    // Usar la señal del backend como fuente de verdad. El backend ya sabe
+    // si este usuario (o la vista que simula) debe ver la pantalla de edición
+    // o solo la de consulta. Si forzamos modoConsultaAsignaciones() aquí,
+    // el admin simulando coordinador nunca vería la vista de edición aunque
+    // el backend le haya devuelto modoConsulta: false.
+    if (datosAsignacionEstudiantesGrupos.modoConsulta) {
       renderizarConsultaAsignacionEstudiantes();
       return;
     }
