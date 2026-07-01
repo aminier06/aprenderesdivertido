@@ -10732,15 +10732,14 @@
     const div = document.getElementById("resumenInscripcionMasiva");
     let html = "<div class=\"dato-asignacion\"><span>Total en el archivo</span><strong>" + r.total + "</strong></div>"
       + "<div class=\"dato-asignacion\"><span>Inscritos nuevos</span><strong>" + r.inscritos + "</strong></div>"
-      + "<div class=\"dato-asignacion\"><span>Reinscritos</span><strong>" + r.reinscritos + "</strong></div>"
-      + "<div class=\"dato-asignacion\"><span>Ya estaban inscritos</span><strong>" + r.yaActivos + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>Ya existían (se omiten)</span><strong>" + (r.yaExistian || r.yaActivos || 0) + "</strong></div>"
       + "<div class=\"dato-asignacion\"><span>No encontrados en el catálogo</span><strong>" + r.noEnCatalogo + "</strong></div>"
       + "<div class=\"dato-asignacion\"><span>Fuera de su regional</span><strong>" + r.fueraDeRegional + "</strong></div>";
 
-    if (detalle.noEnCatalogo.length) {
+    if (detalle.noEnCatalogo && detalle.noEnCatalogo.length) {
       html += "<div class=\"nota\" style=\"margin-top:8px;\">IDs no encontrados en el catálogo: " + detalle.noEnCatalogo.map(escapeHtml).join(", ") + "</div>";
     }
-    if (detalle.fueraDeRegional.length) {
+    if (detalle.fueraDeRegional && detalle.fueraDeRegional.length) {
       html += "<div class=\"nota\" style=\"margin-top:8px;\">IDs de otra regional (no se inscribieron): " + detalle.fueraDeRegional.map(escapeHtml).join(", ") + "</div>";
     }
 
