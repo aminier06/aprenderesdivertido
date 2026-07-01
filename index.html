@@ -8256,6 +8256,18 @@
         if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
         actualizarSelectorSedeCoordinadorGrupos(respuesta);
         renderizarModuloAsignacionGrupos();
+      } else if (respuesta.gruposAunNoCreados) {
+        // El backend indica que los grupos de estudiantes aún no existen.
+        // Mostrar un mensaje informativo claro, no un error genérico.
+        if (mensaje) {
+          mensaje.className = "mensaje";
+          mensaje.innerHTML =
+            "<strong>Los grupos de estudiantes aún no han sido creados.</strong><br>" +
+            "Para asignar facilitadores primero debe:<br>" +
+            "1. Ir al módulo <strong>Asignación de estudiantes</strong>.<br>" +
+            "2. Ejecutar la asignación automática (o manual) y guardarla.<br>" +
+            "3. Regresar a este módulo para asignar los facilitadores por grupo.";
+        }
       } else {
         if (mensaje) {
           mensaje.textContent = respuesta.mensaje || "No se pudieron cargar los facilitadores.";
