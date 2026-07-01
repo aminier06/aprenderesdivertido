@@ -3348,6 +3348,9 @@
         <h2>Inscripción de estudiantes</h2>
         <p class="nota">Digite el ID del estudiante para buscarlo en el catálogo. La sede se define después, al registrar su primera evaluación.</p>
       </div>
+      <div class="acciones-modulo">
+        <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+      </div>
     </div>
 
     <div class="bloque-formulario">
@@ -3396,7 +3399,6 @@
       <div class="acciones-asignacion" style="margin-top:18px;">
         <button type="button" id="btnConfirmarInscripcion" onclick="confirmarInscripcion()">Confirmar inscripción</button>
         <button type="button" class="btn-secundario" onclick="limpiarInscripcion()">Limpiar</button>
-        <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
       </div>
     </div>
 
@@ -9069,102 +9071,172 @@
   function ejecutarAsignacionAutomatica() {
     if (!datosAsignacionEstudiantesGrupos) return;
 
-    const gruposBackend = datosAsignacionEstudiantesGrupos.grupos || [];
-    const estudiantes   = datosAsignacionEstudiantesGrupos.estudiantes || [];
+    const gruposBackend   = datosAsignacionEstudiantesGrupos.grupos     || [];
+    const todosEstudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
 
-    if (!gruposBackend.length) {
-      alert("No hay grupos disponibles para la sede.");
+    if (!gruposBackend.length)     { alert("No hay grupos disponibles para la sede.");   return; }
+    if (!todosEstudiantes.length)  { alert("No hay estudiantes para asignar.");          return; }
+
+    // Separar en tres categorías según evaluación y grupo actual.
+    const conEvalSinGrupo = todosEstudiantes.filter(function(e) {
+      return  normalizarTexto(e.nivelLengua) && !normalizarTexto(e.grupo);
+    });
+    const sinEvalSinGrupo = todosEstudiantes.filter(function(e) {
+      return !normalizarTexto(e.nivelLengua) && !normalizarTexto(e.grupo);
+    });
+    const yaConGrupo = todosEstudiantes.filter(function(e) {
+      return !!normalizarTexto(e.grupo);
+    });
+
+    if (conEvalSinGrupo.length === 0) {
+      if (sinEvalSinGrupo.length > 0)
+        alert("No hay estudiantes evaluados sin grupo. Los " + sinEvalSinGrupo.length +
+              " sin evaluación podrán asignarse cuando registren su prueba.");
+      else
+        alert("Todos los estudiantes ya tienen grupo asignado.");
       return;
     }
-    if (!estudiantes.length) {
-      alert("No hay estudiantes para asignar.");
-      return;
-    }
 
-    // Paso 1: calcular con nombres provisionales (Exploradores, Creadores, Innovadores...)
+    // Detectar si es primera o segunda pasada.
+    // Es primera pasada si ningún estudiante tiene grupo ya asignado.
+    const esPrimeraPasada = yaConGrupo.length === 0;
     const gruposProvisionales = construirGruposOperativos(gruposBackend.length);
-    const resultadoProvisional = calcularAsignacionHomogenea(gruposProvisionales, estudiantes);
 
-    // Paso 2: renombrar cada grupo según la moda real de nivelLengua de sus estudiantes.
-    // Si dos categorías empatan, gana la de mayor nivel (Innovador > Creador > Explorador).
-    // Si hay duplicados de nombre, se añade sufijo -1, -2, etc.
-    const NIVEL_JERARQUIA = { "innovador": 3, "creador": 2, "explorador": 1 };
+    const NIVEL_JERARQUIA   = { "innovador": 3, "creador": 2, "explorador": 1 };
+    const NOMBRE_CATEGORIA  = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
 
     function modaGrupo(lista) {
       const cnt = { explorador: 0, creador: 0, innovador: 0 };
       lista.forEach(function(e) {
         const n = normalizarTexto(e.nivelLengua).toLowerCase();
         if (cnt[n] !== undefined) cnt[n]++;
-        else cnt.creador++; // sin dato → Creador
+        else cnt.creador++;
       });
-      // Ordenar por conteo desc, luego por jerarquía desc como desempate
-      return ["innovador", "creador", "explorador"].sort(function(a, b) {
-        if (cnt[b] !== cnt[a]) return cnt[b] - cnt[a];
-        return NIVEL_JERARQUIA[b] - NIVEL_JERARQUIA[a];
+      return ["innovador","creador","explorador"].sort(function(a,b) {
+        return cnt[b] !== cnt[a] ? cnt[b] - cnt[a] : NIVEL_JERARQUIA[b] - NIVEL_JERARQUIA[a];
       })[0];
     }
 
-    function capitalizar(s) { return s.charAt(0).toUpperCase() + s.slice(1) + "es"; }
-    // "explorador" → "Exploradores", "creador" → "Creadores", "innovador" → "Innovadores"
-    const NOMBRE_CATEGORIA = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
+    if (esPrimeraPasada) {
+      // ── PRIMERA PASADA ────────────────────────────────────────────────────
+      // Distribuir solo quienes tienen evaluación; los sin evaluación quedan
+      // con grupo vacío para la segunda pasada.
+      const resultProv = calcularAsignacionHomogenea(gruposProvisionales, conEvalSinGrupo);
 
-    // Contar cuántas veces aparece cada nombre base para asignar sufijos
-    const cuentaNombreBase = {};
-    gruposProvisionales.forEach(function(gProv) {
-      const lista = resultadoProvisional[gProv] || [];
-      const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
-      cuentaNombreBase[base] = (cuentaNombreBase[base] || 0) + 1;
-    });
+      const cuentaBase = {};
+      gruposProvisionales.forEach(function(gProv) {
+        const lista = resultProv[gProv] || [];
+        if (!lista.length) return;
+        const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
+        cuentaBase[base] = (cuentaBase[base] || 0) + 1;
+      });
 
-    const contadorNombre = {};
-    const mapaRenombrado = {}; // nombreProvisional → nombreFinal
+      const contadorNombre = {};
+      const mapaRenombrado = {};
+      gruposProvisionales.forEach(function(gProv) {
+        const lista = resultProv[gProv] || [];
+        if (!lista.length) { mapaRenombrado[gProv] = gProv; return; }
+        const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
+        contadorNombre[base] = (contadorNombre[base] || 0) + 1;
+        mapaRenombrado[gProv] = cuentaBase[base] === 1
+          ? base
+          : base + "-" + contadorNombre[base];
+      });
 
-    gruposProvisionales.forEach(function(gProv) {
-      const lista = resultadoProvisional[gProv] || [];
-      const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
-      contadorNombre[base] = (contadorNombre[base] || 0) + 1;
-      const nombreFinal = cuentaNombreBase[base] === 1
-        ? base
-        : base + "-" + contadorNombre[base];
-      mapaRenombrado[gProv] = nombreFinal;
-    });
+      const resultado = {};
+      gruposProvisionales.forEach(function(gProv) {
+        resultado[mapaRenombrado[gProv]] = resultProv[gProv] || [];
+      });
+      const grupos = gruposProvisionales.map(function(gProv) { return mapaRenombrado[gProv]; });
 
-    // Construir nuevo objeto asignacion con los nombres finales
-    const resultado = {};
-    gruposProvisionales.forEach(function(gProv) {
-      resultado[mapaRenombrado[gProv]] = resultadoProvisional[gProv] || [];
-    });
-    const grupos = gruposProvisionales.map(function(gProv) { return mapaRenombrado[gProv]; });
+      mapaGrupoSemanticoABackend = {};
+      mapaGrupoBackendASemantico = {};
+      gruposProvisionales.forEach(function(gProv, i) {
+        const nf = mapaRenombrado[gProv];
+        mapaGrupoSemanticoABackend[normalizarTexto(nf)]             = gruposBackend[i];
+        mapaGrupoBackendASemantico[normalizarTexto(gruposBackend[i])] = nf;
+      });
 
-    // Guardar el mapa nombre-semántico → nombre-backend para traducir al guardar.
-    // gruposProvisionales[i] → mapaRenombrado[gProv] = nombreFinal
-    // gruposBackend[i] = nombre original que acepta el backend
-    mapaGrupoSemanticoABackend = {};
-    mapaGrupoBackendASemantico = {};
-    gruposProvisionales.forEach(function(gProv, i) {
-      const nombreFinal = mapaRenombrado[gProv];
-      mapaGrupoSemanticoABackend[normalizarTexto(nombreFinal)] = gruposBackend[i];
-      mapaGrupoBackendASemantico[normalizarTexto(gruposBackend[i])] = nombreFinal;
-    });
+      const centroSedeAuto = (datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede)
+        || (usuarioActual && usuarioActual.centroSede);
+      if (centroSedeAuto) guardarMapaGruposSede(centroSedeAuto);
 
-    // Persistir el mapa para que asistencia y facilitadores lo usen.
-    // ▼ CORRECCIÓN: antes se usaba usuarioActual.centroSede, que es la sede
-    // del PERFIL de quien inició sesión. Eso funciona si un coordinador
-    // reparte su propia sede, pero falla cuando un administrador, técnico
-    // nacional, regional o distrital ejecuta el reparto automático para la
-    // sede de OTRA persona (su propio centroSede está vacío o es distinto).
-    // En ese caso el mapa se guardaba bajo la clave equivocada (o no se
-    // guardaba), y por eso Pase de lista e Incidencias mostraban "Grupo 1"
-    // en vez del nombre semántico, aunque la asignación sí se hubiera hecho.
-    // Ahora se usa el centroSede de la SEDE que realmente se está repartiendo
-    // (datosAsignacionEstudiantesGrupos.sede.centroSede), que es la misma
-    // fuente que ya usan correctamente otras partes de este módulo.
-    const centroSedeAuto = (datosAsignacionEstudiantesGrupos && datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede)
-      || (usuarioActual && usuarioActual.centroSede);
-    if (centroSedeAuto) guardarMapaGruposSede(centroSedeAuto);
+      mostrarModalAsignacionAutomatica(resultado, grupos, mapaGrupoSemanticoABackend, {
+        sinEvaluacion: sinEvalSinGrupo.length,
+        esPrimeraPasada: true,
+      });
 
-    mostrarModalAsignacionAutomatica(resultado, grupos, mapaGrupoSemanticoABackend);
+    } else {
+      // ── SEGUNDA PASADA ────────────────────────────────────────────────────
+      // Los grupos ya existen. Solo incorporar los nuevos evaluados al grupo
+      // existente más compatible, sin recalcular ni renombrar nombres.
+
+      // Reconstruir el perfil numérico de cada grupo con lo que hay en pantalla.
+      const perfilGrupos = {}; // nombreSemantico → {explorador,creador,innovador,total}
+      document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
+        const gActual = normalizarTexto(select.value);
+        if (!gActual) return;
+        if (!perfilGrupos[gActual]) perfilGrupos[gActual] = { explorador:0, creador:0, innovador:0, total:0 };
+        const idEst = normalizarTexto(select.dataset.id);
+        const est   = todosEstudiantes.find(function(e) { return normalizarTexto(e.idEstudiante) === idEst; });
+        if (est) {
+          const nivel = normalizarTexto(est.nivelLengua).toLowerCase();
+          if (perfilGrupos[gActual][nivel] !== undefined) perfilGrupos[gActual][nivel]++;
+          else perfilGrupos[gActual].creador++;
+          perfilGrupos[gActual].total++;
+        }
+      });
+
+      // Para cada nuevo estudiante, elegir el grupo más compatible:
+      // 1) grupo cuyo nombre indica su nivel, 2) grupo con nivel adyacente, 3) el menos lleno.
+      const NIVEL_ADYACENTE = {
+        explorador: ["explorador","creador"],
+        creador:    ["creador","explorador","innovador"],
+        innovador:  ["innovador","creador"],
+      };
+
+      function grupoMasCompatible(nivel) {
+        const n  = nivel || "creador";
+        const ad = NIVEL_ADYACENTE[n] || ["creador"];
+        let candidato = null, mejorScore = Infinity;
+        for (const nombre of Object.keys(perfilGrupos)) {
+          const p = perfilGrupos[nombre];
+          // Prohibir mezcla Explorador-Innovador (no son adyacentes)
+          const nombreL = nombre.toLowerCase();
+          if (n === "innovador" && nombreL.includes("explorador")) continue;
+          if (n === "explorador" && nombreL.includes("innovador"))  continue;
+          // Score: menos estudiantes = mejor, nivel propio en nombre = gran bonus
+          const bonus = nombreL.includes(n)   ? -100
+                      : ad.some(function(a) { return nombreL.includes(a); }) ? -20
+                      : 30;
+          const score = p.total + bonus;
+          if (score < mejorScore) { mejorScore = score; candidato = nombre; }
+        }
+        return candidato || Object.keys(perfilGrupos)[0];
+      }
+
+      const nuevasAsignaciones = {}; // nombreSemantico → [nuevos estudiantes]
+      conEvalSinGrupo.forEach(function(e) {
+        const nivel = normalizarTexto(e.nivelLengua).toLowerCase() || "creador";
+        const grupo = grupoMasCompatible(nivel);
+        if (!nuevasAsignaciones[grupo]) nuevasAsignaciones[grupo] = [];
+        nuevasAsignaciones[grupo].push(e);
+        // Actualizar perfil en tiempo real para los siguientes
+        if (perfilGrupos[grupo]) {
+          if (perfilGrupos[grupo][nivel] !== undefined) perfilGrupos[grupo][nivel]++;
+          else perfilGrupos[grupo].creador++;
+          perfilGrupos[grupo].total++;
+        }
+      });
+
+      mostrarModalAsignacionAutomatica(nuevasAsignaciones, Object.keys(nuevasAsignaciones), mapaGrupoSemanticoABackend, {
+        sinEvaluacion: sinEvalSinGrupo.length,
+        esPrimeraPasada: false,
+        yaConGrupo: yaConGrupo.length,
+      });
+    }
   }
+
 
   function calcularAsignacionHomogenea(grupos, estudiantes) {
     /*
@@ -9426,26 +9498,23 @@
     return { texto: "Mixto",                                                  color: "#ef4444" };
   }
 
-  function mostrarModalAsignacionAutomatica(asignacion, grupos, mapaBackend) {
-    // Eliminar modal anterior si existe
+  function mostrarModalAsignacionAutomatica(asignacion, grupos, mapaBackend, opciones) {
     const anterior = document.getElementById("modalAsignacionAuto");
     if (anterior) anterior.remove();
 
-    // Guardar asignación y mapa en variable temporal
     window._asignacionAutoPendiente = asignacion;
     window._mapaBackendPendiente = mapaBackend || {};
 
     let cardsHTML = "";
     grupos.forEach(function(g) {
       const lista = asignacion[g] || [];
-      const cnt = contarNiveles(lista);
+      const cnt   = contarNiveles(lista);
       const total = lista.length;
-      const pctInn = total ? Math.round(cnt.innovador / total * 100) : 0;
-      const pctCre = total ? Math.round(cnt.creador / total * 100) : 0;
+      const pctInn = total ? Math.round(cnt.innovador  / total * 100) : 0;
+      const pctCre = total ? Math.round(cnt.creador    / total * 100) : 0;
       const pctExp = total ? Math.round(cnt.explorador / total * 100) : 0;
       const pctSD  = total ? (100 - pctInn - pctCre - pctExp) : 0;
       const tipo   = tipoGrupoLabel(cnt);
-
       cardsHTML += `
         <div class="grupo-preview-card">
           <h4>${escapeHtml(g)} <span style="font-weight:normal;color:#64748b;font-size:13px;">(${total} estudiantes)</span></h4>
@@ -9453,10 +9522,10 @@
             <span style="display:inline-block;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:999px;background:${tipo.color}22;color:${tipo.color};border:1px solid ${tipo.color}55;">${tipo.texto}</span>
           </div>
           <div>
-            ${cnt.innovador ? `<span class="nivel-badge innovador">Innovador: ${cnt.innovador}</span>` : ""}
-            ${cnt.creador   ? `<span class="nivel-badge creador">Creador: ${cnt.creador}</span>` : ""}
-            ${cnt.explorador? `<span class="nivel-badge explorador">Explorador: ${cnt.explorador}</span>` : ""}
-            ${cnt.sinDato   ? `<span class="nivel-badge sin-dato">Sin dato: ${cnt.sinDato}</span>` : ""}
+            ${cnt.innovador  ? `<span class="nivel-badge innovador">Innovador: ${cnt.innovador}</span>`   : ""}
+            ${cnt.creador    ? `<span class="nivel-badge creador">Creador: ${cnt.creador}</span>`         : ""}
+            ${cnt.explorador ? `<span class="nivel-badge explorador">Explorador: ${cnt.explorador}</span>`: ""}
+            ${cnt.sinDato    ? `<span class="nivel-badge sin-dato">Sin dato: ${cnt.sinDato}</span>`       : ""}
           </div>
           <div class="grupo-preview-barra" title="Distribución de niveles">
             <div class="barra-segmento" style="width:${pctInn}%;background:#7c3aed;"></div>
@@ -9464,26 +9533,36 @@
             <div class="barra-segmento" style="width:${pctExp}%;background:#16a34a;"></div>
             <div class="barra-segmento" style="width:${pctSD}%;background:#94a3b8;"></div>
           </div>
-        </div>
-      `;
+        </div>`;
     });
 
     const totalEst = grupos.reduce(function(s, g) { return s + (asignacion[g] || []).length; }, 0);
+    const op = opciones || {};
+
+    let parrafo = "";
+    if (op.esPrimeraPasada) {
+      parrafo = `Se distribuyeron <strong>${totalEst} estudiante(s) evaluados</strong> en <strong>${grupos.length} grupo(s)</strong>, respetando la regla de niveles adyacentes en Lengua Española.`;
+      if (op.sinEvaluacion > 0)
+        parrafo += ` <strong>${op.sinEvaluacion} estudiante(s) sin evaluación</strong> quedaron sin grupo. Cuando registren su prueba podrá ejecutar la asignación de nuevo para incorporarlos.`;
+      parrafo += " Puede confirmar y ajustar manualmente antes de guardar.";
+    } else {
+      parrafo = `Segunda pasada: se incorporarán <strong>${totalEst} estudiante(s)</strong> a los grupos existentes según su nivel de Lengua.`;
+      if (op.sinEvaluacion > 0)
+        parrafo += ` Aún quedan <strong>${op.sinEvaluacion} estudiante(s) sin evaluación</strong>; podrá asignarlos en una pasada posterior.`;
+      parrafo += " Los grupos ya creados conservan sus nombres. Puede ajustar manualmente antes de guardar.";
+    }
 
     const modal = document.createElement("div");
-    modal.id = "modalAsignacionAuto";
+    modal.id    = "modalAsignacionAuto";
     modal.className = "modal-overlay";
     modal.innerHTML = `
       <div class="modal-asignacion">
         <h3>Vista previa de la asignación automática</h3>
-        <p class="nota">Se distribuyeron <strong>${totalEst} estudiantes</strong> en <strong>${grupos.length} grupos</strong> respetando la regla de niveles adyacentes en Lengua Española: cada grupo contiene únicamente Exploradores, Exploradores+Creadores, Creadores, Creadores+Innovadores o Innovadores. Los grupos no exceden 25 estudiantes. Puede confirmar y ajustar manualmente antes de guardar.</p>
-
+        <p class="nota">${parrafo}</p>
         <div class="grupos-preview">${cardsHTML}</div>
-
         <p class="nota" style="font-size:13px;color:#7c3aed;">
           <strong>Nota:</strong> Al confirmar, los selects de la tabla se actualizarán con esta distribución. Podrá hacer cambios manuales antes de guardar.
         </p>
-
         <div class="acciones-modal">
           <button type="button" class="btn-secundario" onclick="cerrarModalAsignacion()">Cancelar</button>
           <button type="button" class="btn-confirmar-asignacion" onclick="aplicarAsignacionAutomatica()">Confirmar y aplicar</button>
@@ -9491,11 +9570,7 @@
       </div>
     `;
 
-    // Guardar asignación en variable temporal (ya se asigna al inicio de la función)
-
     document.body.appendChild(modal);
-
-    // Cerrar al hacer clic en el overlay (fuera del modal)
     modal.addEventListener("click", function(e) {
       if (e.target === modal) cerrarModalAsignacion();
     });
