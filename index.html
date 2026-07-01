@@ -8984,24 +8984,21 @@
 
 
     if (!grupos.length) {
+      // Sin grupos definidos aún: mostrar igualmente la tabla para que el
+      // coordinador pueda ver y seleccionar manualmente, pero ocultar el
+      // botón de asignación automática (no hay grupos a los que asignar).
       const alerta = document.getElementById("alertaAsignacionEstudiantesGrupos");
       alerta.classList.remove("oculto");
-      alerta.textContent = "No se encontraron grupos disponibles para esta sede. Verifique la cuota o la asignación de facilitadores.";
-      document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
-      document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
-      return;
+      alerta.textContent = "Aún no hay grupos creados para esta sede. Los grupos se generan automáticamente cuando hay estudiantes evaluados con sede asignada.";
+    } else {
+      document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
     }
 
     if (!estudiantes.length) {
-      const alerta = document.getElementById("alertaAsignacionEstudiantesGrupos");
-      alerta.classList.remove("oculto");
-      alerta.textContent = "No hay estudiantes activos registrados para esta sede.";
       document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
       document.getElementById("btnGuardarAsignacionEstudiantesGrupos").classList.add("oculto");
       return;
     }
-
-    document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
     renderizarTablaAsignacionEstudiantes(grupos, estudiantes);
   }
 
