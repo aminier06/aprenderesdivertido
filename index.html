@@ -2574,6 +2574,16 @@
         <span class="modulo-flecha">›</span>
       </div>
 
+      <div id="tileGestionSedes" class="modulo modulo-usuarios oculto" onclick="abrirModulo('gestionSedes')">
+        <div class="modulo-acento"></div>
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </div>
+        <h3>Gestión de sedes</h3>
+        <p>Crear, editar y eliminar centros sede</p>
+        <span class="modulo-flecha">›</span>
+      </div>
+
       <div id="tileAsignacionGrupos" class="modulo modulo-asignacion oculto" onclick="abrirModulo('asignacionGrupos')">
         <div class="modulo-acento"></div>
         <div class="icono-modulo" aria-hidden="true">
@@ -3486,6 +3496,72 @@
 
 
 
+  <section id="moduloGestionSedes" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Gestión de sedes</h2>
+        <p class="nota">Administre los centros sede del campamento: cree nuevas sedes, edite sus datos o elimine las que ya no correspondan.</p>
+      </div>
+      <div class="acciones-modulo">
+        <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+      </div>
+    </div>
+
+    <!-- Formulario de creación / edición -->
+    <div class="bloque-formulario">
+      <h3 id="tituloFormularioSede">Nueva sede</h3>
+      <input type="hidden" id="sedeCentroOriginal">
+      <div class="form-grid-3">
+        <div>
+          <label for="sedeRegional">Regional</label>
+          <input type="text" id="sedeRegional" placeholder="Ej. 01 - BARAHONA" autocomplete="off">
+        </div>
+        <div>
+          <label for="sedeDistrito">Distrito</label>
+          <input type="text" id="sedeDistrito" placeholder="Ej. 0101 - PEDERNALES" autocomplete="off">
+        </div>
+        <div>
+          <label for="sedeCodigoSede">Código sede</label>
+          <input type="text" id="sedeCodigoSede" placeholder="Ej. 02234" autocomplete="off">
+        </div>
+        <div>
+          <label for="sedeCentroSede">Nombre del centro sede</label>
+          <input type="text" id="sedeCentroSede" placeholder="Ej. ANA MERCEDES CASTRO" autocomplete="off">
+        </div>
+        <div>
+          <label for="sedeCoordinador">Coordinador (referencia)</label>
+          <input type="text" id="sedeCoordinador" placeholder="Nombre del coordinador" autocomplete="off">
+        </div>
+        <div>
+          <label for="sedeTelefono">Teléfono</label>
+          <input type="text" id="sedeTelefono" placeholder="Ej. 809-000-0000" autocomplete="off">
+        </div>
+        <div>
+          <label for="sedeCuota">Cuota de estudiantes</label>
+          <input type="number" id="sedeCuota" placeholder="Ej. 75" min="1" autocomplete="off">
+        </div>
+      </div>
+      <div class="acciones-asignacion" style="margin-top:16px;">
+        <button type="button" id="btnGuardarSede" onclick="guardarSede()">Guardar sede</button>
+        <button type="button" class="btn-secundario" onclick="limpiarFormularioSede()">Cancelar</button>
+      </div>
+      <div id="mensajeFormularioSede" class="mensaje"></div>
+    </div>
+
+    <!-- Listado de sedes con filtro rápido -->
+    <div class="bloque-formulario" style="margin-top:24px;">
+      <h3>Sedes registradas</h3>
+      <div class="form-grid-3" style="margin-bottom:12px;">
+        <div>
+          <label for="filtroSedesTexto">Buscar por nombre, código o distrito</label>
+          <input type="text" id="filtroSedesTexto" placeholder="Buscar…" oninput="filtrarTablaSedes()">
+        </div>
+      </div>
+      <div id="mensajeListaSedes" class="mensaje"></div>
+      <div id="tablaGestionSedes" class="tabla-contenedor oculto"></div>
+    </div>
+  </section>
+
   <section id="moduloEvaluaciones" class="tarjeta oculto">
     <div class="encabezado-modulo">
       <div>
@@ -4158,7 +4234,8 @@
     "panel", "moduloAsistencia", "moduloDashboard",
     "moduloAcompanamientos", "moduloIncidencias",
     "moduloAsignacionGrupos", "moduloAsignacionEstudiantesGrupos",
-    "moduloGestionUsuarios", "moduloEvaluaciones", "login", "cambioPassword"
+    "moduloGestionUsuarios", "moduloEvaluaciones", "login", "cambioPassword",
+    "moduloGestionSedes"
   ];
 
   function mostrarModulo(id) {
@@ -4182,6 +4259,7 @@
     moduloAsignacionGrupos: "Asignación de facilitadores",
     moduloAsignacionEstudiantesGrupos: "Asignación de estudiantes",
     moduloGestionUsuarios: "Gestión de usuarios",
+    moduloGestionSedes:    "Gestión de sedes",
     moduloEvaluaciones: "Evaluaciones"
   };
 
@@ -4915,6 +4993,12 @@
     if (!tile) return;
     if (esAdministradorReal()) tile.classList.remove("oculto");
     else tile.classList.add("oculto");
+
+    const tileGS = document.getElementById("tileGestionSedes");
+    if (tileGS) {
+      if (esAdministradorReal()) tileGS.classList.remove("oculto");
+      else tileGS.classList.add("oculto");
+    }
   }
 
   function puedeConsultarAsignaciones(usuario) {
@@ -5264,6 +5348,11 @@
 
     if (modulo === "gestionUsuarios") {
       abrirModuloGestionUsuarios();
+      return;
+    }
+
+    if (modulo === "gestionSedes") {
+      abrirModuloGestionSedes();
       return;
     }
 
@@ -9650,6 +9739,238 @@
   let usuariosAdminCache = [];
   let sedesGestionUsuarios = [];
 
+  /* ========================= MÓDULO GESTIÓN DE SEDES ====================== */
+
+  let sedesGestion = [];          // caché del listado completo
+  let sedesGestionFiltradas = []; // resultado del filtro activo
+
+  function abrirModuloGestionSedes() {
+    if (!esAdministradorReal()) {
+      alert("Este módulo solo está disponible para el Administrador.");
+      return;
+    }
+    mostrarModulo("moduloGestionSedes");
+    limpiarFormularioSede();
+    cargarListaGestionSedes();
+  }
+
+  function cargarListaGestionSedes() {
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula;
+    const msg = document.getElementById("mensajeListaSedes");
+    msg.textContent = "Cargando…";
+    msg.className = "mensaje";
+    document.getElementById("tablaGestionSedes").classList.add("oculto");
+
+    llamarBackend(
+      { accion: "listarSedesAdmin", cedula: cedula },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          msg.className = "mensaje error";
+          msg.textContent = (resp && resp.mensaje) || "No se pudo cargar el listado de sedes.";
+          return;
+        }
+        sedesGestion = resp.sedes || [];
+        msg.textContent = "";
+        filtrarTablaSedes();
+      },
+      function() {
+        msg.className = "mensaje error";
+        msg.textContent = "No se pudo conectar para cargar las sedes.";
+      },
+      { timeout: 16000 }
+    );
+  }
+
+  function filtrarTablaSedes() {
+    const texto = normalizarTexto(
+      (document.getElementById("filtroSedesTexto") || {}).value || ""
+    ).toLowerCase();
+    sedesGestionFiltradas = texto
+      ? sedesGestion.filter(function(s) {
+          return normalizarTexto(s.centroSede).toLowerCase().includes(texto) ||
+            normalizarTexto(s.codigoSede).toLowerCase().includes(texto) ||
+            normalizarTexto(s.distrito).toLowerCase().includes(texto) ||
+            normalizarTexto(s.regional).toLowerCase().includes(texto);
+        })
+      : sedesGestion.slice();
+    renderizarTablaSedes();
+  }
+
+  function renderizarTablaSedes() {
+    const msg = document.getElementById("mensajeListaSedes");
+    const contenedor = document.getElementById("tablaGestionSedes");
+    if (!sedesGestionFiltradas.length) {
+      msg.className = "mensaje";
+      msg.textContent = sedesGestion.length
+        ? "No hay sedes que coincidan con la búsqueda."
+        : "No hay sedes registradas todavía.";
+      contenedor.innerHTML = "";
+      contenedor.classList.add("oculto");
+      return;
+    }
+    msg.textContent = sedesGestionFiltradas.length + " sede(s)";
+
+    let html = "<table><thead><tr>"
+      + "<th>Código</th><th>Centro sede</th><th>Regional</th><th>Distrito</th>"
+      + "<th>Cuota</th><th>Usuarios</th><th>Estudiantes</th><th></th>"
+      + "</tr></thead><tbody>";
+
+    sedesGestionFiltradas.forEach(function(s) {
+      const tieneDatos = s.usuariosActivos > 0 || s.estudiantesActivos > 0;
+      html += "<tr>"
+        + "<td>" + escapeHtml(s.codigoSede) + "</td>"
+        + "<td><strong>" + escapeHtml(s.centroSede) + "</strong></td>"
+        + "<td>" + escapeHtml(s.regional) + "</td>"
+        + "<td>" + escapeHtml(s.distrito) + "</td>"
+        + "<td style='text-align:center'>" + (s.cuota || "—") + "</td>"
+        + "<td style='text-align:center'>" + (s.usuariosActivos   || "—") + "</td>"
+        + "<td style='text-align:center'>" + (s.estudiantesActivos || "—") + "</td>"
+        + "<td style='white-space:nowrap'>"
+        + "<button type='button' class='btn-secundario' style='margin-right:6px' "
+        +   "onclick='editarSede(" + JSON.stringify(s.centroSede) + ")'>Editar</button>"
+        + "<button type='button' class='btn-secundario' "
+        +   (tieneDatos ? "style='color:#c0392b' " : "")
+        +   "onclick='confirmarEliminarSede(" + JSON.stringify(s.centroSede) + ")'>Eliminar</button>"
+        + "</td>"
+        + "</tr>";
+    });
+    html += "</tbody></table>";
+    contenedor.innerHTML = html;
+    contenedor.classList.remove("oculto");
+  }
+
+  function editarSede(centroSede) {
+    const s = sedesGestion.find(function(x) {
+      return normalizarTexto(x.centroSede) === normalizarTexto(centroSede);
+    });
+    if (!s) return;
+
+    document.getElementById("tituloFormularioSede").textContent = "Editar sede";
+    document.getElementById("sedeCentroOriginal").value  = s.centroSede;
+    document.getElementById("sedeRegional").value        = s.regional;
+    document.getElementById("sedeDistrito").value        = s.distrito;
+    document.getElementById("sedeCodigoSede").value      = s.codigoSede;
+    document.getElementById("sedeCentroSede").value      = s.centroSede;
+    document.getElementById("sedeCoordinador").value     = s.coordinador;
+    document.getElementById("sedeTelefono").value        = s.telefono;
+    document.getElementById("sedeCuota").value           = s.cuota || "";
+
+    document.getElementById("mensajeFormularioSede").textContent = "";
+    document.getElementById("mensajeFormularioSede").className = "mensaje";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function limpiarFormularioSede() {
+    document.getElementById("tituloFormularioSede").textContent = "Nueva sede";
+    ["sedeCentroOriginal","sedeRegional","sedeDistrito","sedeCodigoSede",
+     "sedeCentroSede","sedeCoordinador","sedeTelefono","sedeCuota"].forEach(function(id) {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    const msg = document.getElementById("mensajeFormularioSede");
+    msg.textContent = "";
+    msg.className = "mensaje";
+    const btn = document.getElementById("btnGuardarSede");
+    if (btn) btn.disabled = false;
+  }
+
+  function guardarSede() {
+    const msg = document.getElementById("mensajeFormularioSede");
+    msg.className = "mensaje";
+    msg.textContent = "";
+
+    const payload = {
+      cedula:            (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+      centroSedeOriginal: document.getElementById("sedeCentroOriginal").value.trim(),
+      regional:           document.getElementById("sedeRegional").value.trim(),
+      distrito:           document.getElementById("sedeDistrito").value.trim(),
+      codigoSede:         document.getElementById("sedeCodigoSede").value.trim(),
+      centroSede:         document.getElementById("sedeCentroSede").value.trim(),
+      coordinador:        document.getElementById("sedeCoordinador").value.trim(),
+      telefono:           document.getElementById("sedeTelefono").value.trim(),
+      cuota:              Number(document.getElementById("sedeCuota").value) || 0,
+    };
+
+    if (!payload.regional)   { msg.className = "mensaje error"; msg.textContent = "Debe indicar la regional.";             return; }
+    if (!payload.distrito)   { msg.className = "mensaje error"; msg.textContent = "Debe indicar el distrito.";             return; }
+    if (!payload.centroSede) { msg.className = "mensaje error"; msg.textContent = "Debe indicar el nombre del centro sede."; return; }
+    if (!payload.cuota || payload.cuota <= 0) { msg.className = "mensaje error"; msg.textContent = "Debe indicar una cuota mayor que cero."; return; }
+
+    const btn = document.getElementById("btnGuardarSede");
+    btn.disabled = true;
+    msg.textContent = "Guardando…";
+
+    llamarBackend(
+      { accion: "guardarSede", payload: JSON.stringify(payload) },
+      function(resp) {
+        btn.disabled = false;
+        if (resp && resp.ok) {
+          msg.className = "mensaje ok";
+          msg.textContent = resp.mensaje || "Sede guardada correctamente.";
+          limpiarFormularioSede();
+          cargarListaGestionSedes();
+        } else {
+          msg.className = "mensaje error";
+          msg.textContent = (resp && resp.mensaje) || "No se pudo guardar la sede.";
+        }
+      },
+      function() {
+        btn.disabled = false;
+        msg.className = "mensaje error";
+        msg.textContent = "No se pudo conectar para guardar la sede.";
+      },
+      { timeout: 16000 }
+    );
+  }
+
+  function confirmarEliminarSede(centroSede) {
+    const s = sedesGestion.find(function(x) {
+      return normalizarTexto(x.centroSede) === normalizarTexto(centroSede);
+    });
+    const tieneDatos = s && (s.usuariosActivos > 0 || s.estudiantesActivos > 0);
+    const aviso = tieneDatos
+      ? "Esta sede tiene " + (s.usuariosActivos || 0) + " usuario(s) y "
+        + (s.estudiantesActivos || 0) + " estudiante(s) activo(s).\n\n"
+        + "Los datos de esas personas NO se borrarán, pero quedarán sin sede asignada.\n\n"
+        + "¿Desea eliminar la sede de todas formas?"
+      : "¿Desea eliminar la sede «" + centroSede + "»?\n\nEsta acción es irreversible.";
+
+    if (!confirm(aviso)) return;
+    eliminarSedeAccion(centroSede, true);
+  }
+
+  function eliminarSedeAccion(centroSede, forzar) {
+    const msg = document.getElementById("mensajeListaSedes");
+    msg.className = "mensaje";
+    msg.textContent = "Eliminando…";
+
+    const payload = {
+      cedula:     (usuarioSesion && usuarioSesion.cedula) || usuarioActual.cedula,
+      centroSede: centroSede,
+      forzar:     !!forzar,
+    };
+
+    llamarBackend(
+      { accion: "eliminarSede", payload: JSON.stringify(payload) },
+      function(resp) {
+        if (resp && resp.ok) {
+          msg.className = "mensaje ok";
+          msg.textContent = resp.mensaje || "Sede eliminada correctamente.";
+          cargarListaGestionSedes();
+        } else {
+          msg.className = "mensaje error";
+          msg.textContent = (resp && resp.mensaje) || "No se pudo eliminar la sede.";
+        }
+      },
+      function() {
+        msg.className = "mensaje error";
+        msg.textContent = "No se pudo conectar para eliminar la sede.";
+      },
+      { timeout: 16000 }
+    );
+  }
+
+  /* ======================= MÓDULO GESTIÓN DE USUARIOS ==================== */
   function abrirModuloGestionUsuarios() {
     if (!esAdministradorReal()) {
       alert("Este módulo solo está disponible para el Administrador.");
