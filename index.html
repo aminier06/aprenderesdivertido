@@ -10677,8 +10677,8 @@
       const LOTE = 80; // suficientemente chico para no exceder el límite de la URL
       const totalLotes = Math.ceil(idsUnicos.length / LOTE);
       let loteActual = 0;
-      const acumulado = { total: 0, inscritos: 0, reinscritos: 0, yaActivos: 0, noEnCatalogo: 0, fueraDeRegional: 0, fueraDeDistrito: 0 };
-      const detalleAcumulado = { noEnCatalogo: [], fueraDeRegional: [], fueraDeDistrito: [] };
+      const acumulado = { total: 0, inscritos: 0, yaActivo: 0, existeInactivo: 0, noEnCatalogo: 0, fueraDeRegional: 0, fueraDeDistrito: 0 };
+      const detalleAcumulado = { noEnCatalogo: [], fueraDeRegional: [], fueraDeDistrito: [], yaActivo: [], existeInactivo: [] };
 
       progreso.classList.remove("oculto");
 
@@ -10699,8 +10699,8 @@
             const r = resp.resumen || {};
             acumulado.total += r.total || 0;
             acumulado.inscritos += r.inscritos || 0;
-            acumulado.reinscritos += r.reinscritos || 0;
-            acumulado.yaActivos += r.yaActivos || 0;
+            acumulado.yaActivo += r.yaActivo || 0;
+            acumulado.existeInactivo += r.existeInactivo || 0;
             acumulado.noEnCatalogo += r.noEnCatalogo || 0;
             acumulado.fueraDeRegional += r.fueraDeRegional || 0;
             acumulado.fueraDeDistrito += r.fueraDeDistrito || 0;
@@ -10708,6 +10708,8 @@
               detalleAcumulado.noEnCatalogo = detalleAcumulado.noEnCatalogo.concat(resp.detalle.noEnCatalogo || []);
               detalleAcumulado.fueraDeRegional = detalleAcumulado.fueraDeRegional.concat(resp.detalle.fueraDeRegional || []);
               detalleAcumulado.fueraDeDistrito = detalleAcumulado.fueraDeDistrito.concat(resp.detalle.fueraDeDistrito || []);
+              detalleAcumulado.yaActivo = detalleAcumulado.yaActivo.concat(resp.detalle.yaActivo || []);
+              detalleAcumulado.existeInactivo = detalleAcumulado.existeInactivo.concat(resp.detalle.existeInactivo || []);
             }
 
             loteActual++;
@@ -10739,19 +10741,31 @@
     const div = document.getElementById("resumenInscripcionMasiva");
     let html = "<div class=\"dato-asignacion\"><span>Total en el archivo</span><strong>" + r.total + "</strong></div>"
       + "<div class=\"dato-asignacion\"><span>Inscritos nuevos</span><strong>" + r.inscritos + "</strong></div>"
-      + "<div class=\"dato-asignacion\"><span>Ya existían (se omiten)</span><strong>" + (r.yaExistian || r.yaActivos || 0) + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>Ya inscritos y activos</span><strong>" + (r.yaActivo || 0) + "</strong></div>"
+      + "<div class=\"dato-asignacion\"><span>Existen pero inactivos (no se reactivan solos)</span><strong>" + (r.existeInactivo || 0) + "</strong></div>"
       + "<div class=\"dato-asignacion\"><span>No encontrados en el catálogo</span><strong>" + r.noEnCatalogo + "</strong></div>"
       + "<div class=\"dato-asignacion\"><span>Fuera de su regional</span><strong>" + r.fueraDeRegional + "</strong></div>"
       + "<div class=\"dato-asignacion\"><span>Fuera de su distrito</span><strong>" + (r.fueraDeDistrito || 0) + "</strong></div>";
 
+    const rechazados = (r.noEnCatalogo || 0) + (r.fueraDeRegional || 0) + (r.fueraDeDistrito || 0)
+      + (r.yaActivo || 0) + (r.existeInactivo || 0);
+    if (rechazados > 0) {
+      html += "<p class=\"nota\" style=\"margin-top:10px;font-weight:bold;\">Desglose de los " + rechazados + " que no se inscribieron en este lote:</p>";
+    }
     if (detalle.noEnCatalogo && detalle.noEnCatalogo.length) {
-      html += "<div class=\"nota\" style=\"margin-top:8px;\">IDs no encontrados en el catálogo: " + detalle.noEnCatalogo.map(escapeHtml).join(", ") + "</div>";
+      html += "<div class=\"nota\" style=\"margin-top:8px;\">No encontrados en el catálogo (" + detalle.noEnCatalogo.length + "): " + detalle.noEnCatalogo.map(escapeHtml).join(", ") + "</div>";
     }
     if (detalle.fueraDeRegional && detalle.fueraDeRegional.length) {
-      html += "<div class=\"nota\" style=\"margin-top:8px;\">IDs de otra regional (no se inscribieron): " + detalle.fueraDeRegional.map(escapeHtml).join(", ") + "</div>";
+      html += "<div class=\"nota\" style=\"margin-top:8px;\">De otra regional (" + detalle.fueraDeRegional.length + "): " + detalle.fueraDeRegional.map(escapeHtml).join(", ") + "</div>";
     }
     if (detalle.fueraDeDistrito && detalle.fueraDeDistrito.length) {
-      html += "<div class=\"nota\" style=\"margin-top:8px;\">IDs de otro distrito (no se inscribieron): " + detalle.fueraDeDistrito.map(escapeHtml).join(", ") + "</div>";
+      html += "<div class=\"nota\" style=\"margin-top:8px;\">De otro distrito (" + detalle.fueraDeDistrito.length + "): " + detalle.fueraDeDistrito.map(escapeHtml).join(", ") + "</div>";
+    }
+    if (detalle.yaActivo && detalle.yaActivo.length) {
+      html += "<div class=\"nota\" style=\"margin-top:8px;\">Ya inscritos y activos (" + detalle.yaActivo.length + "): " + detalle.yaActivo.map(escapeHtml).join(", ") + "</div>";
+    }
+    if (detalle.existeInactivo && detalle.existeInactivo.length) {
+      html += "<div class=\"nota\" style=\"margin-top:8px;\">Existen pero están inactivos, no se reactivaron (" + detalle.existeInactivo.length + "): " + detalle.existeInactivo.map(escapeHtml).join(", ") + "</div>";
     }
 
     div.innerHTML = html;
