@@ -9068,57 +9068,18 @@
   function renderizarTablaAsignacionEstudiantes(grupos, estudiantes) {
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
 
-    // ── Calcular el nombre semántico de cada grupo por moda real de sus estudiantes ──
-    // Agrupar estudiantes asignados por su grupo del backend
-    const estudiantesPorGrupo = {};
-    grupos.forEach(function(g) { estudiantesPorGrupo[normalizarTexto(g)] = []; });
-    estudiantes.forEach(function(e) {
-      const k = normalizarTexto(e.grupo);
-      if (k && estudiantesPorGrupo[k] !== undefined) estudiantesPorGrupo[k].push(e);
-    });
-
-    // Calcular moda por grupo (misma lógica que en ejecutarAsignacionAutomatica)
-    const NIVEL_JERARQUIA_R = { innovador: 3, creador: 2, explorador: 1 };
-    const NOMBRE_CATEGORIA_R = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
-
-    function modaGrupoR(lista) {
-      const cnt = { explorador: 0, creador: 0, innovador: 0 };
-      lista.forEach(function(e) {
-        const n = normalizarTexto(e.nivelLengua).toLowerCase();
-        if (cnt[n] !== undefined) cnt[n]++; else cnt.creador++;
-      });
-      return ["innovador", "creador", "explorador"].sort(function(a, b) {
-        if (cnt[b] !== cnt[a]) return cnt[b] - cnt[a];
-        return NIVEL_JERARQUIA_R[b] - NIVEL_JERARQUIA_R[a];
-      })[0];
-    }
-
-    // Contar cuántas veces aparece cada nombre base para asignar sufijos
-    const cuentaBaseR = {};
-    grupos.forEach(function(g) {
-      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
-      // Si no hay estudiantes asignados aún, usar posición como fallback
-      const base = lista.length > 0
-        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
-        : construirGruposOperativos(grupos.length)[grupos.indexOf(g)] || "Creadores";
-      cuentaBaseR[base] = (cuentaBaseR[base] || 0) + 1;
-    });
-
-    const contadorBaseR = {};
-    const mapaSemantico = {};    // backend → semántico (para preseleccionar selects)
-    mapaGrupoSemanticoABackend = {}; // semántico → backend (para guardar)
+    // Los grupos se identifican por número (Grupo 1, Grupo 2...), no por la
+    // moda del nivel de sus integrantes: el nombre es el que ya viene guardado
+    // en la base de datos (o, si el grupo es nuevo y aún no existe en la base,
+    // el identificador provisional que llega del backend). No se recalcula
+    // nada aquí; así el nombre no se mueve aunque cambie la composición.
+    const mapaSemantico = {};    // backend → nombre a mostrar (aquí, el mismo)
+    mapaGrupoSemanticoABackend = {}; // nombre mostrado → backend (para guardar)
 
     grupos.forEach(function(g) {
-      const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
-      const idx = grupos.indexOf(g);
-      const base = lista.length > 0
-        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
-        : (construirGruposOperativos(grupos.length)[idx] || "Creadores");
-      contadorBaseR[base] = (contadorBaseR[base] || 0) + 1;
-      const nombreSem = cuentaBaseR[base] === 1 ? base : base + "-" + contadorBaseR[base];
-      mapaSemantico[normalizarTexto(g)] = nombreSem;
-      mapaGrupoSemanticoABackend[normalizarTexto(nombreSem)] = g;
-      mapaGrupoBackendASemantico[normalizarTexto(g)] = nombreSem;
+      mapaSemantico[normalizarTexto(g)] = g;
+      mapaGrupoSemanticoABackend[normalizarTexto(g)] = g;
+      mapaGrupoBackendASemantico[normalizarTexto(g)] = g;
     });
 
     // Persistir el mapa para que otros módulos lo usen sin depender de si el usuario
@@ -9375,63 +9336,28 @@
     const esPrimeraPasada = yaConGrupo.length === 0;
     const gruposProvisionales = construirGruposOperativos(gruposBackend.length);
 
-    const NIVEL_JERARQUIA   = { "innovador": 3, "creador": 2, "explorador": 1 };
-    const NOMBRE_CATEGORIA  = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
-
-    function modaGrupo(lista) {
-      const cnt = { explorador: 0, creador: 0, innovador: 0 };
-      lista.forEach(function(e) {
-        const n = normalizarTexto(e.nivelLengua).toLowerCase();
-        if (cnt[n] !== undefined) cnt[n]++;
-        else cnt.creador++;
-      });
-      return ["innovador","creador","explorador"].sort(function(a,b) {
-        return cnt[b] !== cnt[a] ? cnt[b] - cnt[a] : NIVEL_JERARQUIA[b] - NIVEL_JERARQUIA[a];
-      })[0];
-    }
-
     if (esPrimeraPasada) {
       // ── PRIMERA PASADA ────────────────────────────────────────────────────
       // Distribuir solo quienes tienen evaluación; los sin evaluación quedan
       // con grupo vacío para la segunda pasada.
       const resultProv = calcularAsignacionHomogenea(gruposProvisionales, conEvalSinGrupo);
 
-      const cuentaBase = {};
-      gruposProvisionales.forEach(function(gProv) {
-        const lista = resultProv[gProv] || [];
-        if (!lista.length) return;
-        const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
-        cuentaBase[base] = (cuentaBase[base] || 0) + 1;
-      });
-
-      const contadorNombre = {};
-      const mapaRenombrado = {};
-      gruposProvisionales.forEach(function(gProv) {
-        const lista = resultProv[gProv] || [];
-        if (!lista.length) { mapaRenombrado[gProv] = gProv; return; }
-        const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
-        contadorNombre[base] = (contadorNombre[base] || 0) + 1;
-        mapaRenombrado[gProv] = cuentaBase[base] === 1
-          ? base
-          : base + "-" + contadorNombre[base];
-      });
-
+      // Los grupos se nombran por número (Grupo 1, Grupo 2...), no por la moda
+      // de nivel de sus integrantes: el criterio de DISTRIBUCIÓN de estudiantes
+      // (niveles adyacentes, máximo 25 por grupo, reparto proporcional del
+      // cupo sobrante) sigue siendo exactamente el mismo; lo único que cambia
+      // es la etiqueta con la que se guarda cada grupo.
       const resultado = {};
       gruposProvisionales.forEach(function(gProv) {
-        resultado[mapaRenombrado[gProv]] = resultProv[gProv] || [];
+        resultado[gProv] = resultProv[gProv] || [];
       });
-      const grupos = gruposProvisionales.map(function(gProv) { return mapaRenombrado[gProv]; });
+      const grupos = gruposProvisionales.slice();
 
-      // El nombre semántico (Explorador, Creador-1...) ES ahora el nombre que
-      // se guarda en la base de datos; el backend ya no lo vuelve a calcular
-      // a partir de un identificador provisional ("Grupo 1"), así que el
-      // mapa apunta cada nombre a sí mismo.
       mapaGrupoSemanticoABackend = {};
       mapaGrupoBackendASemantico = {};
       gruposProvisionales.forEach(function(gProv) {
-        const nf = mapaRenombrado[gProv];
-        mapaGrupoSemanticoABackend[normalizarTexto(nf)] = nf;
-        mapaGrupoBackendASemantico[normalizarTexto(nf)] = nf;
+        mapaGrupoSemanticoABackend[normalizarTexto(gProv)] = gProv;
+        mapaGrupoBackendASemantico[normalizarTexto(gProv)] = gProv;
       });
 
       const centroSedeAuto = (datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede)
@@ -9465,7 +9391,11 @@
       });
 
       // Para cada nuevo estudiante, elegir el grupo más compatible:
-      // 1) grupo cuyo nombre indica su nivel, 2) grupo con nivel adyacente, 3) el menos lleno.
+      // 1) grupo cuya composición predomina en ese nivel, 2) grupo con nivel
+      // adyacente presente, 3) el menos lleno. Antes esto se leía del NOMBRE
+      // del grupo (p.ej. "Explorador"), pero con nombres numéricos ("Grupo 1")
+      // el nombre ya no dice nada del nivel: se usa la composición real
+      // (perfilGrupos), que de todas formas es la fuente correcta.
       const NIVEL_ADYACENTE = {
         explorador: ["explorador","creador"],
         creador:    ["creador","explorador","innovador"],
@@ -9479,20 +9409,21 @@
         for (const nombre of Object.keys(perfilGrupos)) {
           const p = perfilGrupos[nombre];
           // Prohibir mezcla Explorador-Innovador (no son adyacentes)
-          const nombreL = nombre.toLowerCase();
-          if (n === "innovador" && nombreL.includes("explorador")) continue;
-          if (n === "explorador" && nombreL.includes("innovador"))  continue;
-          // Score: menos estudiantes = mejor, nivel propio en nombre = gran bonus
-          const bonus = nombreL.includes(n)   ? -100
-                      : ad.some(function(a) { return nombreL.includes(a); }) ? -20
-                      : 30;
+          if (n === "innovador" && p.explorador > 0) continue;
+          if (n === "explorador" && p.innovador  > 0) continue;
+          // Score: menos estudiantes = mejor. Si el grupo ya tiene ese mismo
+          // nivel entre sus integrantes, gran bonus; si tiene un nivel
+          // adyacente, bonus menor; si no tiene ninguno de los dos, penaliza.
+          const tieneNivel     = p[n] > 0;
+          const tieneAdyacente = ad.some(function(a) { return p[a] > 0; });
+          const bonus = tieneNivel ? -100 : tieneAdyacente ? -20 : 30;
           const score = p.total + bonus;
           if (score < mejorScore) { mejorScore = score; candidato = nombre; }
         }
         return candidato || Object.keys(perfilGrupos)[0];
       }
 
-      const nuevasAsignaciones = {}; // nombreSemantico → [nuevos estudiantes]
+      const nuevasAsignaciones = {}; // nombre de grupo → [nuevos estudiantes]
       conEvalSinGrupo.forEach(function(e) {
         const nivel = normalizarTexto(e.nivelLengua).toLowerCase() || "creador";
         const grupo = grupoMasCompatible(nivel);
