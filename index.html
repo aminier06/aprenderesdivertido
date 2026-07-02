@@ -9642,34 +9642,68 @@
     // ── 4. Verificar que tenemos suficientes grupos ──────────────────────────
     let totalNecesario = gEpuroFinal + gEC + gCpuroFinal + gCI + gIpuroFinal;
 
-    // Si hay más grupos disponibles que los necesarios, repartir sobrante en C
-    // Si hay menos, comprimir: algunos grupos puros tendrán más de 25 (inevitable)
-    let gCExtra = 0;
+    let nE  = gEpuroFinal;
+    let nEC = gEC;
+    let nC  = gCpuroFinal;
+    let nCI = gCI;
+    let nI  = gIpuroFinal;
+
+    // Si hay más grupos disponibles que los necesarios, ese cupo sobrante no
+    // puede quedar etiquetado como "Creador" sin más: si no hay ningún
+    // estudiante Creador, ese grupo saldría vacío (y con nombre duplicado,
+    // porque varios grupos vacíos comparten la misma etiqueta). En vez de eso,
+    // el cupo sobrante se reparte, proporcional al tamaño de cada banda, entre
+    // los niveles que sí tienen estudiantes: así un solo nivel numeroso (p.ej.
+    // 11 Innovadores con 3 grupos disponibles) se divide en varios grupos
+    // reales en vez de dejar 2 de los 3 completamente vacíos.
     if (totalNecesario < numGrupos) {
-      gCExtra = numGrupos - totalNecesario;
+      let extra = numGrupos - totalNecesario;
+      const candidatos = [];
+      if (totE > 0) candidatos.push({ clave: "E", total: totE, entero: 0 });
+      if (totC > 0) candidatos.push({ clave: "C", total: totC, entero: 0 });
+      if (totI > 0) candidatos.push({ clave: "I", total: totI, entero: 0 });
+      const totalCandidatos = candidatos.reduce(function(s, c) { return s + c.total; }, 0);
+
+      if (totalCandidatos > 0) {
+        // Reparto proporcional por método de mayores restos, para no dejar
+        // cupo sin asignar por errores de redondeo.
+        candidatos.forEach(function(c) {
+          const cuota = (c.total / totalCandidatos) * extra;
+          c.entero = Math.floor(cuota);
+          c.resto = cuota - c.entero;
+        });
+        let asignadosExtra = candidatos.reduce(function(s, c) { return s + c.entero; }, 0);
+        const porResto = candidatos.slice().sort(function(a, b) { return b.resto - a.resto; });
+        let idx = 0;
+        while (asignadosExtra < extra && porResto.length > 0) {
+          porResto[idx % porResto.length].entero++;
+          asignadosExtra++;
+          idx++;
+        }
+        candidatos.forEach(function(c) {
+          if (c.clave === "E") nE += c.entero;
+          else if (c.clave === "C") nC += c.entero;
+          else if (c.clave === "I") nI += c.entero;
+        });
+      }
+      // Si no hay ningún estudiante evaluado (caso extremo), no hay a quién
+      // repartirle el cupo sobrante; simplemente se usan menos grupos.
     }
 
     // ── 5. Asignar grupos concretos a cada partición ─────────────────────────
     // Los grupos ya vienen con nombres semánticos desde construirGruposOperativos.
     // Los distribuimos en el orden E → EC → C → CI → I.
     // Si la partición calcula más grupos de los disponibles, comprimir eliminando
-    // primero grupos extra de C, luego mezclas, para respetar numGrupos exacto.
-
-    let nE  = gEpuroFinal;
-    let nEC = gEC;
-    let nC  = gCpuroFinal + gCExtra;
-    let nCI = gCI;
-    let nI  = gIpuroFinal;
+    // primero mezclas, luego grupos puros, para respetar numGrupos exacto.
 
     const totalCalculado = nE + nEC + nC + nCI + nI;
     if (totalCalculado > numGrupos) {
       let exceso = totalCalculado - numGrupos;
-      const qC  = Math.min(gCExtra, exceso); nC  -= qC;  exceso -= qC;
-      const qCI = Math.min(nCI,     exceso); nCI -= qCI; exceso -= qCI;
-      const qEC = Math.min(nEC,     exceso); nEC -= qEC; exceso -= qEC;
-      const qCp = Math.min(nC,      exceso); nC  -= qCp; exceso -= qCp;
-      const qI  = Math.min(nI,      exceso); nI  -= qI;  exceso -= qI;
-      const qE  = Math.min(nE,      exceso); nE  -= qE;
+      const qCI = Math.min(nCI, exceso); nCI -= qCI; exceso -= qCI;
+      const qEC = Math.min(nEC, exceso); nEC -= qEC; exceso -= qEC;
+      const qCp = Math.min(nC,  exceso); nC  -= qCp; exceso -= qCp;
+      const qI  = Math.min(nI,  exceso); nI  -= qI;  exceso -= qI;
+      const qE  = Math.min(nE,  exceso); nE  -= qE;
     }
     const suma = nE + nEC + nC + nCI + nI;
     if (suma < numGrupos) nC += (numGrupos - suma);
