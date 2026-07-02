@@ -3436,15 +3436,31 @@
 
     <div class="bloque-formulario" style="margin-top:24px;">
       <h3>Estudiantes inscritos</h3>
-      <p class="nota">El listado se carga automáticamente según su alcance (su regional, o todo el país si es administrador). Puede acotar por ID, nombre o distrito.</p>
+      <p class="nota">El listado se carga automáticamente según su alcance (su regional, o todo el país si es administrador). Puede acotar por regional, distrito, sede, ID o nombre.</p>
+      <div class="form-grid-3">
+        <div>
+          <label for="inscritosRegional">Regional (opcional)</label>
+          <select id="inscritosRegional" onchange="cargarDistritosFiltroInscritos()">
+            <option value="">Todas las regionales</option>
+          </select>
+        </div>
+        <div>
+          <label for="inscritosDistrito">Distrito (opcional)</label>
+          <select id="inscritosDistrito" onchange="cargarSedesFiltroInscritos()">
+            <option value="">Todos los distritos</option>
+          </select>
+        </div>
+        <div>
+          <label for="inscritosSede">Centro sede (opcional)</label>
+          <select id="inscritosSede" onchange="buscarInscritosLista()">
+            <option value="">Todas las sedes</option>
+          </select>
+        </div>
+      </div>
       <div class="form-grid-3">
         <div>
           <label for="inscritosTexto">ID o nombre (opcional)</label>
           <input type="text" id="inscritosTexto" placeholder="Ej. 33578410 o Juan Pérez" autocomplete="off">
-        </div>
-        <div>
-          <label for="inscritosDistrito">Distrito (opcional)</label>
-          <input type="text" id="inscritosDistrito" placeholder="Ej. 0101 - Pedernales" autocomplete="off">
         </div>
         <div style="display:flex; align-items:flex-end; gap:8px;">
           <button type="button" onclick="buscarInscritosLista()">Buscar</button>
@@ -3566,7 +3582,7 @@
     <div class="encabezado-modulo">
       <div>
         <h2>Evaluaciones de estudiantes</h2>
-        <p class="nota">Registro integrado de pruebas de Lengua Española y Matemática.</p>
+        <p class="nota">Registro integrado de pruebas de Lengua Española y Matemática. Los resultados se guardan directamente en Supabase.</p>
       </div>
       <div class="acciones-modulo">
         <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
@@ -10058,13 +10074,99 @@
 
   /* ============================ MÓDULO INSCRIPCIÓN ======================== */
 
+  let sedesInscripcion = [];
+
+  // Carga las sedes dentro del alcance del usuario (mismo mecanismo que ya usa
+  // Acompañamientos) y llena el selector de regionales del filtro de inscritos.
+  function cargarFiltrosInscritos() {
+    obtenerSedesGlobales(function(sedes) {
+      sedesInscripcion = filtrarSedesSegunVistaActual(sedes || []);
+      llenarSelectorRegionalesInscritos(sedesInscripcion);
+    });
+  }
+
+  function llenarSelectorRegionalesInscritos(sedes) {
+    const selectRegional = document.getElementById("inscritosRegional");
+    const selectDistrito = document.getElementById("inscritosDistrito");
+    const selectSede = document.getElementById("inscritosSede");
+    if (!selectRegional || !selectDistrito || !selectSede) return;
+
+    selectRegional.innerHTML = '<option value="">Todas las regionales</option>';
+    selectDistrito.innerHTML = '<option value="">Todos los distritos</option>';
+    selectSede.innerHTML = '<option value="">Todas las sedes</option>';
+
+    const regionales = obtenerValoresUnicos(sedes, "regional");
+    regionales.forEach(function(regional) {
+      const option = document.createElement("option");
+      option.value = regional;
+      option.textContent = regional;
+      selectRegional.appendChild(option);
+    });
+
+    // Si el alcance del usuario cae dentro de una sola regional (técnico
+    // regional, técnico distrital o coordinador de sede), se preselecciona
+    // para no obligarlo a elegirla cada vez que entra al módulo.
+    if (regionales.length === 1) {
+      selectRegional.value = regionales[0];
+      cargarDistritosFiltroInscritos(true);
+    }
+  }
+
+  function cargarDistritosFiltroInscritos(sinBuscarAun) {
+    const regionalSeleccionada = document.getElementById("inscritosRegional").value;
+    const selectDistrito = document.getElementById("inscritosDistrito");
+    const selectSede = document.getElementById("inscritosSede");
+
+    selectDistrito.innerHTML = '<option value="">Todos los distritos</option>';
+    selectSede.innerHTML = '<option value="">Todas las sedes</option>';
+
+    const sedesFiltradas = regionalSeleccionada
+      ? sedesInscripcion.filter(function(s) { return normalizarTexto(s.regional) === normalizarTexto(regionalSeleccionada); })
+      : sedesInscripcion;
+
+    const distritos = obtenerValoresUnicos(sedesFiltradas, "distrito");
+    distritos.forEach(function(distrito) {
+      const option = document.createElement("option");
+      option.value = distrito;
+      option.textContent = distrito;
+      selectDistrito.appendChild(option);
+    });
+
+    if (distritos.length === 1) {
+      selectDistrito.value = distritos[0];
+      cargarSedesFiltroInscritos(sinBuscarAun);
+    } else if (!sinBuscarAun) {
+      buscarInscritosLista();
+    }
+  }
+
+  function cargarSedesFiltroInscritos(sinBuscarAun) {
+    const regionalSeleccionada = document.getElementById("inscritosRegional").value;
+    const distritoSeleccionado = document.getElementById("inscritosDistrito").value;
+    const selectSede = document.getElementById("inscritosSede");
+
+    selectSede.innerHTML = '<option value="">Todas las sedes</option>';
+
+    const sedesFiltradas = sedesInscripcion
+      .filter(function(s) { return !regionalSeleccionada || normalizarTexto(s.regional) === normalizarTexto(regionalSeleccionada); })
+      .filter(function(s) { return !distritoSeleccionado || normalizarTexto(s.distrito) === normalizarTexto(distritoSeleccionado); });
+
+    const nombresSedes = obtenerValoresUnicos(sedesFiltradas, "centroSede");
+    nombresSedes.forEach(function(sede) {
+      const option = document.createElement("option");
+      option.value = sede;
+      option.textContent = sede;
+      selectSede.appendChild(option);
+    });
+
+    if (!sinBuscarAun) buscarInscritosLista();
+  }
+
   function puedeInscribirEstudiantes() {
     const rol = normalizarRol(usuarioSesion && usuarioSesion.rol);
     return rol === "administrador" || rol === "tecnico regional" ||
       rol === "tecnico distrital" || rol === "coordinador sede";
   }
-
-  let sedesInscripcion = [];
 
   function abrirModuloInscripcion() {
     if (!puedeInscribirEstudiantes()) {
@@ -10074,7 +10176,10 @@
     mostrarModulo("moduloInscripcion");
     limpiarInscripcion();
     document.getElementById("inscritosTexto").value = "";
+    document.getElementById("inscritosRegional").value = "";
     document.getElementById("inscritosDistrito").value = "";
+    document.getElementById("inscritosSede").value = "";
+    cargarFiltrosInscritos();
 
     const inputArchivo = document.getElementById("inscripcionMasivaArchivo");
     if (inputArchivo) inputArchivo.value = "";
@@ -10233,7 +10338,9 @@
 
   function cargarPaginaInscritos() {
     const texto = document.getElementById("inscritosTexto").value.trim();
-    const distrito = document.getElementById("inscritosDistrito").value.trim();
+    const regional = document.getElementById("inscritosRegional").value;
+    const distrito = document.getElementById("inscritosDistrito").value;
+    const centroSede = document.getElementById("inscritosSede").value;
     const mensaje = document.getElementById("mensajeInscritos");
     mensaje.className = "mensaje";
     mensaje.textContent = "Cargando...";
@@ -10242,7 +10349,8 @@
 
     llamarBackend(
       {
-        accion: "buscarInscritos", cedula: cedula, texto: texto, distrito: distrito,
+        accion: "buscarInscritos", cedula: cedula, texto: texto,
+        regional: regional, distrito: distrito, centroSede: centroSede,
         offset: inscritosOffsetActual, limite: INSCRITOS_PAGINA
       },
       function(resp) {
@@ -10334,7 +10442,9 @@
   // se ven en pantalla, así lo exportado coincide con lo filtrado.
   function obtenerInscritosCompletosParaExportar(callback) {
     const texto = document.getElementById("inscritosTexto").value.trim();
-    const distrito = document.getElementById("inscritosDistrito").value.trim();
+    const regional = document.getElementById("inscritosRegional").value;
+    const distrito = document.getElementById("inscritosDistrito").value;
+    const centroSede = document.getElementById("inscritosSede").value;
     const mensaje = document.getElementById("mensajeInscritos");
     mensaje.className = "mensaje";
     mensaje.textContent = "Preparando exportación...";
@@ -10342,7 +10452,7 @@
     const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
 
     llamarBackend(
-      { accion: "buscarInscritos", cedula: cedula, texto: texto, distrito: distrito, todo: "1" },
+      { accion: "buscarInscritos", cedula: cedula, texto: texto, regional: regional, distrito: distrito, centroSede: centroSede, todo: "1" },
       function(resp) {
         if (!resp || !resp.ok) {
           mensaje.className = "mensaje error";
