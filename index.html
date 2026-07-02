@@ -9422,12 +9422,16 @@
       });
       const grupos = gruposProvisionales.map(function(gProv) { return mapaRenombrado[gProv]; });
 
+      // El nombre semántico (Explorador, Creador-1...) ES ahora el nombre que
+      // se guarda en la base de datos; el backend ya no lo vuelve a calcular
+      // a partir de un identificador provisional ("Grupo 1"), así que el
+      // mapa apunta cada nombre a sí mismo.
       mapaGrupoSemanticoABackend = {};
       mapaGrupoBackendASemantico = {};
-      gruposProvisionales.forEach(function(gProv, i) {
+      gruposProvisionales.forEach(function(gProv) {
         const nf = mapaRenombrado[gProv];
-        mapaGrupoSemanticoABackend[normalizarTexto(nf)]             = gruposBackend[i];
-        mapaGrupoBackendASemantico[normalizarTexto(gruposBackend[i])] = nf;
+        mapaGrupoSemanticoABackend[normalizarTexto(nf)] = nf;
+        mapaGrupoBackendASemantico[normalizarTexto(nf)] = nf;
       });
 
       const centroSedeAuto = (datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede)
