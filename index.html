@@ -9452,204 +9452,49 @@
         - Cada grupo solo puede contener niveles ADYACENTES:
             · Explorador + Creador   → permitido solo si es inevitable
             · Creador   + Innovador  → permitido solo si es inevitable
-            · Explorador + Innovador → PROHIBIDO siempre
-            · Un solo nivel          → PREFERIDO (grupos puros primero)
-        - Máximo 25 estudiantes por grupo.
-        - PRIORIDAD: grupos puros (E, C, I) antes que mezclas.
-          Solo se mezcla el sobrante que no llena un grupo entero por sí solo.
+            · Explorador + Innovador → PROHIBIDO salvo que no exista ninguna
+              otra forma de acomodar a todos en los grupos disponibles.
+            · Un solo nivel          → SIEMPRE preferido.
+        - Máximo 25 estudiantes por grupo (se excede solo si de verdad no
+          alcanzan los grupos disponibles).
 
       ESTRATEGIA:
-        1. Separar en bandas E, C, I (Sin dato → Creador).
-        2. Calcular grupos puros para cada banda.
-           - Si la banda llena exactamente sus grupos → puramente puros.
-           - Si sobran estudiantes que no llenan otro grupo, son "sobrantes".
-        3. Agrupar los sobrantes:
-           - Sobrante E + sobrante C → van a un grupo EC mixto.
-           - Sobrante C + sobrante I → van a un grupo CI mixto.
-           - Si hay sobrante de los tres: E+C en un grupo, I en otro CI si cabe.
-           - Si el sobrante mixto supera 25, crear grupos adicionales de mezcla.
-        4. Asignar grupos concretos y repartir en serpentina.
+        1. Separar en bandas E, C, I (Sin dato ≡ Creador).
+        2. Si hay grupos suficientes para que cada banda tenga su propio grupo
+           (al menos 1 por banda, y suficientes para no pasar de 25 por
+           grupo), NO se mezcla nada: el cupo se reparte entre las bandas
+           proporcional a su tamaño, para repartir mejor a las bandas grandes
+           en varios grupos puros en vez de amontonarlos en uno solo.
+        3. Si NO alcanzan los grupos para separar a todos, se fusionan las
+           bandas vecinas (E con C, o C con I — nunca E con I directamente,
+           salvo que ya no quede otra alternativa) empezando por el par que
+           menos estudiantes combine, hasta que quepan en los grupos
+           disponibles. Los grupos resultantes se reparten entre esos bloques
+           proporcional a su tamaño.
+        4. Dentro de cada bloque, los estudiantes se reparten en serpentina
+           entre sus grupos, alternando de mayor a menor puntaje para
+           equilibrar el nivel dentro de cada grupo.
     */
 
     const MAX_POR_GRUPO = 25;
     const numGrupos = grupos.length;
 
-    // ── 1. Separar por nivel de Lengua ──────────────────────────────────────
-    const bandaE  = [];
-    const bandaC  = [];
-    const bandaI  = [];
-    const bandaSD = [];
+    const asignacion = {};
+    grupos.forEach(function(g) { asignacion[g] = []; });
+    if (!numGrupos || !estudiantes.length) return asignacion;
 
+    // ── 1. Separar por nivel de Lengua ──────────────────────────────────────
+    const bandaE = [], bandaC = [], bandaI = [];
     estudiantes.forEach(function(e) {
       const n = normalizarTexto(e.nivelLengua).toLowerCase();
       if      (n === "explorador") bandaE.push(e);
-      else if (n === "creador")    bandaC.push(e);
       else if (n === "innovador")  bandaI.push(e);
-      else                         bandaSD.push(e);
+      else                         bandaC.push(e); // Creador y sin dato ≡ Creador
     });
 
     function ordenarBanda(arr) {
-      return arr.slice().sort(function(a, b) {
-        return puntajeEstudiante(b) - puntajeEstudiante(a);
-      });
+      return arr.slice().sort(function(a, b) { return puntajeEstudiante(b) - puntajeEstudiante(a); });
     }
-
-    const E = ordenarBanda(bandaE);
-    const C = ordenarBanda(bandaC.concat(bandaSD)); // Sin dato ≡ Creador
-    const I = ordenarBanda(bandaI);
-
-    const totE = E.length, totC = C.length, totI = I.length;
-    const totTotal = totE + totC + totI;
-
-    // ── 2. Calcular grupos PUROS para cada banda ─────────────────────────────
-    // Grupos completos de 25 que puede formar cada banda sola
-    const gEpuro = Math.floor(totE / MAX_POR_GRUPO);
-    const gCpuro = Math.floor(totC / MAX_POR_GRUPO);
-    const gIpuro = Math.floor(totI / MAX_POR_GRUPO);
-
-    // Sobrantes que no llenan un grupo completo
-    let sobranteE = totE - gEpuro * MAX_POR_GRUPO;
-    let sobranteC = totC - gCpuro * MAX_POR_GRUPO;
-    let sobranteI = totI - gIpuro * MAX_POR_GRUPO;
-
-    // ── 3. Resolver sobrantes con mezcla mínima ──────────────────────────────
-    /*
-      Orden de prioridad para absorber sobrantes:
-        a) Si sobranteE + sobranteC <= MAX → un grupo EC mixto.
-           Si excede MAX, crear grupos EC adicionales.
-        b) Si sobranteI + sobranteC_restante <= MAX → un grupo CI mixto.
-        c) Si solo sobra uno de los tres → añadir al grupo puro correspondiente
-           (el último grupo de esa banda tendrá menos de 25, lo cual es válido).
-
-      Nota: "grupo puro" puede tener < 25 estudiantes; lo importante es que
-      todos son del mismo nivel. Eso es preferible a mezclar.
-    */
-
-    // Cuántos estudiantes de E van a grupos puros vs mezcla
-    let eEnPuro  = gEpuro * MAX_POR_GRUPO + sobranteE; // todos E van a grupos E
-    let cEnPuro  = gCpuro * MAX_POR_GRUPO;              // C completos en puros
-    let iEnPuro  = gIpuro * MAX_POR_GRUPO + sobranteI;  // todos I van a grupos I
-    let cEnMezcla = sobranteC;                           // sobrante C va a mezcla
-
-    // Grupos de mezcla necesarios para el sobrante C
-    // El sobrante C se distribuye entre grupos EC y CI según haya sobrante E/I
-    let cParaEC = 0, cParaCI = 0;
-    let gEC = 0, gCI = 0;
-
-    if (sobranteE > 0 && sobranteC > 0) {
-      // Mezclar sobrante E con parte del sobrante C
-      const totalEC = sobranteE + Math.min(sobranteC, MAX_POR_GRUPO - sobranteE);
-      cParaEC = Math.min(sobranteC, MAX_POR_GRUPO - sobranteE);
-      gEC = Math.ceil((sobranteE + cParaEC) / MAX_POR_GRUPO);
-    } else if (sobranteE > 0) {
-      // Solo sobrante E, sin C sobrante: va a su propio grupo (incompleto pero puro)
-      // ya está contado en eEnPuro
-      gEC = 0;
-    }
-
-    const cRestante = sobranteC - cParaEC;
-
-    if (sobranteI > 0 && cRestante > 0) {
-      cParaCI = Math.min(cRestante, MAX_POR_GRUPO - sobranteI);
-      gCI = Math.ceil((sobranteI + cParaCI) / MAX_POR_GRUPO);
-    } else if (sobranteI > 0) {
-      gCI = 0;
-    }
-
-    const cRestante2 = cRestante - cParaCI;
-    // Si aún queda sobrante C sin mezclar, añadirlo al último grupo C puro
-    // (ese grupo tendrá < 25 pero será puro)
-    const cTotalPuro = cEnPuro + cRestante2;
-    const gCpuroFinal = Math.ceil(cTotalPuro / MAX_POR_GRUPO);
-
-    // Si E/I no tienen sobrante pero sí tienen estudiantes → grupo puro incompleto
-    const gEpuroFinal = sobranteE > 0 && gEC === 0
-      ? Math.ceil(totE / MAX_POR_GRUPO)   // sobrante E va a su propio grupo puro
-      : gEpuro;
-    const gIpuroFinal = sobranteI > 0 && gCI === 0
-      ? Math.ceil(totI / MAX_POR_GRUPO)
-      : gIpuro;
-
-    // ── 4. Verificar que tenemos suficientes grupos ──────────────────────────
-    let totalNecesario = gEpuroFinal + gEC + gCpuroFinal + gCI + gIpuroFinal;
-
-    let nE  = gEpuroFinal;
-    let nEC = gEC;
-    let nC  = gCpuroFinal;
-    let nCI = gCI;
-    let nI  = gIpuroFinal;
-
-    // Si hay más grupos disponibles que los necesarios, ese cupo sobrante no
-    // puede quedar etiquetado como "Creador" sin más: si no hay ningún
-    // estudiante Creador, ese grupo saldría vacío (y con nombre duplicado,
-    // porque varios grupos vacíos comparten la misma etiqueta). En vez de eso,
-    // el cupo sobrante se reparte, proporcional al tamaño de cada banda, entre
-    // los niveles que sí tienen estudiantes: así un solo nivel numeroso (p.ej.
-    // 11 Innovadores con 3 grupos disponibles) se divide en varios grupos
-    // reales en vez de dejar 2 de los 3 completamente vacíos.
-    if (totalNecesario < numGrupos) {
-      let extra = numGrupos - totalNecesario;
-      const candidatos = [];
-      if (totE > 0) candidatos.push({ clave: "E", total: totE, entero: 0 });
-      if (totC > 0) candidatos.push({ clave: "C", total: totC, entero: 0 });
-      if (totI > 0) candidatos.push({ clave: "I", total: totI, entero: 0 });
-      const totalCandidatos = candidatos.reduce(function(s, c) { return s + c.total; }, 0);
-
-      if (totalCandidatos > 0) {
-        // Reparto proporcional por método de mayores restos, para no dejar
-        // cupo sin asignar por errores de redondeo.
-        candidatos.forEach(function(c) {
-          const cuota = (c.total / totalCandidatos) * extra;
-          c.entero = Math.floor(cuota);
-          c.resto = cuota - c.entero;
-        });
-        let asignadosExtra = candidatos.reduce(function(s, c) { return s + c.entero; }, 0);
-        const porResto = candidatos.slice().sort(function(a, b) { return b.resto - a.resto; });
-        let idx = 0;
-        while (asignadosExtra < extra && porResto.length > 0) {
-          porResto[idx % porResto.length].entero++;
-          asignadosExtra++;
-          idx++;
-        }
-        candidatos.forEach(function(c) {
-          if (c.clave === "E") nE += c.entero;
-          else if (c.clave === "C") nC += c.entero;
-          else if (c.clave === "I") nI += c.entero;
-        });
-      }
-      // Si no hay ningún estudiante evaluado (caso extremo), no hay a quién
-      // repartirle el cupo sobrante; simplemente se usan menos grupos.
-    }
-
-    // ── 5. Asignar grupos concretos a cada partición ─────────────────────────
-    // Los grupos ya vienen con nombres semánticos desde construirGruposOperativos.
-    // Los distribuimos en el orden E → EC → C → CI → I.
-    // Si la partición calcula más grupos de los disponibles, comprimir eliminando
-    // primero mezclas, luego grupos puros, para respetar numGrupos exacto.
-
-    const totalCalculado = nE + nEC + nC + nCI + nI;
-    if (totalCalculado > numGrupos) {
-      let exceso = totalCalculado - numGrupos;
-      const qCI = Math.min(nCI, exceso); nCI -= qCI; exceso -= qCI;
-      const qEC = Math.min(nEC, exceso); nEC -= qEC; exceso -= qEC;
-      const qCp = Math.min(nC,  exceso); nC  -= qCp; exceso -= qCp;
-      const qI  = Math.min(nI,  exceso); nI  -= qI;  exceso -= qI;
-      const qE  = Math.min(nE,  exceso); nE  -= qE;
-    }
-    const suma = nE + nEC + nC + nCI + nI;
-    if (suma < numGrupos) nC += (numGrupos - suma);
-
-    const particionGrupos = { E: [], EC: [], C: [], CI: [], I: [] };
-    let gi = 0;
-    for (let k = 0; k < nE;  k++) particionGrupos.E.push(grupos[gi++]);
-    for (let k = 0; k < nEC; k++) particionGrupos.EC.push(grupos[gi++]);
-    for (let k = 0; k < nC;  k++) particionGrupos.C.push(grupos[gi++]);
-    for (let k = 0; k < nCI; k++) particionGrupos.CI.push(grupos[gi++]);
-    for (let k = 0; k < nI;  k++) particionGrupos.I.push(grupos[gi++]);
-
-    // ── 6. Repartir estudiantes en serpentina ────────────────────────────────
-    const asignacion = {};
-    grupos.forEach(function(g) { asignacion[g] = []; });
 
     function repartirSerpentina(listaEstudiantes, listaGrupos) {
       if (!listaGrupos.length || !listaEstudiantes.length) return;
@@ -9668,48 +9513,119 @@
       });
     }
 
-    function intercalarDos(listaA, listaB, listaGrupos) {
-      if (!listaGrupos.length) return;
-      const combinado = [];
-      const maxLen = Math.max(listaA.length, listaB.length);
-      for (let k = 0; k < maxLen; k++) {
-        if (k < listaA.length) combinado.push(listaA[k]);
-        if (k < listaB.length) combinado.push(listaB[k]);
+    // Reparto proporcional (método de mayores restos) de "cupo" grupos entre
+    // una lista de bloques, dándole al menos 1 grupo a cada uno.
+    function repartirCupoProporcional(bloques, cupo) {
+      bloques.forEach(function(b) { b.grupos = 1; });
+      let usados = bloques.length;
+      let extra = cupo - usados;
+      if (extra > 0) {
+        const totalPeso = bloques.reduce(function(s, b) { return s + b.lista.length; }, 0) || 1;
+        bloques.forEach(function(b) {
+          const cuota = (b.lista.length / totalPeso) * extra;
+          b.entero = Math.floor(cuota);
+          b.resto = cuota - b.entero;
+        });
+        let asignadosExtra = bloques.reduce(function(s, b) { return s + b.entero; }, 0);
+        const porResto = bloques.slice().sort(function(a, b) { return b.resto - a.resto; });
+        let idx = 0;
+        while (asignadosExtra < extra && porResto.length > 0) {
+          porResto[idx % porResto.length].entero++;
+          asignadosExtra++;
+          idx++;
+        }
+        bloques.forEach(function(b) { b.grupos += b.entero || 0; });
+      } else if (extra < 0) {
+        // No debería pasar (cupo >= bloques.length siempre que se llame a
+        // esta función), pero por seguridad se recorta empezando por el
+        // bloque con más grupos.
+        let faltan = -extra;
+        const porGrupos = bloques.slice().sort(function(a, b) { return b.grupos - a.grupos; });
+        let idx = 0;
+        while (faltan > 0 && porGrupos.length) {
+          if (porGrupos[idx % porGrupos.length].grupos > 1) { porGrupos[idx % porGrupos.length].grupos--; faltan--; }
+          idx++;
+          if (idx > 10000) break;
+        }
       }
-      repartirSerpentina(combinado, listaGrupos);
     }
 
-    // Distribuir E puros
-    // Si gEC > 0: los primeros (gEpuroFinal * MAX) van a grupos E, el sobrante a EC
-    const eEnGruposPuros = gEpuroFinal * MAX_POR_GRUPO;
-    repartirSerpentina(E.slice(0, eEnGruposPuros), particionGrupos.E);
-    const eSobrante = E.slice(eEnGruposPuros); // sobrante E para grupos EC
+    const E = ordenarBanda(bandaE), C = ordenarBanda(bandaC), I = ordenarBanda(bandaI);
 
-    // Distribuir C puros (grupos enteros + sobrante C sin mezcla)
-    const cEnGruposPuros = cTotalPuro; // todos los C que van a grupos puros
-    repartirSerpentina(C.slice(0, cEnGruposPuros), particionGrupos.C);
+    const bandasActivas = [];
+    if (E.length) bandasActivas.push({ clave: "E", lista: E });
+    if (C.length) bandasActivas.push({ clave: "C", lista: C });
+    if (I.length) bandasActivas.push({ clave: "I", lista: I });
+    if (!bandasActivas.length) return asignacion;
 
-    // Distribuir I puros
-    const iEnGruposPuros = gIpuroFinal * MAX_POR_GRUPO;
-    repartirSerpentina(I.slice(0, iEnGruposPuros), particionGrupos.I);
-    const iSobrante = I.slice(iEnGruposPuros);
+    // Mínimo de grupos que necesitaría cada banda para no pasar de 25 por grupo.
+    bandasActivas.forEach(function(b) { b.minGrupos = Math.max(1, Math.ceil(b.lista.length / MAX_POR_GRUPO)); });
+    const minTotal = bandasActivas.reduce(function(s, b) { return s + b.minGrupos; }, 0);
 
-    // Distribuir mezclas (solo si hay grupos EC/CI)
-    const cParaECArr = C.slice(cTotalPuro, cTotalPuro + cParaEC);
-    intercalarDos(eSobrante, cParaECArr, particionGrupos.EC);
+    let gi = 0;
 
-    const cParaCIArr = C.slice(cTotalPuro + cParaEC, cTotalPuro + cParaEC + cParaCI);
-    intercalarDos(iSobrante, cParaCIArr, particionGrupos.CI);
+    if (numGrupos >= minTotal) {
+      // ── HAY CUPO PARA QUE CADA NIVEL TENGA SU(S) PROPIO(S) GRUPO(S) PURO(S) ──
+      // Se le da a cada banda su mínimo y el cupo sobrante se reparte
+      // proporcional a su tamaño, para que un nivel numeroso (p.ej. 11
+      // Innovadores con cupo de sobra) se reparta en más de un grupo puro en
+      // vez de quedar solo con el mínimo mientras otro nivel se queda vacío.
+      const bloques = bandasActivas.map(function(b) { return { lista: b.lista, minGrupos: b.minGrupos }; });
+      let extra = numGrupos - minTotal;
+      if (extra > 0) {
+        const totalPeso = bloques.reduce(function(s, b) { return s + b.lista.length; }, 0);
+        bloques.forEach(function(b) {
+          const cuota = (b.lista.length / totalPeso) * extra;
+          b.entero = Math.floor(cuota);
+          b.resto = cuota - b.entero;
+        });
+        let asignadosExtra = bloques.reduce(function(s, b) { return s + b.entero; }, 0);
+        const porResto = bloques.slice().sort(function(a, b) { return b.resto - a.resto; });
+        let idx = 0;
+        while (asignadosExtra < extra && porResto.length > 0) {
+          porResto[idx % porResto.length].entero++;
+          asignadosExtra++;
+          idx++;
+        }
+        bloques.forEach(function(b) { b.minGrupos += b.entero || 0; });
+      }
+      bloques.forEach(function(b) {
+        const gruposBloque = grupos.slice(gi, gi + b.minGrupos);
+        gi += b.minGrupos;
+        repartirSerpentina(b.lista, gruposBloque);
+      });
 
-    // ── Rescate: estudiantes que quedaron sin asignar por compresión de particiones.
-    // Se distribuyen en serpentina entre todos los grupos disponibles.
-    const asignados = new Set();
-    grupos.forEach(function(g) {
-      (asignacion[g] || []).forEach(function(e) { asignados.add(e.idEstudiante); });
-    });
-    const sinAsignar = estudiantes.filter(function(e) { return !asignados.has(e.idEstudiante); });
-    if (sinAsignar.length > 0) {
-      repartirSerpentina(sinAsignar, grupos);
+    } else {
+      // ── CUPO INSUFICIENTE: hay que fusionar niveles adyacentes ───────────────
+      // Se fusiona siempre el par de bloques VECINOS (en el orden E–C–I, así
+      // que Explorador solo se fusiona con Creador, e Innovador solo con
+      // Creador) con menos estudiantes combinados, hasta que la cantidad de
+      // bloques quepa en los grupos disponibles. Solo si ya no queda ninguna
+      // banda intermedia (C) que actúe de puente, un bloque termina
+      // mezclando Explorador con Innovador directamente — y eso solo ocurre
+      // cuando de verdad no hay otra forma de acomodar a todos.
+      let bloques = bandasActivas.map(function(b) {
+        return { claves: [b.clave], lista: b.lista.slice() };
+      });
+      const orden = { E: 0, C: 1, I: 2 };
+      bloques.sort(function(a, b) { return orden[a.claves[0]] - orden[b.claves[0]]; });
+
+      while (bloques.length > numGrupos && bloques.length > 1) {
+        let mejorIdx = 0, mejorTotal = Infinity;
+        for (let k = 0; k < bloques.length - 1; k++) {
+          const total = bloques[k].lista.length + bloques[k + 1].lista.length;
+          if (total < mejorTotal) { mejorTotal = total; mejorIdx = k; }
+        }
+        const a = bloques[mejorIdx], b = bloques[mejorIdx + 1];
+        bloques.splice(mejorIdx, 2, { claves: a.claves.concat(b.claves), lista: a.lista.concat(b.lista) });
+      }
+
+      repartirCupoProporcional(bloques, numGrupos);
+      bloques.forEach(function(b) {
+        const gruposBloque = grupos.slice(gi, gi + b.grupos);
+        gi += b.grupos;
+        repartirSerpentina(b.lista, gruposBloque);
+      });
     }
 
     return asignacion;
