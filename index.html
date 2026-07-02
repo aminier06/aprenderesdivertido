@@ -9323,11 +9323,22 @@
   function ejecutarAsignacionAutomatica() {
     if (!datosAsignacionEstudiantesGrupos) return;
 
-    const gruposBackend   = datosAsignacionEstudiantesGrupos.grupos     || [];
-    const todosEstudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
+    const gruposBackend = datosAsignacionEstudiantesGrupos.grupos || [];
+
+    // El listado que carga la pantalla puede abarcar todo el distrito (así
+    // el coordinador puede ver y ubicar estudiantes que aún no tienen sede
+    // asignada). Pero la asignación automática arma grupos según la cuota de
+    // UNA sede: si se dejara el listado completo, un estudiante de otra sede
+    // del mismo distrito podría terminar contando para "ya tiene grupo" o
+    // mezclado en un grupo que no es el suyo. Por eso aquí se acota siempre
+    // a la sede operativa actual antes de calcular nada.
+    const centroActual = datosAsignacionEstudiantesGrupos.centroSedeActual || "";
+    const todosEstudiantes = (datosAsignacionEstudiantesGrupos.estudiantes || []).filter(function(e) {
+      return !centroActual || normalizarTexto(e.centroSede).toLowerCase() === normalizarTexto(centroActual).toLowerCase();
+    });
 
     if (!gruposBackend.length)     { alert("No hay grupos disponibles para la sede.");   return; }
-    if (!todosEstudiantes.length)  { alert("No hay estudiantes para asignar.");          return; }
+    if (!todosEstudiantes.length)  { alert("No hay estudiantes para asignar."); return; }
 
     // Separar en tres categorías según evaluación y grupo actual.
     const conEvalSinGrupo = todosEstudiantes.filter(function(e) {
