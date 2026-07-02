@@ -6065,7 +6065,7 @@
     const matrizDiv = document.getElementById("dashboardMatrizResultados");
     if (!matrizDiv) return;
 
-    const niveles = ["Explorador","Creador","Innovador","Otro"];
+    const niveles = ["Explorador","Creador","Innovador"];
     let html = '<table><thead><tr><th>Nivel de desempeño</th><th>Lengua</th><th>%</th><th>Matemática</th><th>%</th></tr></thead><tbody>';
     const totLen = Object.values(len).reduce(function(a, b) { return a + b; }, 0);
     const totMat = Object.values(mat).reduce(function(a, b) { return a + b; }, 0);
