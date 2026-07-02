@@ -2644,7 +2644,7 @@
       <div class="form-grid-3">
         <div>
           <label for="usuarioAdminCedula">Cédula</label>
-          <input type="text" id="usuarioAdminCedula" placeholder="Sin guiones o como aparece en la BD">
+          <input type="text" id="usuarioAdminCedula" placeholder="Sin guiones o como aparece en la BD" oninput="autocompletarNombreUsuarioAdmin()" onblur="autocompletarNombreUsuarioAdmin()">
         </div>
         <div>
           <label for="usuarioAdminNombre">Nombre completo</label>
@@ -11159,6 +11159,42 @@
     html += '</tbody></table>';
     cont.innerHTML = html;
     cont.classList.remove("oculto");
+  }
+
+  let timerAutocompletarCedulaAdmin = null;
+
+  // Autocompleta el nombre buscando en PERSONAL_MINERD por CedulaLimpia (solo
+  // dígitos). Se dispara mientras se digita (cuando ya hay 11 dígitos, largo
+  // normal de una cédula dominicana) y también al salir del campo, por si la
+  // cédula tiene otra longitud. No hace nada si el campo está deshabilitado
+  // (modo edición: la cédula ya viene fija y no tiene sentido buscarla de nuevo).
+  function autocompletarNombreUsuarioAdmin() {
+    const inputCedula = document.getElementById("usuarioAdminCedula");
+    const inputNombre = document.getElementById("usuarioAdminNombre");
+    if (!inputCedula || !inputNombre || inputCedula.disabled) return;
+
+    const cedula = inputCedula.value.replace(/\D/g, "");
+    if (cedula.length < 11) return;
+
+    clearTimeout(timerAutocompletarCedulaAdmin);
+    timerAutocompletarCedulaAdmin = setTimeout(function() {
+      const cedulaAdmin = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+      const mensaje = document.getElementById("mensajeUsuarioAdmin");
+
+      llamarBackend(
+        { accion: "buscarPersonalPorCedula", cedulaAdmin: cedulaAdmin, cedula: cedula },
+        function(resp) {
+          if (!resp || !resp.ok) return; // fallo silencioso: se puede digitar el nombre a mano
+          if (resp.encontrado && resp.nombre) {
+            inputNombre.value = resp.nombre;
+            if (mensaje) { mensaje.textContent = ""; mensaje.className = "mensaje"; }
+          } else if (mensaje && !inputNombre.value.trim()) {
+            mensaje.textContent = "No se encontró esa cédula en PERSONAL_MINERD. Digite el nombre manualmente.";
+            mensaje.className = "mensaje";
+          }
+        }
+      );
+    }, 300);
   }
 
   function limpiarFormularioUsuarioAdmin() {
