@@ -8963,7 +8963,6 @@
 
     const sede = datosAsignacionEstudiantesGrupos.sede || {};
     const grupos = datosAsignacionEstudiantesGrupos.grupos || [];
-    const gruposEsperados = Number(datosAsignacionEstudiantesGrupos.gruposEsperados || grupos.length || 0);
     const estudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
 
     const total = estudiantes.length;
@@ -8977,7 +8976,7 @@
       <div class="dato-asignacion"><span>Regional</span><strong>${escapeHtml(sede.regional || usuarioActual.regional || "")}</strong></div>
       <div class="dato-asignacion"><span>Distrito</span><strong>${escapeHtml(sede.distrito || usuarioActual.distrito || "")}</strong></div>
       <div class="dato-asignacion"><span>Centro sede</span><strong>${escapeHtml(sede.centroSede || usuarioActual.centroSede || "")}</strong></div>
-      <div class="dato-asignacion"><span>Grupos</span><strong>${escapeHtml(grupos.length ? grupos.map(grupoLegible).join(", ") : (gruposEsperados ? (gruposEsperados + " por formar segun cuota") : "No definidos"))}</strong></div>
+      <div class="dato-asignacion"><span>Grupos disponibles</span><strong>${escapeHtml(construirGruposOperativos(grupos.length).join(", ")) || "No definidos"}</strong></div>
       <div class="dato-asignacion"><span>Estudiantes</span><strong>${total}</strong></div>
       <div class="dato-asignacion"><span>Asignados</span><strong id="totalEstudiantesAsignados">${asignados}</strong></div>
       <div class="dato-asignacion"><span>Sin asignar</span><strong id="totalEstudiantesSinAsignar">${sinAsignar}</strong></div>
@@ -9081,7 +9080,6 @@
     // Calcular moda por grupo (misma lógica que en ejecutarAsignacionAutomatica)
     const NIVEL_JERARQUIA_R = { innovador: 3, creador: 2, explorador: 1 };
     const NOMBRE_CATEGORIA_R = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
-    const NOMBRE_CATEGORIA_NUM_R = { explorador: "Explorador", creador: "Creador", innovador: "Innovador" };
 
     function modaGrupoR(lista) {
       const cnt = { explorador: 0, creador: 0, innovador: 0 };
@@ -9101,7 +9099,7 @@
       const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
       // Si no hay estudiantes asignados aún, usar posición como fallback
       const base = lista.length > 0
-        ? modaGrupoR(lista)
+        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
         : construirGruposOperativos(grupos.length)[grupos.indexOf(g)] || "Creadores";
       cuentaBaseR[base] = (cuentaBaseR[base] || 0) + 1;
     });
@@ -9113,12 +9111,11 @@
     grupos.forEach(function(g) {
       const lista = estudiantesPorGrupo[normalizarTexto(g)] || [];
       const idx = grupos.indexOf(g);
-      const moda = lista.length > 0 ? modaGrupoR(lista) : "";
-      const base = moda ? (NOMBRE_CATEGORIA_R[moda] || "Creadores") : (construirGruposOperativos(grupos.length)[idx] || "Creadores");
-      const baseNum = moda ? (NOMBRE_CATEGORIA_NUM_R[moda] || "Creador") : base;
-      const keyConteo = moda || base;
-      contadorBaseR[keyConteo] = (contadorBaseR[keyConteo] || 0) + 1;
-      const nombreSem = cuentaBaseR[keyConteo] === 1 ? base : baseNum + "-" + contadorBaseR[keyConteo];
+      const base = lista.length > 0
+        ? (NOMBRE_CATEGORIA_R[modaGrupoR(lista)] || "Creadores")
+        : (construirGruposOperativos(grupos.length)[idx] || "Creadores");
+      contadorBaseR[base] = (contadorBaseR[base] || 0) + 1;
+      const nombreSem = cuentaBaseR[base] === 1 ? base : base + "-" + contadorBaseR[base];
       mapaSemantico[normalizarTexto(g)] = nombreSem;
       mapaGrupoSemanticoABackend[normalizarTexto(nombreSem)] = g;
       mapaGrupoBackendASemantico[normalizarTexto(g)] = nombreSem;
@@ -9348,10 +9345,9 @@
     if (!datosAsignacionEstudiantesGrupos) return;
 
     const gruposBackend   = datosAsignacionEstudiantesGrupos.grupos     || [];
-    const cantidadGrupos  = gruposBackend.length || Number(datosAsignacionEstudiantesGrupos.gruposEsperados || 0);
     const todosEstudiantes = datosAsignacionEstudiantesGrupos.estudiantes || [];
 
-    if (!cantidadGrupos)           { alert("No hay grupos disponibles para la sede.");   return; }
+    if (!gruposBackend.length)     { alert("No hay grupos disponibles para la sede.");   return; }
     if (!todosEstudiantes.length)  { alert("No hay estudiantes para asignar.");          return; }
 
     // Separar en tres categorías según evaluación y grupo actual.
@@ -9377,11 +9373,10 @@
     // Detectar si es primera o segunda pasada.
     // Es primera pasada si ningún estudiante tiene grupo ya asignado.
     const esPrimeraPasada = yaConGrupo.length === 0;
-    const gruposProvisionales = construirGruposOperativos(cantidadGrupos);
+    const gruposProvisionales = construirGruposOperativos(gruposBackend.length);
 
     const NIVEL_JERARQUIA   = { "innovador": 3, "creador": 2, "explorador": 1 };
     const NOMBRE_CATEGORIA  = { explorador: "Exploradores", creador: "Creadores", innovador: "Innovadores" };
-    const NOMBRE_CATEGORIA_NUM = { explorador: "Explorador", creador: "Creador", innovador: "Innovador" };
 
     function modaGrupo(lista) {
       const cnt = { explorador: 0, creador: 0, innovador: 0 };
@@ -9405,8 +9400,8 @@
       gruposProvisionales.forEach(function(gProv) {
         const lista = resultProv[gProv] || [];
         if (!lista.length) return;
-        const moda = modaGrupo(lista);
-        cuentaBase[moda] = (cuentaBase[moda] || 0) + 1;
+        const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
+        cuentaBase[base] = (cuentaBase[base] || 0) + 1;
       });
 
       const contadorNombre = {};
@@ -9414,13 +9409,11 @@
       gruposProvisionales.forEach(function(gProv) {
         const lista = resultProv[gProv] || [];
         if (!lista.length) { mapaRenombrado[gProv] = gProv; return; }
-        const moda = modaGrupo(lista);
-        const base = NOMBRE_CATEGORIA[moda] || "Creadores";
-        const baseNum = NOMBRE_CATEGORIA_NUM[moda] || "Creador";
-        contadorNombre[moda] = (contadorNombre[moda] || 0) + 1;
-        mapaRenombrado[gProv] = cuentaBase[moda] === 1
+        const base = NOMBRE_CATEGORIA[modaGrupo(lista)] || "Creadores";
+        contadorNombre[base] = (contadorNombre[base] || 0) + 1;
+        mapaRenombrado[gProv] = cuentaBase[base] === 1
           ? base
-          : baseNum + "-" + contadorNombre[moda];
+          : base + "-" + contadorNombre[base];
       });
 
       const resultado = {};
@@ -9433,9 +9426,8 @@
       mapaGrupoBackendASemantico = {};
       gruposProvisionales.forEach(function(gProv, i) {
         const nf = mapaRenombrado[gProv];
-        const llaveBackend = gruposBackend[i] || nf;
-        mapaGrupoSemanticoABackend[normalizarTexto(nf)]             = llaveBackend;
-        mapaGrupoBackendASemantico[normalizarTexto(llaveBackend)] = nf;
+        mapaGrupoSemanticoABackend[normalizarTexto(nf)]             = gruposBackend[i];
+        mapaGrupoBackendASemantico[normalizarTexto(gruposBackend[i])] = nf;
       });
 
       const centroSedeAuto = (datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede)
