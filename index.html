@@ -2921,11 +2921,11 @@
               <div class="db-grafico-titulo" id="tituloGraficoDashboard2">Porcentaje de asistencia por fecha</div>
               <div class="db-canvas-wrap"><canvas id="graficoDashboard2"></canvas></div>
             </div>
-            <div class="db-grafico-card">
+            <div class="db-grafico-card" id="tarjetaGraficoDashboard3">
               <div class="db-grafico-titulo" id="tituloGraficoDashboard3">Estados por fecha</div>
               <div class="db-canvas-wrap"><canvas id="graficoDashboard3"></canvas></div>
             </div>
-            <div class="db-grafico-card">
+            <div class="db-grafico-card" id="tarjetaGraficoDashboard4">
               <div class="db-grafico-titulo" id="tituloGraficoDashboard4">Ausencias recurrentes</div>
               <div class="db-canvas-wrap"><canvas id="graficoDashboard4"></canvas></div>
             </div>
@@ -6001,6 +6001,16 @@
     const gridGraficos = document.getElementById("graficosDashboard");
     if (gridGraficos) gridGraficos.classList.remove("oculto");
 
+    // Este dashboard solo tiene contenido real para 2 de los 4 espacios de
+    // gráfico (Lengua y Matemática). Los otros dos venían mostrando un
+    // recuadro vacío con un título ("Comparación inicial y final",
+    // "Avance por sede") que nunca llegó a tener datos detrás — se ocultan
+    // en vez de dejar espacio desperdiciado sin comunicar nada.
+    const tarjeta3 = document.getElementById("tarjetaGraficoDashboard3");
+    const tarjeta4 = document.getElementById("tarjetaGraficoDashboard4");
+    if (tarjeta3) tarjeta3.classList.add("oculto");
+    if (tarjeta4) tarjeta4.classList.add("oculto");
+
     const colores = {
       Explorador: "#4e79a7",
       Creador:    "#f28e2b",
@@ -6074,6 +6084,14 @@
     const asistencia = document.getElementById("dashboardAsistenciaResultados");
     const matriz = document.getElementById("dashboardMatrizResultados");
     const graficos = document.getElementById("graficosDashboard");
+    // Por defecto, las 4 tarjetas de gráfico están visibles; cada dashboard
+    // que use menos de 4 (como Evaluaciones, con solo 2) las oculta después
+    // de esta limpieza. Esto asegura que un dashboard que sí usa las 4 (como
+    // Asistencia) no quede con tarjetas ocultas de una visita anterior.
+    const tarjeta3 = document.getElementById("tarjetaGraficoDashboard3");
+    const tarjeta4 = document.getElementById("tarjetaGraficoDashboard4");
+    if (tarjeta3) tarjeta3.classList.remove("oculto");
+    if (tarjeta4) tarjeta4.classList.remove("oculto");
 
     destruirGraficosDashboard();
 
@@ -6244,41 +6262,17 @@
   function mostrarMatrizDashboardBasica(tipo) {
     limpiarResultadosDashboard();
 
-    const matriz = document.getElementById("dashboardMatrizResultados");
-    matriz.classList.remove("oculto");
-    mostrarBloqueGraficosDashboard();
-    configurarTitulosGraficosDashboard(tipo);
-    crearGraficoDashboard("graficoDashboard1", "bar", [obtenerNombreDashboard(tipo)], [{ label: "Registros disponibles", data: [0], backgroundColor: "#2563eb", borderRadius: 6 }]);
-    crearGraficoDashboard("graficoDashboard2", "bar", ["Sin datos cargados"], [{ label: "Registros", data: [0], backgroundColor: ["#e2e8f0"], borderRadius: 6 }]);
-    crearGraficoDashboard("graficoDashboard3", "bar", ["Regional", "Distrito", "Sede", "Grupo"], [{ label: "Filtros activos", data: [document.getElementById("regionalDashboard").value ? 1 : 0, document.getElementById("distritoDashboard").value ? 1 : 0, document.getElementById("sedeDashboard").value ? 1 : 0, document.getElementById("grupoDashboard").value ? 1 : 0], backgroundColor: "#0d9488" }]);
-    crearGraficoDashboard("graficoDashboard4", "line", ["Inicio", "Fin"], [{ label: "Periodo seleccionado", data: [document.getElementById("fechaInicioDashboard").value ? 1 : 0, document.getElementById("fechaFinDashboard").value ? 1 : 0], borderColor: "#475569", backgroundColor: "rgba(71,85,105,0.12)", fill: true }]);
-
-    matriz.innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th>Dashboard</th>
-            <th>Regional</th>
-            <th>Distrito</th>
-            <th>Centro sede</th>
-            <th>Grupo</th>
-            <th>Fecha inicial</th>
-            <th>Fecha final</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>${obtenerNombreDashboard(tipo)}</td>
-            <td>${document.getElementById("regionalDashboard").value || "Todos"}</td>
-            <td>${document.getElementById("distritoDashboard").value || "Todos"}</td>
-            <td>${document.getElementById("sedeDashboard").value || "Todas"}</td>
-            <td>${grupoLegible(document.getElementById("grupoDashboard").value) || "Todos"}</td>
-            <td>${document.getElementById("fechaInicioDashboard").value || ""}</td>
-            <td>${document.getElementById("fechaFinDashboard").value || ""}</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
+    // Este dashboard (Acompañamientos o Vista ejecutiva) todavía no tiene
+    // una consulta real detrás. Antes se mostraban 4 gráficas con datos en
+    // cero y una tabla que solo repetía los filtros elegidos — parecía
+    // contenido real, pero no comunicaba nada. Es más honesto decirlo
+    // directamente que simular que hay algo ahí.
+    const msg = document.getElementById("mensajeDashboard");
+    if (msg) {
+      msg.className = "mensaje";
+      msg.textContent = "El dashboard de " + obtenerNombreDashboard(tipo) + " todavía no está implementado. "
+        + "Los filtros de arriba no aplican aquí todavía porque no hay ninguna consulta conectada a este tablero.";
+    }
   }
 
   function obtenerNombreDashboard(tipo) {
