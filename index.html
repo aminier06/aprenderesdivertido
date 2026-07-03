@@ -6340,11 +6340,32 @@
     if (tituloT3) tituloT3.textContent = "Acompañamientos por sede (top 10)";
     const notaT3 = document.getElementById("notaGraficoDashboard3");
     if (notaT3) notaT3.textContent = "";
+
+    // Los nombres de sede completos ("14361 - FRANCISCO JAVIER URENA
+    // CANELA") son demasiado largos como etiqueta de eje: por más que el
+    // contenedor esté bien dimensionado, un texto así de largo termina
+    // forzando el ancho de todos modos. Se acorta el texto que se DIBUJA
+    // (no el dato en sí), y el nombre completo queda disponible al pasar
+    // el mouse por encima, en el tooltip.
+    const LARGO_MAXIMO_ETIQUETA = 24;
+    function acortarEtiqueta(texto) {
+      const t = String(texto || "");
+      return t.length > LARGO_MAXIMO_ETIQUETA ? t.slice(0, LARGO_MAXIMO_ETIQUETA - 1) + "…" : t;
+    }
+    const nombresCompletosSede = porSede.map(function(s) { return s.sede; });
+
     crearGraficoDashboard(
       "graficoDashboard3", "bar",
-      porSede.map(function(s) { return s.sede; }),
+      nombresCompletosSede.map(acortarEtiqueta),
       [{ label: "Cantidad", data: porSede.map(function(s) { return s.cantidad; }), backgroundColor: "#2563eb" }],
-      { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+      {
+        indexAxis: "y",
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { title: function(items) { return nombresCompletosSede[items[0].dataIndex] || ""; } } },
+        },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+      }
     );
 
     // 4) Semáforo de cumplimiento por distrito, como tabla debajo de los
