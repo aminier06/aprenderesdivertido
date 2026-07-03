@@ -2923,6 +2923,7 @@
             </div>
             <div class="db-grafico-card" id="tarjetaGraficoDashboard3">
               <div class="db-grafico-titulo" id="tituloGraficoDashboard3">Estados por fecha</div>
+              <div class="nota" id="notaGraficoDashboard3" style="margin-bottom:4px;"></div>
               <div class="db-canvas-wrap"><canvas id="graficoDashboard3"></canvas></div>
             </div>
             <div class="db-grafico-card" id="tarjetaGraficoDashboard4">
@@ -6001,14 +6002,13 @@
     const gridGraficos = document.getElementById("graficosDashboard");
     if (gridGraficos) gridGraficos.classList.remove("oculto");
 
-    // Este dashboard solo tiene contenido real para 2 de los 4 espacios de
-    // gráfico (Lengua y Matemática). Los otros dos venían mostrando un
-    // recuadro vacío con un título ("Comparación inicial y final",
-    // "Avance por sede") que nunca llegó a tener datos detrás — se ocultan
-    // en vez de dejar espacio desperdiciado sin comunicar nada.
+    // Este dashboard ya tiene contenido real para 3 de los 4 espacios de
+    // gráfico (Lengua, Matemática y ahora Comparación inicial/final). El
+    // cuarto ("Avance por sede") sigue sin consulta detrás, así que se
+    // mantiene oculto en vez de dejar un recuadro vacío.
     const tarjeta3 = document.getElementById("tarjetaGraficoDashboard3");
     const tarjeta4 = document.getElementById("tarjetaGraficoDashboard4");
-    if (tarjeta3) tarjeta3.classList.add("oculto");
+    if (tarjeta3) tarjeta3.classList.remove("oculto");
     if (tarjeta4) tarjeta4.classList.add("oculto");
 
     const colores = {
@@ -6026,9 +6026,8 @@
       const etiquetas = Object.keys(datos).filter(function(k) { return datos[k] > 0; });
       const valores   = etiquetas.map(function(k) { return datos[k]; });
       const coloresData = etiquetas.map(function(k) { return colores[k] || "#aaa"; });
-      const existente = Chart.getChart(canvasId);
-      if (existente) existente.destroy();
-      new Chart(canvas, {
+      if (graficosDashboard[canvasId]) graficosDashboard[canvasId].destroy();
+      graficosDashboard[canvasId] = new Chart(canvas, {
         type: "doughnut",
         data: {
           labels:   etiquetas,
@@ -6054,6 +6053,42 @@
 
     dibujarDonaEval("graficoDashboard1", "tituloGraficoDashboard1", "Niveles de desempeño — Lengua",      len);
     dibujarDonaEval("graficoDashboard2", "tituloGraficoDashboard2", "Niveles de desempeño — Matemática",  mat);
+
+    // ── COMPARACIÓN INICIAL Y FINAL ──────────────────────────────────────────
+    // Se asume que la evaluación más antigua de cada estudiante en un área es
+    // la inicial y la más reciente es la final (la tabla no tiene un campo
+    // explícito que lo diga). Solo compara a quien ya tenga 2 evaluaciones en
+    // la misma área; el resto todavía no tiene con qué comparar.
+    const comp = resp.comparacion || { lengua: {}, matematica: {} };
+    const cl = comp.lengua || {}, cm = comp.matematica || {};
+    const tituloComp = document.getElementById("tituloGraficoDashboard3");
+    if (tituloComp) tituloComp.textContent = "Comparación inicial y final";
+    const canvasComp = document.getElementById("graficoDashboard3");
+    if (canvasComp && typeof Chart !== "undefined") {
+      if (graficosDashboard["graficoDashboard3"]) graficosDashboard["graficoDashboard3"].destroy();
+      graficosDashboard["graficoDashboard3"] = new Chart(canvasComp, {
+        type: "bar",
+        data: {
+          labels: ["Avanzó", "Se mantuvo", "Retrocedió"],
+          datasets: [
+            { label: "Lengua",     data: [cl.avanzo || 0, cl.seMantuvo || 0, cl.retrocedio || 0], backgroundColor: "#4e79a7", borderRadius: 6 },
+            { label: "Matemática", data: [cm.avanzo || 0, cm.seMantuvo || 0, cm.retrocedio || 0], backgroundColor: "#f28e2b", borderRadius: 6 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { font: { size: 11 } } } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        },
+      });
+    }
+    const notaComp = document.getElementById("notaGraficoDashboard3");
+    if (notaComp) {
+      const pendLengua = cl.soloInicial || 0, pendMat = cm.soloInicial || 0;
+      notaComp.textContent = (pendLengua || pendMat)
+        ? "Con solo evaluación inicial (falta la final): " + pendLengua + " en Lengua, " + pendMat + " en Matemática."
+        : "";
+    }
 
     // ── TABLA DE DETALLE ──────────────────────────────────────────────────────
     const matrizDiv = document.getElementById("dashboardMatrizResultados");
@@ -6092,6 +6127,8 @@
     const tarjeta4 = document.getElementById("tarjetaGraficoDashboard4");
     if (tarjeta3) tarjeta3.classList.remove("oculto");
     if (tarjeta4) tarjeta4.classList.remove("oculto");
+    const notaComp = document.getElementById("notaGraficoDashboard3");
+    if (notaComp) notaComp.textContent = "";
 
     destruirGraficosDashboard();
 
