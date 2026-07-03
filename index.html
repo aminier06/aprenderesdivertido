@@ -1003,6 +1003,23 @@
     tr:hover td { background: var(--fondo-2); }
     tr:hover td:first-child { background: var(--fondo-2); }
 
+    /* Las tablas de resumen de los dashboards (niveles de desempeño,
+       comparación inicial/final, semáforo por regional/distrito, asistencia
+       por fecha, ausencias recurrentes...) tienen pocas columnas y no
+       necesitan el min-width de 850px pensado para listados grandes — ese
+       ancho fijo es justo lo que las obligaba a hacer scroll horizontal
+       aunque el contenido cupiera de sobra. */
+    #dashboardContenido table {
+      min-width: 0;
+      width: 100%;
+      table-layout: auto;
+    }
+    #dashboardContenido th,
+    #dashboardContenido td {
+      white-space: normal;
+      word-break: break-word;
+    }
+
     /* ── MENSAJES / ALERTAS ──────────────────────── */
     .bloque-consulta {
       margin-top: 22px;
