@@ -5929,6 +5929,11 @@
       return;
     }
 
+    if (dashboardActual === "ejecutivo") {
+      cargarDashboardEjecutivo();
+      return;
+    }
+
     mostrarMatrizDashboardBasica(dashboardActual);
   }
 
@@ -6108,6 +6113,94 @@
     });
     html += '<tr style="font-weight:bold"><td>Total evaluados</td><td style="text-align:center">' + totLen + '</td><td></td><td style="text-align:center">' + totMat + '</td><td></td></tr>';
     html += '</tbody></table>';
+    matrizDiv.innerHTML = html;
+    matrizDiv.classList.remove("oculto");
+  }
+
+  function cargarDashboardEjecutivo() {
+    limpiarResultadosDashboard();
+    const contenido = document.getElementById("dashboardContenido");
+    if (contenido) contenido.classList.remove("oculto");
+
+    const titulo = document.getElementById("tituloDashboardSeleccionado");
+    const desc   = document.getElementById("descripcionDashboardSeleccionado");
+    if (titulo) titulo.textContent = "Vista ejecutiva del campamento";
+    if (desc) desc.textContent = "Semáforo por regional: cobertura de evaluación, asistencia reciente e incidencias graves sin resolver.";
+
+    const msg = document.getElementById("mensajeDashboard");
+    if (msg) { msg.className = "mensaje"; msg.textContent = "Cargando vista ejecutiva…"; }
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+    const payload = {
+      accion:            "dashboardEjecutivo",
+      cedula:            cedula,
+      filtroRegional:    document.getElementById("regionalDashboard").value  || "",
+      filtroDistrito:    document.getElementById("distritoDashboard").value  || "",
+      filtroCentroSede:  document.getElementById("sedeDashboard").value      || "",
+      fechaDesde:        document.getElementById("fechaInicioDashboard").value || "",
+      fechaHasta:        document.getElementById("fechaFinDashboard").value   || "",
+    };
+
+    llamarBackend(
+      payload,
+      function(resp) {
+        if (!resp || !resp.ok) {
+          if (msg) { msg.className = "mensaje error"; msg.textContent = (resp && resp.mensaje) || "No se pudo cargar la vista ejecutiva."; }
+          return;
+        }
+        if (msg) { msg.className = "mensaje"; msg.textContent = ""; }
+        renderizarDashboardEjecutivo(resp.filas || []);
+      },
+      function() {
+        if (msg) { msg.className = "mensaje error"; msg.textContent = "No se pudo conectar para cargar la vista ejecutiva."; }
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  function renderizarDashboardEjecutivo(filas) {
+    const matrizDiv = document.getElementById("dashboardMatrizResultados");
+    if (!matrizDiv) return;
+
+    const COLOR_SEMAFORO = { verde: "#16a34a", amarillo: "#d97706", rojo: "#dc2626" };
+    function puntoSemaforo(clave) {
+      const color = COLOR_SEMAFORO[clave] || "#94a3b8";
+      return '<span title="' + clave + '" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + color + ';"></span>';
+    }
+
+    if (!filas.length) {
+      matrizDiv.innerHTML = '<p class="nota">No hay datos suficientes todavía para armar el semáforo (revise que existan estudiantes inscritos dentro de su alcance).</p>';
+      matrizDiv.classList.remove("oculto");
+      return;
+    }
+
+    let html = '<table><thead><tr>'
+      + '<th>Regional</th><th>Inscritos</th><th>Evaluados</th>'
+      + '<th>Cobertura de evaluación</th><th>Asistencia reciente</th>'
+      + '<th>Incidencias graves abiertas</th><th>Estado general</th>'
+      + '</tr></thead><tbody>';
+
+    filas.forEach(function(f) {
+      const asistTxto = f.tieneDatosAsistencia ? (f.asistenciaPct + "%") : "Sin registros";
+      html += '<tr>'
+        + '<td>' + escapeHtml(f.regional) + '</td>'
+        + '<td style="text-align:center">' + f.inscritos + '</td>'
+        + '<td style="text-align:center">' + f.evaluados + '</td>'
+        + '<td style="text-align:center">' + puntoSemaforo(f.semaforoCobertura) + ' ' + f.coberturaPct + '%</td>'
+        + '<td style="text-align:center">' + puntoSemaforo(f.semaforoAsistencia) + ' ' + asistTxto + '</td>'
+        + '<td style="text-align:center">' + puntoSemaforo(f.semaforoIncidencias) + ' ' + f.incidenciasGraves + '</td>'
+        + '<td style="text-align:center">' + puntoSemaforo(f.semaforoGeneral) + '</td>'
+        + '</tr>';
+    });
+
+    html += '</tbody></table>'
+      + '<p class="nota" style="margin-top:10px;">'
+      + '🟢 Cobertura ≥70% asistencia ≥85% y sin incidencias graves abiertas · '
+      + '🟡 Cobertura 40–69%, asistencia 70–84%, o 1–2 incidencias graves · '
+      + '🔴 Cobertura &lt;40%, asistencia &lt;70%, o 3+ incidencias graves. '
+      + 'El "Estado general" toma el peor de los tres semáforos de cada regional.'
+      + '</p>';
+
     matrizDiv.innerHTML = html;
     matrizDiv.classList.remove("oculto");
   }
