@@ -6163,15 +6163,17 @@
     );
   }
 
+  // Compartida por cualquier dashboard que necesite pintar un punto de
+  // semáforo (verde/amarillo/rojo) dentro de una celda de tabla.
+  function puntoSemaforo(clave) {
+    const COLOR_SEMAFORO = { verde: "#16a34a", amarillo: "#d97706", rojo: "#dc2626" };
+    const color = COLOR_SEMAFORO[clave] || "#94a3b8";
+    return '<span title="' + clave + '" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + color + ';"></span>';
+  }
+
   function renderizarDashboardEjecutivo(filas) {
     const matrizDiv = document.getElementById("dashboardMatrizResultados");
     if (!matrizDiv) return;
-
-    const COLOR_SEMAFORO = { verde: "#16a34a", amarillo: "#d97706", rojo: "#dc2626" };
-    function puntoSemaforo(clave) {
-      const color = COLOR_SEMAFORO[clave] || "#94a3b8";
-      return '<span title="' + clave + '" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + color + ';"></span>';
-    }
 
     if (!filas.length) {
       matrizDiv.innerHTML = '<p class="nota">No hay datos suficientes todavía para armar el semáforo (revise que existan estudiantes inscritos dentro de su alcance).</p>';
@@ -6320,6 +6322,29 @@
       [{ label: "Cantidad", data: porSede.map(function(s) { return s.cantidad; }), backgroundColor: "#2563eb" }],
       { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
     );
+
+    // 4) Semáforo de cumplimiento por distrito, como tabla debajo de los
+    // gráficos (un semáforo se lee mejor en tabla que forzado en una barra).
+    const matrizDiv = document.getElementById("dashboardMatrizResultados");
+    const porDistrito = resp.porDistrito || [];
+    if (matrizDiv && porDistrito.length) {
+      let html = '<h4 style="margin:16px 0 8px;">Semáforo de cumplimiento por distrito</h4>'
+        + '<table><thead><tr><th>Distrito</th><th>Acompañamientos</th><th>Cumplimiento promedio</th></tr></thead><tbody>';
+      porDistrito.forEach(function(d) {
+        html += '<tr>'
+          + '<td>' + escapeHtml(d.distrito) + '</td>'
+          + '<td style="text-align:center">' + d.cantidad + '</td>'
+          + '<td style="text-align:center">' + puntoSemaforo(d.semaforo) + ' ' + d.cumplimientoPromedio + '%</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>'
+        + '<p class="nota" style="margin-top:8px;">🟢 80% o más · 🟡 entre 60% y 79% · 🔴 menos de 60%.</p>';
+      matrizDiv.innerHTML = html;
+      matrizDiv.classList.remove("oculto");
+    } else if (matrizDiv) {
+      matrizDiv.innerHTML = "";
+      matrizDiv.classList.add("oculto");
+    }
   }
 
   function limpiarResultadosDashboard() {
