@@ -5934,6 +5934,11 @@
       return;
     }
 
+    if (dashboardActual === "acompanamientos") {
+      cargarDashboardAcompanamientos();
+      return;
+    }
+
     mostrarMatrizDashboardBasica(dashboardActual);
   }
 
@@ -6203,6 +6208,118 @@
 
     matrizDiv.innerHTML = html;
     matrizDiv.classList.remove("oculto");
+  }
+
+  function cargarDashboardAcompanamientos() {
+    limpiarResultadosDashboard();
+    const contenido = document.getElementById("dashboardContenido");
+    if (contenido) contenido.classList.remove("oculto");
+
+    const titulo = document.getElementById("tituloDashboardSeleccionado");
+    const desc   = document.getElementById("descripcionDashboardSeleccionado");
+    if (titulo) titulo.textContent = "Dashboard de Acompañamientos";
+    if (desc) desc.textContent = "Cumplimiento, seguimiento pendiente y volumen de acompañamientos por sede.";
+
+    const msg = document.getElementById("mensajeDashboard");
+    if (msg) { msg.className = "mensaje"; msg.textContent = "Cargando datos de acompañamientos…"; }
+
+    const cedula = (usuarioSesion && usuarioSesion.cedula) || (usuarioActual && usuarioActual.cedula);
+    const payload = {
+      accion:            "dashboardAcompanamientos",
+      cedula:            cedula,
+      filtroRegional:    document.getElementById("regionalDashboard").value  || "",
+      filtroDistrito:    document.getElementById("distritoDashboard").value  || "",
+      filtroCentroSede:  document.getElementById("sedeDashboard").value      || "",
+      fechaDesde:        document.getElementById("fechaInicioDashboard").value || "",
+      fechaHasta:        document.getElementById("fechaFinDashboard").value   || "",
+    };
+
+    llamarBackend(
+      payload,
+      function(resp) {
+        if (!resp || !resp.ok) {
+          if (msg) { msg.className = "mensaje error"; msg.textContent = (resp && resp.mensaje) || "No se pudieron cargar los datos de acompañamientos."; }
+          return;
+        }
+        if (msg) { msg.className = "mensaje"; msg.textContent = ""; }
+        renderizarDashboardAcompanamientos(resp);
+      },
+      function() {
+        if (msg) { msg.className = "mensaje error"; msg.textContent = "No se pudo conectar para cargar el dashboard de acompañamientos."; }
+      },
+      { timeout: 20000 }
+    );
+  }
+
+  function renderizarDashboardAcompanamientos(resp) {
+    const k = resp.kpis || {};
+
+    // ── KPIs ──────────────────────────────────────────────────────────────────
+    const resumen = document.getElementById("resumenDashboard");
+    if (resumen) {
+      resumen.innerHTML = [
+        { lbl: "Total de acompañamientos", val: k.total || 0, cls: "" },
+        { lbl: "Cumplimiento promedio",    val: (k.cumplimientoPromedio || 0) + "%", cls: "" },
+        { lbl: "Requieren seguimiento y siguen abiertos", val: k.requierenSeguimientoAbiertos || 0,
+          cls: k.requierenSeguimientoAbiertos > 0 ? "db-kpi-alerta" : "" },
+      ].map(function(d) {
+        return '<div class="db-kpi ' + (d.cls || "") + '">'
+          + '<div class="db-kpi-valor">' + d.val + '</div>'
+          + '<div class="db-kpi-label">' + d.lbl + '</div>'
+          + '</div>';
+      }).join("");
+    }
+
+    // Si todavía no hay ningún acompañamiento registrado dentro del alcance,
+    // no tiene sentido dibujar tres gráficos vacíos — se dice directamente.
+    if (!k.total) {
+      const msg = document.getElementById("mensajeDashboard");
+      if (msg) { msg.className = "mensaje"; msg.textContent = "Todavía no hay acompañamientos registrados dentro de su alcance. Los gráficos aparecerán en cuanto se registre el primero."; }
+      const gridGraficos0 = document.getElementById("graficosDashboard");
+      if (gridGraficos0) gridGraficos0.classList.add("oculto");
+      return;
+    }
+
+    const gridGraficos = document.getElementById("graficosDashboard");
+    if (gridGraficos) gridGraficos.classList.remove("oculto");
+
+    // Esta vista solo usa 3 de los 4 espacios de gráfico.
+    const tarjeta4 = document.getElementById("tarjetaGraficoDashboard4");
+    if (tarjeta4) tarjeta4.classList.add("oculto");
+
+    // 1) Cumplimiento promedio por tipo (Coordinador de sede / Facilitador)
+    const porTipo = resp.porTipo || [];
+    const tituloT1 = document.getElementById("tituloGraficoDashboard1");
+    if (tituloT1) tituloT1.textContent = "Cumplimiento promedio por tipo";
+    crearGraficoDashboard(
+      "graficoDashboard1", "bar",
+      porTipo.map(function(t) { return t.tipo; }),
+      [{ label: "Cumplimiento (%)", data: porTipo.map(function(t) { return t.cumplimientoPromedio; }), backgroundColor: "#0d9488", borderRadius: 6 }],
+      { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { precision: 0 } } } }
+    );
+
+    // 2) Distribución global de cumplimiento (Cumple / Cumple parcial / No cumple)
+    const dist = resp.distribucionCumplimiento || { cumple: 0, cumpleParcial: 0, noCumple: 0 };
+    const tituloT2 = document.getElementById("tituloGraficoDashboard2");
+    if (tituloT2) tituloT2.textContent = "Distribución de cumplimiento (todos los ítems)";
+    crearGraficoDashboard(
+      "graficoDashboard2", "doughnut",
+      ["Cumple", "Cumple parcialmente", "No cumple"],
+      [{ data: [dist.cumple, dist.cumpleParcial, dist.noCumple], backgroundColor: ["#16a34a", "#d97706", "#dc2626"], borderWidth: 2 }]
+    );
+
+    // 3) Acompañamientos por sede (top 10 por volumen)
+    const porSede = resp.porSede || [];
+    const tituloT3 = document.getElementById("tituloGraficoDashboard3");
+    if (tituloT3) tituloT3.textContent = "Acompañamientos por sede (top 10)";
+    const notaT3 = document.getElementById("notaGraficoDashboard3");
+    if (notaT3) notaT3.textContent = "";
+    crearGraficoDashboard(
+      "graficoDashboard3", "bar",
+      porSede.map(function(s) { return s.sede; }),
+      [{ label: "Cantidad", data: porSede.map(function(s) { return s.cantidad; }), backgroundColor: "#2563eb" }],
+      { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+    );
   }
 
   function limpiarResultadosDashboard() {
