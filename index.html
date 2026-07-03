@@ -1586,11 +1586,18 @@
       border-radius: var(--r-lg);
       padding: 15px 16px 11px;
       box-shadow: var(--s-sm);
+      /* Por defecto, un hijo de grid no se encoge más allá del ancho
+         natural de su contenido (min-width: auto). Un gráfico horizontal
+         con etiquetas largas (nombres de sede completos) puede pedir un
+         ancho grande, y sin esto, en vez de recortarse, empuja toda la
+         tarjeta — y con ella el grid entero — más allá del viewport. */
+      min-width: 0;
+      overflow: hidden;
     }
 
     .db-grafico-titulo { font-weight: 600; color: var(--texto); font-size: 13px; margin-bottom: 10px; }
 
-    .db-canvas-wrap { position: relative; height: 225px; width: 100%; }
+    .db-canvas-wrap { position: relative; height: 225px; width: 100%; min-width: 0; }
 
     .db-subtitulo-tabla { font-size: 14px; font-weight: 700; color: var(--texto); margin: 14px 0 7px; }
 
