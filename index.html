@@ -4688,24 +4688,8 @@
 
   function construirGruposOperativos(cantidad) {
     const total = Math.max(0, Number(cantidad || 0));
-    // Nombres base según categorías de desempeño (en orden ascendente)
-    const NOMBRES_BASE = ["Exploradores", "Creadores", "Innovadores"];
     const grupos = [];
-    // Llenar primero con los tres nombres base (uno de cada categoría)
-    for (let i = 0; i < Math.min(total, NOMBRES_BASE.length); i++) {
-      grupos.push(NOMBRES_BASE[i]);
-    }
-    // Si hay más grupos que nombres base, repetir con sufijo numérico
-    if (total > NOMBRES_BASE.length) {
-      // Segunda vuelta: Exploradores-2, Creadores-2, Innovadores-2, ...
-      let vuelta = 2;
-      let idx = 0;
-      while (grupos.length < total) {
-        grupos.push(NOMBRES_BASE[idx % NOMBRES_BASE.length] + "-" + vuelta);
-        idx++;
-        if (idx % NOMBRES_BASE.length === 0) vuelta++;
-      }
-    }
+    for (let i = 1; i <= total; i++) grupos.push("Grupo " + i);
     return grupos;
   }
 
