@@ -8623,7 +8623,7 @@
 
     const esCoordActual = normalizarRol(usuarioActual && usuarioActual.rol) === "coordinador sede";
 
-    if (!modoConsultaAsignaciones() && !esCoordActual) {
+    if (!modoConsultaAsignaciones() && !esCoordActual && !esAdministradorReal()) {
       bloque.classList.add("oculto");
       return;
     }
@@ -9174,8 +9174,12 @@
       filtrosAsignacionEstudiantes = { regional: "", distrito: "", centroSede: "" };
     }
     const bloqueFiltrosEst = document.getElementById("bloqueFiltrosAsignacionEstudiantes");
-    // Mostrar filtros tanto para técnicos (modo consulta) como para coordinadores.
-    if (bloqueFiltrosEst) bloqueFiltrosEst.classList.toggle("oculto", !(modoConsultaAsignaciones() || esCoord));
+    // Mostrar filtros para técnicos (modo consulta), coordinadores, y ahora
+    // también para el administrador: necesita elegir una sede por filtro
+    // antes de poder editar, así que el filtro tiene que estar visible
+    // incluso antes de que haya elegido ninguna (si no, nunca podría llegar
+    // a elegirla).
+    if (bloqueFiltrosEst) bloqueFiltrosEst.classList.toggle("oculto", !(modoConsultaAsignaciones() || esCoord || esAdministradorReal()));
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = "";
     document.getElementById("tablaAsignacionEstudiantesGrupos").innerHTML = "";
     document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
