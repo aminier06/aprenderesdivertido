@@ -9636,7 +9636,16 @@
       return !centroActual || normalizarTexto(e.centroSede).toLowerCase() === normalizarTexto(centroActual).toLowerCase();
     });
 
-    if (!gruposBackend.length)     { alert("No hay grupos disponibles para la sede.");   return; }
+    if (!gruposBackend.length) {
+      const sedeDetectada = centroActual || (datosAsignacionEstudiantesGrupos.sede && datosAsignacionEstudiantesGrupos.sede.centroSede) || "(ninguna sede detectada)";
+      alert(
+        "No hay grupos disponibles para la sede.\n\n"
+        + "Sede detectada por el sistema: " + sedeDetectada + "\n"
+        + "Esto pasa cuando esa sede no tiene ninguna cuota registrada en la tabla SEDES, "
+        + "o su cuota está en cero. Verifique la cuota de \"" + sedeDetectada + "\" en Supabase."
+      );
+      return;
+    }
     if (!todosEstudiantes.length)  { alert("No hay estudiantes para asignar."); return; }
 
     // Separar en tres categorías según evaluación y grupo actual.
