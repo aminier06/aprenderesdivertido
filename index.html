@@ -9699,19 +9699,29 @@
       // existente más compatible, sin recalcular ni renombrar nombres.
 
       // Reconstruir el perfil numérico de cada grupo con lo que hay en pantalla.
-      const perfilGrupos = {}; // nombreSemantico → {explorador,creador,innovador,total}
+      // IMPORTANTE: la tabla, para un coordinador, muestra todo su distrito —
+      // no solo su sede activa — para que pueda ubicar estudiantes sin sede
+      // asignada. Pero los NOMBRES de grupo son numéricos y genéricos
+      // ("Grupo 1", "Grupo 2"), así que dos sedes distintas del mismo
+      // distrito pueden tener, cada una, su propio "Grupo 1" sin relación
+      // entre sí. Sin este filtro, sus estadísticas se mezclaban bajo la
+      // misma clave, haciendo parecer un solo grupo enorme cuando en
+      // realidad eran dos grupos normales de sedes distintas. `todosEstudiantes`
+      // ya viene acotado a la sede activa (ver más arriba); si una fila no
+      // aparece ahí, es de otra sede y se descarta aquí, sin siquiera crear
+      // la entrada en perfilGrupos.
+      const perfilGrupos = {}; // nombreDeGrupo → {explorador,creador,innovador,total}
       document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
         const gActual = normalizarTexto(select.value);
         if (!gActual) return;
-        if (!perfilGrupos[gActual]) perfilGrupos[gActual] = { explorador:0, creador:0, innovador:0, total:0 };
         const idEst = normalizarTexto(select.dataset.id);
         const est   = todosEstudiantes.find(function(e) { return normalizarTexto(e.idEstudiante) === idEst; });
-        if (est) {
-          const nivel = normalizarTexto(est.nivelLengua).toLowerCase();
-          if (perfilGrupos[gActual][nivel] !== undefined) perfilGrupos[gActual][nivel]++;
-          else perfilGrupos[gActual].creador++;
-          perfilGrupos[gActual].total++;
-        }
+        if (!est) return; // estudiante de otra sede del mismo distrito — no cuenta aquí
+        if (!perfilGrupos[gActual]) perfilGrupos[gActual] = { explorador:0, creador:0, innovador:0, total:0 };
+        const nivel = normalizarTexto(est.nivelLengua).toLowerCase();
+        if (perfilGrupos[gActual][nivel] !== undefined) perfilGrupos[gActual][nivel]++;
+        else perfilGrupos[gActual].creador++;
+        perfilGrupos[gActual].total++;
       });
 
       // Para cada nuevo estudiante, elegir el grupo más compatible:
