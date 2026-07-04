@@ -9229,7 +9229,7 @@
 
     const esCoordEnUrl = normalizarRol(usuarioActual && usuarioActual.rol) === "coordinador sede";
 
-    if (modoConsultaAsignaciones() || esCoordEnUrl) {
+    if (modoConsultaAsignaciones() || esCoordEnUrl || esAdministradorReal()) {
       url += "&filtroRegional=" + encodeURIComponent(filtrosAsignacionEstudiantes.regional || "")
         + "&filtroDistrito=" + encodeURIComponent(filtrosAsignacionEstudiantes.distrito || "")
         + "&filtroCentroSede=" + encodeURIComponent(filtrosAsignacionEstudiantes.centroSede || "");
