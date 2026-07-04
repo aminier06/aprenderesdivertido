@@ -9723,7 +9723,19 @@
       // ya viene acotado a la sede activa (ver más arriba); si una fila no
       // aparece ahí, es de otra sede y se descarta aquí, sin siquiera crear
       // la entrada en perfilGrupos.
+      // Se pre-inicializan TODOS los grupos que el backend ofrece —incluidos
+      // los espacios nuevos y todavía vacíos que la cuota permite pero que
+      // aún no tienen ningún estudiante— para que sean candidatos reales.
+      // Sin esto, un grupo vacío nunca aparecía en perfilGrupos (porque
+      // ningún select tenía ese valor seleccionado todavía), así que la
+      // segunda pasada nunca lo elegía: seguía apretando a los estudiantes
+      // nuevos en los grupos que ya tenían gente, aunque la cuota permitiera
+      // abrir uno más.
       const perfilGrupos = {}; // nombreDeGrupo → {explorador,creador,innovador,total}
+      gruposBackend.forEach(function(g) {
+        const nombre = normalizarTexto(g);
+        if (nombre) perfilGrupos[nombre] = { explorador:0, creador:0, innovador:0, total:0 };
+      });
       document.querySelectorAll(".select-asignacion-estudiante").forEach(function(select) {
         const gActual = normalizarTexto(select.value);
         if (!gActual) return;
@@ -9750,9 +9762,11 @@
       };
 
       function grupoMasCompatible(nivel) {
+        const MAX_POR_GRUPO = 25;
         const n  = nivel || "creador";
         const ad = NIVEL_ADYACENTE[n] || ["creador"];
         let candidato = null, mejorScore = Infinity;
+        let candidatoEmergencia = null, mejorScoreEmergencia = Infinity;
         for (const nombre of Object.keys(perfilGrupos)) {
           const p = perfilGrupos[nombre];
           // Prohibir mezcla Explorador-Innovador (no son adyacentes)
@@ -9765,9 +9779,16 @@
           const tieneAdyacente = ad.some(function(a) { return p[a] > 0; });
           const bonus = tieneNivel ? -100 : tieneAdyacente ? -20 : 30;
           const score = p.total + bonus;
+          // Un grupo que ya llegó al máximo no se considera — salvo que no
+          // quede ningún otro grupo compatible con cupo, en cuyo caso se usa
+          // como último recurso, igual que en la primera pasada.
+          if (p.total >= MAX_POR_GRUPO) {
+            if (score < mejorScoreEmergencia) { mejorScoreEmergencia = score; candidatoEmergencia = nombre; }
+            continue;
+          }
           if (score < mejorScore) { mejorScore = score; candidato = nombre; }
         }
-        return candidato || Object.keys(perfilGrupos)[0];
+        return candidato || candidatoEmergencia || Object.keys(perfilGrupos)[0];
       }
 
       const nuevasAsignaciones = {}; // nombre de grupo → [nuevos estudiantes]
