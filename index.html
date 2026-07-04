@@ -4677,7 +4677,25 @@
       });
     }
 
-    if (rol === "coordinador sede" || rol === "coordinador de sede" || rol === "facilitador") {
+    if (rol === "coordinador sede" || rol === "coordinador de sede") {
+      // Un coordinador puede tener varias sedes asignadas (tabla
+      // COORDINADOR_SEDES, cargada en usuarioActual.sedes desde el login).
+      // Antes esto comparaba solo contra centroSede (un único valor), así
+      // que un coordinador con dos o más sedes solo veía la primera en el
+      // selector de este módulo, aunque sí veía todas en el módulo de
+      // estudiantes/grupos. Si sedes no llegó o está vacío, se cae de
+      // vuelta a centroSede único, igual que en el resto de la app.
+      const sedesCoord = (usuarioActual.sedes && usuarioActual.sedes.length)
+        ? usuarioActual.sedes
+        : [usuarioActual.centroSede];
+      return sedes.filter(function(sede) {
+        return sedesCoord.some(function(s) {
+          return normalizarTexto(s) === normalizarTexto(sede.centroSede);
+        });
+      });
+    }
+
+    if (rol === "facilitador") {
       return sedes.filter(function(sede) {
         return normalizarTexto(sede.centroSede) === normalizarTexto(usuarioActual.centroSede);
       });
