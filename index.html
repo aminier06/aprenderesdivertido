@@ -7829,6 +7829,32 @@
     document.body.appendChild(script);
   }
 
+  // Antes, una descripción u observación de más de 160 caracteres se
+  // cortaba con "..." y ahí se quedaba: no había forma de leer el resto
+  // sin ir a buscar el registro por otro lado. Ahora se muestra el
+  // fragmento corto con un enlace "Ver más" que revela el texto completo
+  // (y "Ver menos" para volver a colapsarlo), sin perder la compacidad de
+  // la tabla cuando hay muchas incidencias listadas.
+  function celdaTextoLargo(id, texto) {
+    const valor = String(texto || "");
+    if (valor.length <= 160) return `<td>${escapeHtml(valor)}</td>`;
+
+    const corto = escapeHtml(valor.substring(0, 160)) + "…";
+    const completo = escapeHtml(valor);
+    return `<td>
+      <span id="${id}_corto">${corto} <a href="#" onclick="alternarTextoLargo('${id}'); return false;">Ver más</a></span>
+      <span id="${id}_completo" class="oculto">${completo} <a href="#" onclick="alternarTextoLargo('${id}'); return false;">Ver menos</a></span>
+    </td>`;
+  }
+
+  function alternarTextoLargo(id) {
+    const corto = document.getElementById(id + "_corto");
+    const completo = document.getElementById(id + "_completo");
+    if (!corto || !completo) return;
+    corto.classList.toggle("oculto");
+    completo.classList.toggle("oculto");
+  }
+
   function claseGravedad(gravedad) {
     const valor = normalizarTexto(gravedad).toLowerCase();
     if (valor === "crítica" || valor === "critica") return "critica";
@@ -7852,6 +7878,7 @@
     html += "<thead><tr>";
     html += "<th>Código</th>";
     html += "<th>Fecha</th>";
+    html += "<th>Distrito</th>";
     html += "<th>Centro sede</th>";
     html += "<th>Grupo</th>";
     html += "<th>Categoría</th>";
@@ -7874,20 +7901,19 @@
       const descripcion = incidencia.descripcion || incidencia.Descripcion || "";
       const responsable = incidencia.responsableSeguimiento || incidencia.ResponsableSeguimiento || "";
       const observaciones = incidencia.observacionesSeguimiento || incidencia.ObservacionesSeguimiento || "";
-      const descripcionCorta = descripcion.length > 160 ? descripcion.substring(0, 160) + "..." : descripcion;
-      const observacionesCortas = observaciones.length > 160 ? observaciones.substring(0, 160) + "..." : observaciones;
 
       html += "<tr>";
       html += `<td>${id}</td>`;
       html += `<td>${incidencia.fechaIncidencia || incidencia.FechaIncidencia || incidencia.fecha || ""}</td>`;
+      html += `<td>${incidencia.distrito || incidencia.Distrito || ""}</td>`;
       html += `<td>${incidencia.centroSede || incidencia.CentroSede || ""}</td>`;
       html += `<td>${grupoLegible(incidencia.grupo || incidencia.Grupo) || ""}</td>`;
       html += `<td>${incidencia.categoria || incidencia.Categoria || ""}</td>`;
       html += `<td><span class="badge-gravedad ${claseGravedad(gravedad)}">${gravedad}</span></td>`;
       html += `<td><span class="badge-estado">${estado}</span></td>`;
-      html += `<td>${descripcionCorta}</td>`;
+      html += celdaTextoLargo("desc_" + index, descripcion);
       html += `<td>${responsable}</td>`;
-      html += `<td>${observacionesCortas}</td>`;
+      html += celdaTextoLargo("obs_" + index, observaciones);
 
       if (permiteActualizar) {
         html += `<td>
