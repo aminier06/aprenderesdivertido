@@ -2856,11 +2856,11 @@
         </div>
         <div class="db-filtro-item">
           <label for="fechaInicioDashboard">Fecha inicial</label>
-          <input type="date" id="fechaInicioDashboard">
+          <input type="date" id="fechaInicioDashboard" onchange="if (dashboardActual) cargarDashboardSeleccionado();">
         </div>
         <div class="db-filtro-item">
           <label for="fechaFinDashboard">Fecha final</label>
-          <input type="date" id="fechaFinDashboard">
+          <input type="date" id="fechaFinDashboard" onchange="if (dashboardActual) cargarDashboardSeleccionado();">
         </div>
       </div>
       <button type="button" class="btn-actualizar-dashboard" onclick="cargarDashboardSeleccionado()" id="btnCargarDashboard">
@@ -5889,7 +5889,10 @@
     sedeSeleccionadaDashboard = null;
     limpiarResultadosDashboard();
 
-    if (!regionalSeleccionada) return;
+    if (!regionalSeleccionada) {
+      if (dashboardActual) cargarDashboardSeleccionado();
+      return;
+    }
 
     const sedesFiltradas = sedesDashboard.filter(function(sede) {
       return normalizarTexto(sede.regional) === normalizarTexto(regionalSeleccionada);
@@ -5906,7 +5909,9 @@
 
     if (distritos.length === 1) {
       selectDistrito.value = distritos[0];
-      cargarSedesDashboard();
+      cargarSedesDashboard(); // esta función se encarga de recargar más adelante
+    } else if (dashboardActual) {
+      cargarDashboardSeleccionado();
     }
   }
 
@@ -5919,7 +5924,10 @@
     sedeSeleccionadaDashboard = null;
     limpiarResultadosDashboard();
 
-    if (!regionalSeleccionada || !distritoSeleccionado) return;
+    if (!regionalSeleccionada || !distritoSeleccionado) {
+      if (dashboardActual) cargarDashboardSeleccionado();
+      return;
+    }
 
     const sedesFiltradas = sedesDashboard
       .filter(function(sede) {
@@ -5941,7 +5949,9 @@
 
     if (sedesFiltradas.length === 1) {
       selectSede.value = sedesFiltradas[0].centroSede;
-      seleccionarSedeDashboard();
+      seleccionarSedeDashboard(); // esta función se encarga de recargar
+    } else if (dashboardActual) {
+      cargarDashboardSeleccionado();
     }
   }
 
@@ -5953,6 +5963,8 @@
 
     limpiarResultadosDashboard();
     poblarSelectGrupoDashboard();
+
+    if (dashboardActual) cargarDashboardSeleccionado();
   }
 
   // ▼ MEJORA: antes este <select> tenía nombres de grupo escritos a mano en
