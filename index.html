@@ -2850,7 +2850,7 @@
         </div>
         <div class="db-filtro-item">
           <label for="grupoDashboard">Grupo</label>
-          <select id="grupoDashboard">
+          <select id="grupoDashboard" onchange="cargarDashboardSeleccionado()">
             <option value="">Todos los grupos</option>
           </select>
         </div>
@@ -6319,6 +6319,7 @@
       filtroRegional:    document.getElementById("regionalDashboard").value  || "",
       filtroDistrito:    document.getElementById("distritoDashboard").value  || "",
       filtroCentroSede:  document.getElementById("sedeDashboard").value      || "",
+      filtroGrupo:       document.getElementById("grupoDashboard").value     || "",
       fechaDesde:        document.getElementById("fechaInicioDashboard").value || "",
       fechaHasta:        document.getElementById("fechaFinDashboard").value   || "",
     };
@@ -6371,10 +6372,6 @@
 
     const gridGraficos = document.getElementById("graficosDashboard");
     if (gridGraficos) gridGraficos.classList.remove("oculto");
-
-    // Esta vista solo usa 3 de los 4 espacios de gráfico.
-    const tarjeta4 = document.getElementById("tarjetaGraficoDashboard4");
-    if (tarjeta4) tarjeta4.classList.add("oculto");
 
     // 1) Cumplimiento promedio por tipo (Coordinador de sede / Facilitador)
     const porTipo = resp.porTipo || [];
@@ -6431,7 +6428,23 @@
       }
     );
 
-    // 4) Semáforo de cumplimiento por distrito, como tabla debajo de los
+    // 4) Cantidad de acompañamientos por tipo (Facilitador vs. Coordinador de
+    // sede). El backend ya traía este número en porTipo[].cantidad junto al
+    // cumplimiento promedio, pero solo se graficaba el cumplimiento — nunca
+    // se mostraba cuántos acompañamientos había de cada tipo. Se usa el
+    // cuarto espacio de gráfico de esta plantilla, que esta vista no
+    // ocupaba antes.
+    const tarjeta4 = document.getElementById("tarjetaGraficoDashboard4");
+    if (tarjeta4) tarjeta4.classList.remove("oculto");
+    const tituloT4 = document.getElementById("tituloGraficoDashboard4");
+    if (tituloT4) tituloT4.textContent = "Cantidad de acompañamientos por tipo";
+    crearGraficoDashboard(
+      "graficoDashboard4", "doughnut",
+      porTipo.map(function(t) { return t.tipo; }),
+      [{ data: porTipo.map(function(t) { return t.cantidad; }), backgroundColor: ["#2563eb", "#7c3aed", "#0d9488"], borderWidth: 2 }]
+    );
+
+    // 5) Semáforo de cumplimiento por distrito, como tabla debajo de los
     // gráficos (un semáforo se lee mejor en tabla que forzado en una barra).
     const matrizDiv = document.getElementById("dashboardMatrizResultados");
     const porDistrito = resp.porDistrito || [];
