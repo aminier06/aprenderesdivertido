@@ -2516,7 +2516,7 @@
           </div>
           <div>
             <label for="adminVistaSede">Centro sede</label>
-            <select id="adminVistaSede">
+            <select id="adminVistaSede" onchange="cargarGruposVistaAdministrador()">
               <option value="">Todos</option>
             </select>
           </div>
@@ -2524,9 +2524,6 @@
             <label for="adminVistaGrupo">Grupo</label>
             <select id="adminVistaGrupo">
               <option value="">Todos</option>
-              <option value="Exploradores">Exploradores</option>
-              <option value="Creadores">Creadores</option>
-              <option value="Innovadores">Innovadores</option>
             </select>
           </div>
         </div>
@@ -5253,6 +5250,38 @@
     cargarSedesVistaAdministrador();
   }
 
+  // El selector de grupo del "ver como" nunca se poblaba de verdad: el
+  // <select> traía escritas en el HTML tres opciones fijas ("Exploradores",
+  // "Creadores", "Innovadores") que quedaron de un esquema de nombres
+  // anterior, y nada las actualizaba según la sede elegida. Como los
+  // grupos reales se guardan por número ("Grupo 1", "Grupo 2"...), elegir
+  // cualquiera de esas tres opciones nunca podía coincidir con un grupo
+  // real. Ahora se reconstruye cada vez que cambia la sede, igual que en
+  // el selector de asistencia.
+  function cargarGruposVistaAdministrador() {
+    const centroSede = document.getElementById("adminVistaSede").value;
+    const selectGrupo = document.getElementById("adminVistaGrupo");
+    if (!selectGrupo) return;
+
+    selectGrupo.innerHTML = '<option value="">Todos</option>';
+
+    const sede = (sedesModoAdministrador || []).find(function(s) {
+      return normalizarTexto(s.centroSede) === normalizarTexto(centroSede);
+    });
+    if (!sede) return;
+
+    const grupos = sede.grupos || construirGruposOperativos(
+      Number(sede.gruposEsperados || 0) || Math.ceil(Number(sede.cuota || 0) / 25)
+    );
+
+    grupos.forEach(function(g) {
+      const option = document.createElement("option");
+      option.value = g;
+      option.textContent = g; // los grupos se muestran siempre por número
+      selectGrupo.appendChild(option);
+    });
+  }
+
   function cargarSedesVistaAdministrador() {
     const regional = document.getElementById("adminVistaRegional").value;
     const distrito = document.getElementById("adminVistaDistrito").value;
@@ -5282,6 +5311,9 @@
       if (vs.centroSede) selectSede.value = vs.centroSede;
     }
     // Si no hay vista activa, queda en "Todos" — correcto
+
+    // Reconstruir el selector de grupo según la sede que quedó fijada arriba
+    cargarGruposVistaAdministrador();
 
     // Mostrar indicador de vista activa si corresponde
     if (typeof restaurarSelectoresVista === "function") restaurarSelectoresVista();
