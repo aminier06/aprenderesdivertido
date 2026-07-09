@@ -4566,11 +4566,24 @@
     } catch(e) {}
   }
 
-  // Devuelve el nombre visible (semántico) de un grupo dado su nombre del backend.
-  // Si no hay traducción registrada, devuelve el valor original.
+  // Devuelve el nombre visible de un grupo. Los grupos se identifican
+  // SIEMPRE por número ("Grupo 1", "Grupo 2"...) — no existe ninguna
+  // traducción real que aplicar aquí.
+  //
+  // Antes esta función buscaba el nombre en mapaGrupoBackendASemantico, un
+  // mapa guardado en localStorage POR SEDE Y POR NAVEGADOR, que venía de un
+  // esquema anterior donde el grupo se mostraba según el nivel predominante
+  // de sus integrantes ("Explorador", "Creador", "Innovador"). Ese esquema
+  // ya no existe — los dos lugares que arman ese mapa hoy en día guardan una
+  // traducción idéntica ("Grupo 1" → "Grupo 1") — pero localStorage no se
+  // limpia solo: si el navegador de una persona alguna vez guardó la
+  // traducción vieja, se queda ahí para siempre EN ESE NAVEGADOR, sin
+  // importar que el resto de la app ya haya cambiado de esquema. Por eso
+  // solo lo notaban quienes no son facilitador (coordinador, técnico,
+  // administrador): el facilitador tiene su grupo fijo de antemano y nunca
+  // pasa por un selector que dependa de este mapa.
   function grupoLegible(grupoBackend) {
-    if (!grupoBackend) return "";
-    return mapaGrupoBackendASemantico[normalizarTexto(grupoBackend)] || grupoBackend;
+    return grupoBackend || "";
   }
 
   // Devuelve el nombre de backend dado un nombre semántico (para enviar al servidor).
