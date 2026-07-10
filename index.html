@@ -1624,6 +1624,42 @@
     .dato-asignacion span  { display: block; font-size: 12px; color: var(--texto-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
     .dato-asignacion strong { display: block; color: var(--texto); font-size: 20px; font-weight: 700; }
 
+    .tarjeta-grupos-asignacion {
+      background: var(--blanco);
+      border: 1.5px solid var(--borde);
+      border-top: 3px solid #0d9488;
+      border-radius: var(--r);
+      padding: 14px 16px;
+      box-shadow: var(--s-sm);
+      margin-top: 12px;
+    }
+    .tarjeta-grupos-asignacion h4 {
+      margin: 0 0 10px 0;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--texto-3);
+    }
+    .grupos-asignacion-lista {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .grupo-asignacion-chip {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      background: var(--fondo-2, #f4f6f8);
+      border: 1px solid var(--borde);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--texto-2);
+    }
+    .grupo-asignacion-chip strong { font-size: 15px; color: var(--texto); }
+    .grupo-asignacion-chip.vacio { opacity: 0.55; }
+
     .tabla-asignacion select { min-width: 220px; width: 100%; margin-top: 0; font-size: 13.5px; padding: 8px 10px; }
     .tabla-asignacion td, .tabla-asignacion th { text-align: left; vertical-align: middle; }
 
@@ -3354,6 +3390,7 @@
     </div>
 
     <div id="resumenAsignacionEstudiantesGrupos" class="resumen-asignacion"></div>
+    <div id="resumenGruposAsignacion" class="tarjeta-grupos-asignacion oculto"></div>
     <div id="alertaAsignacionEstudiantesGrupos" class="alerta-asignacion oculto"></div>
     <div id="tablaAsignacionEstudiantesGrupos" class="tabla-contenedor tabla-asignacion oculto"></div>
 
@@ -9295,6 +9332,8 @@
     // a elegirla).
     if (bloqueFiltrosEst) bloqueFiltrosEst.classList.toggle("oculto", !(modoConsultaAsignaciones() || esCoord || esAdministradorReal()));
     document.getElementById("resumenAsignacionEstudiantesGrupos").innerHTML = "";
+    document.getElementById("resumenGruposAsignacion").classList.add("oculto");
+    document.getElementById("resumenGruposAsignacion").innerHTML = "";
     document.getElementById("tablaAsignacionEstudiantesGrupos").innerHTML = "";
     document.getElementById("tablaAsignacionEstudiantesGrupos").classList.add("oculto");
     document.getElementById("alertaAsignacionEstudiantesGrupos").classList.add("oculto");
@@ -9379,6 +9418,44 @@
     cargarEstudiantesAsignacionGrupos();
   }
 
+  // Arma la tarjeta con la cantidad de estudiantes en cada grupo de la sede
+  // actual. Se apoya en la lista de "grupos" que ya trae el backend (para
+  // que también aparezcan, en 0, los grupos que todavía no tienen a nadie),
+  // y cuenta cuántos estudiantes tiene cada uno según su campo "grupo".
+  // Los ordena numéricamente (Grupo 1, Grupo 2... Grupo 10), no
+  // alfabéticamente, para que no salga "Grupo 10" antes que "Grupo 2".
+  function renderizarTarjetaGruposAsignacion(grupos, estudiantes) {
+    const contenedor = document.getElementById("resumenGruposAsignacion");
+    if (!contenedor) return;
+
+    if (!grupos || !grupos.length) {
+      contenedor.classList.add("oculto");
+      contenedor.innerHTML = "";
+      return;
+    }
+
+    const conteo = {};
+    grupos.forEach(function(g) { conteo[normalizarTexto(g)] = 0; });
+    (estudiantes || []).forEach(function(e) {
+      const g = normalizarTexto(e.grupo);
+      if (g && conteo[g] !== undefined) conteo[g]++;
+    });
+
+    const gruposOrdenados = grupos.slice().sort(function(a, b) {
+      const na = parseInt((String(a).match(/\d+/) || [0])[0], 10);
+      const nb = parseInt((String(b).match(/\d+/) || [0])[0], 10);
+      return na - nb;
+    });
+
+    const chips = gruposOrdenados.map(function(g) {
+      const cantidad = conteo[normalizarTexto(g)] || 0;
+      return `<div class="grupo-asignacion-chip${cantidad === 0 ? " vacio" : ""}">${escapeHtml(g)}: <strong>${cantidad}</strong></div>`;
+    }).join("");
+
+    contenedor.innerHTML = `<h4>Estudiantes por grupo</h4><div class="grupos-asignacion-lista">${chips}</div>`;
+    contenedor.classList.remove("oculto");
+  }
+
   function renderizarModuloAsignacionEstudiantesGrupos() {
     if (!datosAsignacionEstudiantesGrupos) return;
 
@@ -9412,6 +9489,8 @@
       <div class="dato-asignacion"><span>Asignados</span><strong id="totalEstudiantesAsignados">${asignados}</strong></div>
       <div class="dato-asignacion"><span>Sin asignar</span><strong id="totalEstudiantesSinAsignar">${sinAsignar}</strong></div>
     `;
+
+    renderizarTarjetaGruposAsignacion(grupos, estudiantes);
 
 
     if (!grupos.length) {
@@ -9448,6 +9527,21 @@
       <div class="dato-asignacion"><span>Asignados</span><strong>${asignados}</strong></div>
       <div class="dato-asignacion"><span>Pendientes</span><strong>${sinAsignar}</strong></div>
     `;
+
+    // La consulta puede abarcar varias sedes a la vez (un técnico viendo un
+    // distrito completo, por ejemplo). La tarjeta de "estudiantes por grupo"
+    // solo tiene sentido cuando todos los estudiantes visibles son de UNA
+    // sola sede — de lo contrario, "Grupo 1" de una sede se mezclaría con
+    // "Grupo 1" de otra sede distinta, dando un número engañoso.
+    const centrosEnVista = new Set(estudiantes.map(function(e) { return normalizarTexto(e.centroSede).toLowerCase(); }).filter(Boolean));
+    if (centrosEnVista.size === 1) {
+      const gruposObservados = Array.from(new Set(
+        estudiantes.map(function(e) { return normalizarTexto(e.grupo); }).filter(Boolean)
+      ));
+      renderizarTarjetaGruposAsignacion(gruposObservados, estudiantes);
+    } else {
+      document.getElementById("resumenGruposAsignacion").classList.add("oculto");
+    }
 
     const tabla = document.getElementById("tablaAsignacionEstudiantesGrupos");
 
