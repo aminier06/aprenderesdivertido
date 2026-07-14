@@ -1673,6 +1673,11 @@
     .grupo-asignacion-chip.vacio { opacity: 0.55; }
     .icono-exportar-chip { font-size: 11px; color: var(--texto-3); }
 
+    #tablaAsistenciaGrupo th.fecha-sin-registrar,
+    #tablaAsistenciaGrupo td.fecha-sin-registrar {
+      background: #fff3cd;
+    }
+
     .tabla-asignacion select { min-width: 220px; width: 100%; margin-top: 0; font-size: 13.5px; padding: 8px 10px; }
     .tabla-asignacion td, .tabla-asignacion th { text-align: left; vertical-align: middle; }
 
@@ -2823,8 +2828,15 @@
 
     <div class="datos-usuario" id="datosUsuarioAsistencia"></div>
 
-    <label for="fechaAsistencia">Fecha de asistencia</label>
+    <label for="fechaAsistencia" id="labelFechaAsistencia">Fecha de asistencia</label>
     <input type="date" id="fechaAsistencia" onchange="cargarEstudiantes(); guardarBorradorAsistencia()">
+
+    <div id="rangoFechasConsultaAsistencia" class="oculto">
+      <label for="fechaDesdeAsistencia">Consultar desde</label>
+      <input type="date" id="fechaDesdeAsistencia" onchange="cargarEstudiantes()">
+      <label for="fechaHastaAsistencia">Hasta</label>
+      <input type="date" id="fechaHastaAsistencia" onchange="cargarEstudiantes()">
+    </div>
 
     <label for="regionalAsistencia">Regional</label>
     <select id="regionalAsistencia" onchange="cargarDistritosAsistencia()">
@@ -5532,6 +5544,21 @@
 
     const hoy = new Date().toISOString().split("T")[0];
     document.getElementById("fechaAsistencia").value = hoy;
+
+    // Quien no es facilitador nunca pasa lista aquí, solo consulta — así que
+    // no tiene sentido mostrarle un campo de "fecha de asistencia" pensado
+    // para tomar lista un día puntual. En su lugar ve un rango de fechas,
+    // que es lo que de verdad usa la consulta.
+    const esFac = esFacilitador();
+    document.getElementById("labelFechaAsistencia").classList.toggle("oculto", !esFac);
+    document.getElementById("fechaAsistencia").classList.toggle("oculto", !esFac);
+    document.getElementById("rangoFechasConsultaAsistencia").classList.toggle("oculto", esFac);
+    if (!esFac) {
+      const haceCatorceDias = new Date();
+      haceCatorceDias.setDate(haceCatorceDias.getDate() - 13);
+      document.getElementById("fechaHastaAsistencia").value = hoy;
+      document.getElementById("fechaDesdeAsistencia").value = haceCatorceDias.toISOString().split("T")[0];
+    }
 
     document.getElementById("regionalAsistencia").innerHTML = '<option value="">Seleccione la regional</option>';
     document.getElementById("distritoAsistencia").innerHTML = '<option value="">Seleccione el distrito</option>';
@@ -8331,6 +8358,16 @@
   }
 
   function cargarEstudiantes() {
+    // Quien no es facilitador está aquí solo para consultar, nunca para
+    // pasar lista. Antes, seleccionar un grupo igual cargaba el mismo
+    // listado editable de un solo día (con el botón "Guardar" oculto, pero
+    // el listado ahí, como si se fuera a tomar asistencia). Ahora se va
+    // directo a la consulta por rango de fechas.
+    if (!esFacilitador()) {
+      consultarAsistenciaGrupo();
+      return;
+    }
+
     const grupo = document.getElementById("grupoAsistencia").value;
     const fechaAsistencia = document.getElementById("fechaAsistencia").value;
     const regionalSeleccionada = document.getElementById("regionalAsistencia").value;
@@ -8634,6 +8671,8 @@
       + "&regional=" + encodeURIComponent(regionalSeleccionada)
       + "&distrito=" + encodeURIComponent(distritoSeleccionado)
       + "&centroSede=" + encodeURIComponent(centroSeleccionado)
+      + "&fechaDesde=" + encodeURIComponent(document.getElementById("fechaDesdeAsistencia") ? document.getElementById("fechaDesdeAsistencia").value : "")
+      + "&fechaHasta=" + encodeURIComponent(document.getElementById("fechaHastaAsistencia") ? document.getElementById("fechaHastaAsistencia").value : "")
       + "&callback=" + callbackName;
 
     document.body.appendChild(script);
@@ -8644,12 +8683,22 @@
     const fechas = respuesta.fechas || [];
     const estudiantes = respuesta.estudiantes || [];
 
+    // Una fecha "sin registrar" es aquella donde NINGÚN estudiante mostrado
+    // tiene una asistencia guardada — o sea, ese día no se pasó lista en
+    // absoluto para este grupo (a diferencia de una celda vacía puntual,
+    // que sería un estudiante concreto sin marcar ese día).
+    const fechasSinRegistro = {};
+    fechas.forEach(function(fecha) {
+      fechasSinRegistro[fecha] = !estudiantes.some(function(e) { return e.asistencias[fecha]; });
+    });
+
     let html = "<table>";
     html += "<thead><tr>";
     html += "<th>Estudiante</th>";
 
     fechas.forEach(function(fecha) {
-      html += `<th>${fecha}</th>`;
+      const claseAviso = fechasSinRegistro[fecha] ? ' class="fecha-sin-registrar" title="Nadie tiene asistencia registrada este día"' : "";
+      html += `<th${claseAviso}>${fecha}</th>`;
     });
 
     html += "<th>Presente</th>";
@@ -8663,7 +8712,8 @@
       html += `<td>${estudiante.nombre || ""}</td>`;
 
       fechas.forEach(function(fecha) {
-        html += `<td>${estudiante.asistencias[fecha] || ""}</td>`;
+        const claseAviso = fechasSinRegistro[fecha] ? ' class="fecha-sin-registrar"' : "";
+        html += `<td${claseAviso}>${estudiante.asistencias[fecha] || ""}</td>`;
       });
 
       html += `<td>${estudiante.totales.Presente || 0}</td>`;
