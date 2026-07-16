@@ -5750,10 +5750,7 @@
       return;
     }
 
-    // Cargar el mapa de grupos de esta sede desde localStorage
-    cargarMapaGruposSede(centro);
-
-    // Poblar el select de grupos con los nombres semánticos
+    // Poblar el select de grupos
     const selectGrupo = document.getElementById("grupoAsistencia");
     const gruposBackendSede = sedeSeleccionadaAsistencia.grupos || construirGruposOperativos(
       Number(sedeSeleccionadaAsistencia.gruposEsperados || 0) ||
@@ -5762,12 +5759,19 @@
 
     selectGrupo.innerHTML = '<option value="">Seleccione un grupo</option>';
 
-    const tieneMapaSede = Object.keys(mapaGrupoBackendASemantico).length > 0;
-    if (!tieneMapaSede) {
-      // No se ha hecho asignación de estudiantes: mostrar aviso y bloquear selección de grupo
+    // Antes esto se bloqueaba según un mapa guardado en localStorage POR
+    // NAVEGADOR (cargarMapaGruposSede), que solo existía si esa sede se
+    // había trabajado antes DESDE ESE MISMO navegador. Un técnico nacional
+    // revisa sedes de todo el país; casi ninguna iba a estar cacheada en su
+    // equipo, así que el selector de grupo terminaba bloqueado para casi
+    // cualquier sede que consultara, sin que faltara ninguna asignación de
+    // verdad. Ahora se usa directamente si la sede tiene grupos reales
+    // (según su cuota o los grupos ya formados), sin depender de qué
+    // navegador se esté usando.
+    if (!gruposBackendSede || gruposBackendSede.length === 0) {
       selectGrupo.disabled = true;
       const mensaje = document.getElementById("mensajeAsistencia");
-      mensaje.textContent = "Primero debe completar la asignación de estudiantes a grupos para esta sede.";
+      mensaje.textContent = "Esta sede todavía no tiene grupos configurados.";
       mensaje.className = "mensaje error";
     } else {
       selectGrupo.disabled = false;
@@ -9046,19 +9050,15 @@
 
     document.getElementById("bloqueCuotaManual").classList.add("oculto");
 
-    // Cargar el mapa de esta sede específica (puede diferir del usuario actual si es modo consulta)
-    const centroSedeFac = sede.centroSede || usuarioActual.centroSede || "";
-    if (centroSedeFac) cargarMapaGruposSede(centroSedeFac);
-
-    const tieneMapaFac = Object.keys(mapaGrupoBackendASemantico).length > 0;
-    if (!tieneMapaFac && puedeModificarAsignaciones()) {
-      const alerta = document.getElementById("alertaAsignacionGrupos");
-      alerta.classList.remove("oculto");
-      alerta.innerHTML = "⚠️ Debe completar primero la <strong>asignación de estudiantes a grupos</strong> antes de asignar facilitadores. Los grupos recibirán su nombre definitivo al hacer esa asignación.";
-      document.getElementById("tablaAsignacionGrupos").classList.add("oculto");
-      document.getElementById("btnGuardarAsignacionGrupos").classList.add("oculto");
-      return;
-    }
+    // Antes había aquí un segundo chequeo, basado en un mapa guardado en
+    // localStorage por navegador, que repetía (de forma poco confiable) algo
+    // que el backend YA confirmó: si respuesta.ok llegó true sin
+    // gruposAunNoCreados (ver cargarFacilitadoresSede), es porque la
+    // asignación de estudiantes a grupos ya existe de verdad. Ese chequeo
+    // redundante bloqueaba esta pantalla en cualquier navegador que no
+    // tuviera esa sede cacheada — por ejemplo, el de un técnico nacional
+    // revisando una sede que nunca había abierto antes desde ese equipo —
+    // aunque la asignación real sí estuviera hecha.
 
     renderizarTablaAsignacion(datosAsignacionGrupos.grupos || construirGruposOperativos(gruposEsperados));
   }
