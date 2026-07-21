@@ -13138,7 +13138,6 @@ const respuestasTexto = {
 
     const hayCompletados = completados > 0;
     document.getElementById("btnDescargarTodosPDF").disabled = !hayCompletados;
-    document.getElementById("btnDescargarTodosWord").disabled = !hayCompletados;
 
     const contenedor = document.getElementById("listaEstudiantesInformes");
     contenedor.innerHTML = (resp.estudiantes || []).map(function(e) {
