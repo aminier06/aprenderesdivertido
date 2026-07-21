@@ -13598,21 +13598,28 @@ const respuestasTexto = {
       const mismoGrupoQueAnterior = i > 0 && normalizarTexto(facilitadoresOrdenados[i - 1].grupo) === normalizarTexto(f.grupo);
       const mismoGrupoQueSiguiente = i < facilitadoresOrdenados.length - 1 && normalizarTexto(facilitadoresOrdenados[i + 1].grupo) === normalizarTexto(f.grupo);
 
-      // La celda de "Grupo" se fusiona (rowspan) en la primera fila del par,
-      // y se omite en la segunda — así la pareja se ve como un solo bloque.
-      let celdaGrupo = "";
+      // Como los dos facilitadores de un mismo grupo comparten exactamente
+      // el mismo avance (ver obtenerDatosInformeSede en el backend: se
+      // cuenta por estudiante único, no por facilitador), las celdas de
+      // "Grupo", "Informes completados" y "% avance" se fusionan juntas en
+      // la primera fila del par, y se omiten en la segunda.
+      let celdasCompartidas = "";
       if (mismoGrupoQueSiguiente) {
-        celdaGrupo = `<td rowspan="2" class="celda-par-grupo">${escapeHtml(f.grupo || "")}</td>`;
+        celdasCompartidas = `
+          <td rowspan="2" class="celda-par-grupo">${escapeHtml(f.grupo || "")}</td>
+          <td rowspan="2" class="celda-par-grupo">${f.completados} / ${f.totalEstudiantes}</td>
+          <td rowspan="2" class="celda-par-grupo">${pct}%</td>`;
       } else if (!mismoGrupoQueAnterior) {
-        celdaGrupo = `<td>${escapeHtml(f.grupo || "")}</td>`;
+        celdasCompartidas = `
+          <td>${escapeHtml(f.grupo || "")}</td>
+          <td>${f.completados} / ${f.totalEstudiantes}</td>
+          <td>${pct}%</td>`;
       }
-      // si mismoGrupoQueAnterior es true, no se repite la celda (ya quedó fusionada arriba)
+      // si mismoGrupoQueAnterior es true, no se repiten (ya quedaron fusionadas arriba)
 
       filas += `<tr class="${mismoGrupoQueAnterior ? "fila-pareja-grupo" : ""}">
         <td>${escapeHtml(f.nombre)}</td>
-        ${celdaGrupo}
-        <td>${f.completados} / ${f.totalEstudiantes}</td>
-        <td>${pct}%</td>
+        ${celdasCompartidas}
       </tr>`;
     });
 
