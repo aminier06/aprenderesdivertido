@@ -1723,6 +1723,22 @@
     .dato-asignacion.tarjeta-clicable { cursor: pointer; transition: box-shadow 0.15s; }
     .dato-asignacion.tarjeta-clicable:hover { box-shadow: 0 0 0 2px #c0392b33; }
 
+    .galeria-fotos-informe {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px; margin: 8px 0;
+    }
+    .foto-informe-item {
+      position: relative; border: 1.5px solid var(--borde); border-radius: var(--r);
+      overflow: hidden; aspect-ratio: 1 / 1; background: #f4f4f6;
+    }
+    .foto-informe-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .foto-informe-item .btn-eliminar-foto {
+      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); color: #fff; border: none; cursor: pointer;
+      font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center;
+    }
+    .foto-informe-item .btn-eliminar-foto:hover { background: #c0392b; }
+
     #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
     #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
     #tablaIndicadoresLengua td.elemental, #tablaIndicadoresMat td.elemental { color: #c0392b; font-weight: 600; }
@@ -3884,6 +3900,14 @@
           <textarea id="informeSedeOportunidades" rows="4" placeholder="Dificultades enfrentadas, áreas a fortalecer..."></textarea>
           <label for="informeSedeAcuerdos" style="margin-top:10px; display:block;">Acuerdos realizados</label>
           <textarea id="informeSedeAcuerdos" rows="4" placeholder="Compromisos asumidos durante el campamento..."></textarea>
+
+          <label style="margin-top:14px; display:block;">Fotos del campamento (hasta 5)</label>
+          <div id="galeriaFotosInforme" class="galeria-fotos-informe"></div>
+          <input type="file" id="inputFotoInformeSede" accept="image/*" class="oculto" onchange="subirFotoInformeSede(this)">
+          <div class="acciones-asignacion" style="margin-top:8px;">
+            <button type="button" id="btnAgregarFotoInforme" class="btn-secundario" onclick="document.getElementById('inputFotoInformeSede').click()">Agregar foto</button>
+          </div>
+          <div id="mensajeFotosInforme" class="mensaje"></div>
 
           <div class="acciones-asignacion" style="margin-top:12px;">
             <button type="button" id="btnGuardarInformeSede" onclick="guardarInformeSedeActual()">Guardar informe</button>
@@ -14385,11 +14409,14 @@ const respuestasTexto = {
     // vez finalizado, tampoco se puede editar — ni siquiera el coordinador
     // que lo escribió — salvo el administrador, como excepción general.
     const puedeEditar = resp.puedeEditar !== false;
+    puedeEditarInformeSedeActual = puedeEditar;
     document.getElementById("notaSoloLecturaInforme").classList.toggle("oculto", puedeEditar);
     document.getElementById("btnGuardarInformeSede").classList.toggle("oculto", !puedeEditar);
+    document.getElementById("btnAgregarFotoInforme").classList.toggle("oculto", !puedeEditar);
     ["informeSedeFortalezas", "informeSedeOportunidades", "informeSedeAcuerdos"].forEach(function(id) {
       document.getElementById(id).disabled = !puedeEditar;
     });
+    renderizarGaleriaFotosInforme(resp.fotosUrls, resp.fotosRutas);
 
     const avisoFinalizado = document.getElementById("avisoInformeFinalizado");
     if (resp.finalizado) {
@@ -14401,6 +14428,142 @@ const respuestasTexto = {
       avisoFinalizado.classList.add("oculto");
       document.getElementById("btnFinalizarInformeSede").classList.toggle("oculto", !puedeEditar);
     }
+  }
+
+  /* ---------------------- Fotos del informe de sede ---------------------- */
+
+  const MAX_FOTOS_INFORME_SEDE = 5;
+
+  // Redimensiona la imagen en el navegador (máx. 1600px de lado mayor,
+  // calidad 0.8) antes de convertirla a base64 — una foto de cámara puede
+  // pesar varios MB; esto la deja en un tamaño razonable para subir.
+  function redimensionarImagenABase64(archivo, maxDimension, calidad, callback) {
+    const lector = new FileReader();
+    lector.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        let w = img.width, h = img.height;
+        if (w > maxDimension || h > maxDimension) {
+          if (w >= h) { h = Math.round(h * maxDimension / w); w = maxDimension; }
+          else { w = Math.round(w * maxDimension / h); h = maxDimension; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL("image/jpeg", calidad));
+      };
+      img.onerror = function() { callback(null); };
+      img.src = e.target.result;
+    };
+    lector.onerror = function() { callback(null); };
+    lector.readAsDataURL(archivo);
+  }
+
+  function obtenerCentroSedeInformeActivo() {
+    if (datosInformeSedeActual && datosInformeSedeActual.centroSede) return datosInformeSedeActual.centroSede;
+    const selSimple = document.getElementById("informeSedeSelector");
+    if (selSimple && selSimple.value) return selSimple.value;
+    return sedeSupervisionSeleccionada ? sedeSupervisionSeleccionada.centroSede : "";
+  }
+
+  function subirFotoInformeSede(input) {
+    const archivo = input.files[0];
+    input.value = ""; // para poder volver a elegir el mismo archivo despues si hace falta
+    if (!archivo) return;
+    if (!archivo.type.startsWith("image/")) { alert("Solo se pueden subir imágenes."); return; }
+
+    const centroSede = obtenerCentroSedeInformeActivo();
+    if (!centroSede) return;
+    const yaSubidas = (datosInformeSedeActual && datosInformeSedeActual.fotosRutas) ? datosInformeSedeActual.fotosRutas.length : 0;
+    if (yaSubidas >= MAX_FOTOS_INFORME_SEDE) { alert("Ya hay " + MAX_FOTOS_INFORME_SEDE + " fotos — elimine alguna antes de agregar otra."); return; }
+
+    const mensaje = document.getElementById("mensajeFotosInforme");
+    mensaje.textContent = "Subiendo foto...";
+    mensaje.className = "mensaje";
+
+    redimensionarImagenABase64(archivo, 1600, 0.8, function(dataUrl) {
+      if (!dataUrl) {
+        mensaje.textContent = "No se pudo leer la imagen.";
+        mensaje.className = "mensaje error";
+        return;
+      }
+      fetch(URL_SCRIPT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cedula: usuarioActual.cedula,
+          payload: JSON.stringify({ centroSede: centroSede, imagenBase64: dataUrl }),
+        }),
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+          if (!resp || !resp.ok) {
+            mensaje.textContent = (resp && resp.mensaje) || "No se pudo subir la foto.";
+            mensaje.className = "mensaje error";
+            return;
+          }
+          mensaje.textContent = "";
+          if (datosInformeSedeActual) {
+            datosInformeSedeActual.fotosUrls = resp.fotosUrls;
+            datosInformeSedeActual.fotosRutas = resp.fotosRutas;
+          }
+          renderizarGaleriaFotosInforme(resp.fotosUrls, resp.fotosRutas);
+        })
+        .catch(function() {
+          mensaje.textContent = "No se pudo conectar con el servidor para subir la foto.";
+          mensaje.className = "mensaje error";
+        });
+    });
+  }
+
+  function eliminarFotoInformeSedeClick(ruta) {
+    if (!confirm("¿Eliminar esta foto del informe?")) return;
+    const centroSede = obtenerCentroSedeInformeActivo();
+    if (!centroSede) return;
+    const mensaje = document.getElementById("mensajeFotosInforme");
+    mensaje.textContent = "Eliminando foto...";
+    mensaje.className = "mensaje";
+
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cedula: usuarioActual.cedula,
+        payload: JSON.stringify({ centroSede: centroSede, ruta: ruta }),
+      }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo eliminar la foto.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "";
+        if (datosInformeSedeActual) {
+          datosInformeSedeActual.fotosUrls = resp.fotosUrls;
+          datosInformeSedeActual.fotosRutas = resp.fotosRutas;
+        }
+        renderizarGaleriaFotosInforme(resp.fotosUrls, resp.fotosRutas);
+      })
+      .catch(function() {
+        mensaje.textContent = "No se pudo conectar con el servidor para eliminar la foto.";
+        mensaje.className = "mensaje error";
+      });
+  }
+
+  let puedeEditarInformeSedeActual = false;
+
+  function renderizarGaleriaFotosInforme(fotosUrls, fotosRutas) {
+    const contenedor = document.getElementById("galeriaFotosInforme");
+    contenedor.innerHTML = (fotosUrls || []).map(function(url, idx) {
+      const ruta = (fotosRutas || [])[idx] || "";
+      const botonEliminar = puedeEditarInformeSedeActual
+        ? `<button type="button" class="btn-eliminar-foto" title="Eliminar" onclick="eliminarFotoInformeSedeClick('${ruta.replace(/'/g, "\\'")}')">✕</button>`
+        : "";
+      return `<div class="foto-informe-item"><img src="${escapeHtml(url)}" alt="Foto del informe" loading="lazy">${botonEliminar}</div>`;
+    }).join("");
+    document.getElementById("btnAgregarFotoInforme").disabled = (fotosUrls || []).length >= MAX_FOTOS_INFORME_SEDE;
   }
 
   function guardarInformeSedeActual() {
@@ -14466,7 +14629,24 @@ const respuestasTexto = {
     };
   }
 
-  function descargarInformeSedePDF() {
+  // Descarga una imagen (ya está en una URL pública de Storage) y la
+  // convierte a data URL — jsPDF necesita los píxeles en el documento, no
+  // puede referenciar una URL remota directamente.
+  function cargarImagenComoDataURL(url) {
+    return fetch(url)
+      .then(function(r) { return r.blob(); })
+      .then(function(blob) {
+        return new Promise(function(resolve) {
+          const lector = new FileReader();
+          lector.onload = function() { resolve(lector.result); };
+          lector.onerror = function() { resolve(null); };
+          lector.readAsDataURL(blob);
+        });
+      })
+      .catch(function() { return null; });
+  }
+
+  async function descargarInformeSedePDF() {
     if (!datosInformeSedeActual) { alert("Todavía no se ha cargado el informe de la sede."); return; }
     const t = construirTextoInformeSede();
     const jsPDFCtor = window.jspdf.jsPDF;
@@ -14544,6 +14724,27 @@ const respuestasTexto = {
     doc.setFont("helvetica", "normal");
     lineas = doc.splitTextToSize(t.acuerdos, anchoDisponible);
     doc.text(lineas, margen, y); y += lineas.length * 5;
+
+    // Fotos: se descargan y convierten a data URL antes de incrustarlas —
+    // por eso toda la función es asíncrona. Hasta 5, en una grilla de 3
+    // columnas, cuadradas.
+    const fotosUrls = (datosInformeSedeActual.fotosUrls || []).slice(0, 5);
+    if (fotosUrls.length > 0) {
+      const colAncho = (anchoDisponible - 2 * 6) / 3;
+      const filasFotos = Math.ceil(fotosUrls.length / 3);
+      const alturaBloqueFotos = 8 + filasFotos * (colAncho + 6);
+      if (y + alturaBloqueFotos > altoPagina - 20) { doc.addPage(); y = 36; }
+      y = dibujarSeccionInformePDF(doc, "Fotos del campamento", margen, y, anchoDisponible);
+      const dataUrls = await Promise.all(fotosUrls.map(cargarImagenComoDataURL));
+      dataUrls.forEach(function(dataUrl, i) {
+        if (!dataUrl) return;
+        const col = i % 3, fila = Math.floor(i / 3);
+        const x = margen + col * (colAncho + 6);
+        const yy = y + fila * (colAncho + 6);
+        try { doc.addImage(dataUrl, "JPEG", x, yy, colAncho, colAncho); } catch (e) { /* imagen no soportada, se omite */ }
+      });
+      y += filasFotos * (colAncho + 6) + 6;
+    }
 
     dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Coordinador(a) de sede", t.elaboradoPor, t.fechaGeneracion);
 
