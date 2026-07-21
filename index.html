@@ -1704,6 +1704,8 @@
       font-weight: 600;
       background: #f4fbfa;
     }
+    #tablaFacilitadoresInforme tr.fila-facilitador-clic { cursor: pointer; }
+    #tablaFacilitadoresInforme tr.fila-facilitador-clic:hover td { background: #f4fbfa; }
 
     #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
     #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
@@ -3711,28 +3713,42 @@
       </div>
 
       <div id="mensajeInformeSede" class="mensaje"></div>
+      <div id="notaSoloLecturaInforme" class="nota oculto">Está viendo este informe según su ámbito. Solo el coordinador de la sede puede editarlo y guardarlo.</div>
 
       <div class="resumen-asignacion" style="margin:14px 0;">
         <div class="dato-asignacion"><span>% Asistencia general</span><strong id="informeSedeAsistencia">—</strong></div>
         <div class="dato-asignacion"><span>Estudiantes activos</span><strong id="informeSedeEstudiantes">—</strong></div>
+        <div class="dato-asignacion"><span>Acompañamientos realizados</span><strong id="informeSedeAcompanamientos">—</strong></div>
         <div class="dato-asignacion"><span>Mejoraron de nivel</span><strong id="informeSedeMejoraron">—</strong></div>
         <div class="dato-asignacion"><span>Se mantuvieron</span><strong id="informeSedeMantuvieron">—</strong></div>
         <div class="dato-asignacion"><span>Bajaron</span><strong id="informeSedeBajaron">—</strong></div>
-        <div class="dato-asignacion"><span>Cumplimiento de mis acompañamientos</span><strong id="informeSedeAcompanamientos">—</strong></div>
+        <div class="dato-asignacion"><span>Pendientes de evaluación final</span><strong id="informeSedePendientes">—</strong></div>
         <div class="dato-asignacion"><span>Incidencias registradas</span><strong id="informeSedeIncidencias">—</strong></div>
       </div>
 
       <h3>Avance de informes por facilitador</h3>
+      <p class="nota">Haga clic en un facilitador para ver y descargar los informes de sus estudiantes.</p>
       <div id="tablaFacilitadoresInforme" class="tabla-contenedor"></div>
 
-      <div class="bloque-formulario" style="margin-top:14px;">
-        <label for="informeSedeValoracion">Valoración general de la sede</label>
-        <textarea id="informeSedeValoracion" rows="4" placeholder="Logros de la sede, dificultades enfrentadas..."></textarea>
-        <label for="informeSedeRecomendaciones" style="margin-top:10px; display:block;">Recomendaciones</label>
-        <textarea id="informeSedeRecomendaciones" rows="4" placeholder="Recomendaciones para el próximo año..."></textarea>
+      <div id="bloqueEstudiantesFacilitadorSede" class="bloque-formulario oculto" style="margin-top:14px;">
+        <h3 id="tituloEstudiantesFacilitadorSede">Estudiantes</h3>
+        <div class="acciones-asignacion" style="margin-bottom:10px;">
+          <button type="button" class="btn-secundario" onclick="descargarInformesFacilitadorSedePDF()">Descargar todos (PDF)</button>
+          <button type="button" class="btn-secundario" onclick="cerrarEstudiantesFacilitadorSede()">Cerrar</button>
+        </div>
+        <div id="listaEstudiantesFacilitadorSede" class="lista-estudiantes-informes"></div>
+      </div>
+
+      <div id="bloqueEscrituraInformeSede" class="bloque-formulario" style="margin-top:14px;">
+        <label for="informeSedeFortalezas">Fortalezas observadas</label>
+        <textarea id="informeSedeFortalezas" rows="4" placeholder="Logros de la sede durante el campamento..."></textarea>
+        <label for="informeSedeOportunidades" style="margin-top:10px; display:block;">Oportunidades de mejora</label>
+        <textarea id="informeSedeOportunidades" rows="4" placeholder="Dificultades enfrentadas, áreas a fortalecer..."></textarea>
+        <label for="informeSedeAcuerdos" style="margin-top:10px; display:block;">Acuerdos realizados</label>
+        <textarea id="informeSedeAcuerdos" rows="4" placeholder="Compromisos para el próximo cierre..."></textarea>
 
         <div class="acciones-asignacion" style="margin-top:12px;">
-          <button type="button" onclick="guardarInformeSedeActual()">Guardar informe</button>
+          <button type="button" id="btnGuardarInformeSede" onclick="guardarInformeSedeActual()">Guardar informe</button>
           <button type="button" class="btn-secundario" onclick="descargarInformeSedePDF()">Descargar PDF</button>
         </div>
       </div>
@@ -5252,15 +5268,17 @@
       else tileContratos.classList.add("oculto");
     }
 
-    // Informes de cierre: Facilitador (informe por estudiante) y
-    // Coordinador de sede (informe de la sede). El administrador también
-    // lo ve, para poder revisar/generar informes de sede si hiciera falta.
+    // Informes de cierre: Facilitador (informe por estudiante), Coordinador
+    // de sede (informe de la sede, con permiso para editarlo), y técnicos
+    // distrital/regional/nacional + administrador (ven y descargan los
+    // informes según su ámbito, sin poder editar el de la sede).
     const tileInformes = document.getElementById("tileInformes");
     if (tileInformes) {
       const rolVistaI = normalizarRol(usuario && usuario.rol);
       const puedeVerInformes = esAdministradorReal() ||
         rolVistaI === "facilitador" || rolVistaI === "coordinador sede" || rolVistaI === "coordinador de sede" ||
-        rolVistaI === "administrador";
+        rolVistaI === "administrador" || rolVistaI === "tecnico distrital" ||
+        rolVistaI === "tecnico regional" || rolVistaI === "tecnico nacional" || rolVistaI === "director nacional";
       if (puedeVerInformes) tileInformes.classList.remove("oculto");
       else tileInformes.classList.add("oculto");
     }
@@ -13107,7 +13125,7 @@ const respuestasTexto = {
       cargarListaEstudiantesInformes();
     } else {
       document.getElementById("notaInformes").textContent =
-        "Informe general de la sede: datos calculados de toda la sede, más su valoración y recomendaciones.";
+        "Informe general de la sede: datos calculados de toda la sede, más fortalezas, oportunidades de mejora y acuerdos realizados.";
       document.getElementById("vistaInformesCoordinador").classList.remove("oculto");
       cargarModuloInformesCoordinador();
     }
@@ -13190,7 +13208,7 @@ const respuestasTexto = {
   // Construye una tabla HTML con el nivel de cada indicador, entrada vs.
   // final, y un color simple según el nivel (mismo criterio de colores que
   // ya usa el módulo de evaluaciones: elemental/aceptable/satisfactorio).
-  function construirTablaIndicadores(indicadores, soloUna) {
+  function construirTablaIndicadores(indicadores, sinFinal) {
     if (!indicadores || !indicadores.length) {
       return '<p class="nota">Sin evaluación registrada para esta prueba.</p>';
     }
@@ -13206,7 +13224,7 @@ const respuestasTexto = {
       // de entrada), antes esta columna repetía el mismo valor sin ninguna
       // aclaración — parecía un error, cuando en realidad es lo esperado
       // hasta que se aplique la evaluación final (a partir del 27 de julio).
-      const celdaFinal = soloUna
+      const celdaFinal = sinFinal
         ? `<td title="Aún no se ha registrado la evaluación final" style="color:#999;font-style:italic;">Pendiente</td>`
         : `<td class="${claseNivel(ind.final)}">${escapeHtml(ind.final)}</td>`;
       return `<tr>
@@ -13229,12 +13247,12 @@ const respuestasTexto = {
     const lengua = (resp.evaluaciones || {}).LENGUA;
     const mat = (resp.evaluaciones || {}).MATEMATICA;
     document.getElementById("informeEstEntradaLengua").textContent = lengua ? lengua.entrada : "Sin evaluar";
-    document.getElementById("informeEstFinalLengua").textContent = lengua ? (lengua.soloUna ? lengua.final + " (sin final aún)" : lengua.final) : "Sin evaluar";
+    document.getElementById("informeEstFinalLengua").textContent = lengua ? lengua.final : "Sin evaluar";
     document.getElementById("informeEstEntradaMat").textContent = mat ? mat.entrada : "Sin evaluar";
-    document.getElementById("informeEstFinalMat").textContent = mat ? (mat.soloUna ? mat.final + " (sin final aún)" : mat.final) : "Sin evaluar";
+    document.getElementById("informeEstFinalMat").textContent = mat ? mat.final : "Sin evaluar";
 
-    document.getElementById("tablaIndicadoresLengua").innerHTML = construirTablaIndicadores(lengua && lengua.indicadores, lengua && lengua.soloUna);
-    document.getElementById("tablaIndicadoresMat").innerHTML = construirTablaIndicadores(mat && mat.indicadores, mat && mat.soloUna);
+    document.getElementById("tablaIndicadoresLengua").innerHTML = construirTablaIndicadores(lengua && lengua.indicadores, lengua && lengua.sinFinal);
+    document.getElementById("tablaIndicadoresMat").innerHTML = construirTablaIndicadores(mat && mat.indicadores, mat && mat.sinFinal);
 
     document.getElementById("informeEstDescripcion").value = resp.descripcionAvances || "";
   }
@@ -13411,7 +13429,7 @@ const respuestasTexto = {
       // "de X a Y" en vez de una flecha: la fuente estándar de jsPDF no
       // renderiza bien el carácter de flecha (\u2192) — salía como un
       // glifo incorrecto en el PDF final.
-      const finalGeneral = ev.soloUna ? ev.final + " (aún sin final)" : ev.final;
+      const finalGeneral = ev.final; // el backend ya devuelve "Pendiente" directamente cuando aplica
       doc.setFont("helvetica", "normal"); doc.setFontSize(10);
       doc.text(`Resultado general: de ${ev.entrada} a ${finalGeneral}`, margen, y); y += 7;
 
@@ -13436,7 +13454,7 @@ const respuestasTexto = {
         doc.setTextColor(cEntrada[0], cEntrada[1], cEntrada[2]);
         doc.text(ind.entrada, colEntrada, y);
 
-        if (ev.soloUna) {
+        if (ev.sinFinal) {
           doc.setTextColor(140, 140, 140);
           doc.text("Pendiente", colFinal, y);
         } else {
@@ -13485,9 +13503,9 @@ const respuestasTexto = {
     const bloqueEval = function(tipo, etiqueta) {
       const ev = (datos.evaluaciones || {})[tipo];
       if (!ev) return `<p style="font-family:Arial;"><b>${etiqueta}:</b> sin evaluar.</p>`;
-      const finalTxt = ev.soloUna ? ev.final + " (aún sin evaluación final)" : ev.final;
+      const finalTxt = ev.final; // el backend ya devuelve "Pendiente" directamente cuando aplica
       return `<p style="font-family:Arial;"><b>${etiqueta}</b> — resultado general: entrada ${escapeHtml(ev.entrada)} &rarr; final ${escapeHtml(finalTxt)}</p>
-        <div style="font-family:Arial;font-size:11px;">${construirTablaIndicadores(ev.indicadores, ev.soloUna)}</div>`;
+        <div style="font-family:Arial;font-size:11px;">${construirTablaIndicadores(ev.indicadores, ev.sinFinal)}</div>`;
     };
     return `
       <h2 style="font-family:Arial;">${escapeHtml(datos.estudiante.nombre)}</h2>
@@ -13626,6 +13644,77 @@ const respuestasTexto = {
     );
   }
 
+  let facilitadorEstudiantesActual = null; // { facilitador, informes } del último facilitador consultado
+
+  function verEstudiantesFacilitadorSede(cedula, nombre) {
+    const bloque = document.getElementById("bloqueEstudiantesFacilitadorSede");
+    bloque.classList.remove("oculto");
+    document.getElementById("tituloEstudiantesFacilitadorSede").textContent = "Estudiantes de " + nombre;
+    document.getElementById("listaEstudiantesFacilitadorSede").innerHTML = "Cargando...";
+    bloque.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    llamarBackend(
+      { accion: "listarInformesEstudiantesFacilitador", cedula: usuarioActual.cedula, cedulaFacilitador: cedula },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          document.getElementById("listaEstudiantesFacilitadorSede").innerHTML =
+            '<p class="mensaje error">' + escapeHtml((resp && resp.mensaje) || "No se pudo cargar.") + '</p>';
+          return;
+        }
+        facilitadorEstudiantesActual = resp;
+        if (!resp.informes.length) {
+          document.getElementById("listaEstudiantesFacilitadorSede").innerHTML =
+            '<p class="nota">Este facilitador todavía no ha completado ningún informe.</p>';
+          return;
+        }
+        document.getElementById("listaEstudiantesFacilitadorSede").innerHTML = resp.informes.map(function(inf, idx) {
+          return `<div class="item-estudiante-informe completado" data-idx="${idx}">
+            <span>${escapeHtml(inf.estudiante.nombre)}</span>
+            <span class="estado-informe-chip completado">Descargar</span>
+          </div>`;
+        }).join("");
+        document.getElementById("listaEstudiantesFacilitadorSede").querySelectorAll(".item-estudiante-informe").forEach(function(item) {
+          item.addEventListener("click", function() {
+            descargarInformeIndividualDesdeSede(parseInt(item.dataset.idx, 10));
+          });
+        });
+      }
+    );
+  }
+
+  function descargarInformeIndividualDesdeSede(idx) {
+    if (!facilitadorEstudiantesActual) return;
+    const datos = facilitadorEstudiantesActual.informes[idx];
+    const jsPDFCtor = window.jspdf.jsPDF;
+    const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    dibujarInformeEstudiantePDF(doc, Object.assign({}, datos, {
+      elaboradoPor: facilitadorEstudiantesActual.facilitador.nombre,
+      fechaGeneracion: new Date().toLocaleDateString("es-DO"),
+    }));
+    doc.save("Informe_" + datos.estudiante.nombre.replace(/\s+/g, "_") + ".pdf");
+  }
+
+  function descargarInformesFacilitadorSedePDF() {
+    if (!facilitadorEstudiantesActual || !facilitadorEstudiantesActual.informes.length) {
+      alert("Este facilitador todavía no tiene informes completados para descargar.");
+      return;
+    }
+    const nombreFac = facilitadorEstudiantesActual.facilitador.nombre;
+    const fechaGeneracion = new Date().toLocaleDateString("es-DO");
+    const jsPDFCtor = window.jspdf.jsPDF;
+    const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    facilitadorEstudiantesActual.informes.forEach(function(datos, i) {
+      if (i > 0) doc.addPage();
+      dibujarInformeEstudiantePDF(doc, Object.assign({}, datos, { elaboradoPor: nombreFac, fechaGeneracion: fechaGeneracion }));
+    });
+    doc.save("Informes_" + nombreFac.replace(/\s+/g, "_") + ".pdf");
+  }
+
+  function cerrarEstudiantesFacilitadorSede() {
+    document.getElementById("bloqueEstudiantesFacilitadorSede").classList.add("oculto");
+    facilitadorEstudiantesActual = null;
+  }
+
   function pintarDatosInformeSede(resp) {
     const a = resp.asistencia || {};
     document.getElementById("informeSedeAsistencia").textContent =
@@ -13636,11 +13725,9 @@ const respuestasTexto = {
     document.getElementById("informeSedeMejoraron").textContent = p.mejoraron ?? 0;
     document.getElementById("informeSedeMantuvieron").textContent = p.seMantuvieron ?? 0;
     document.getElementById("informeSedeBajaron").textContent = p.bajaron ?? 0;
+    document.getElementById("informeSedePendientes").textContent = p.pendientes ?? 0;
 
-    const ac = resp.acompanamientos || {};
-    document.getElementById("informeSedeAcompanamientos").textContent =
-      ac.pctCumplimiento === null || ac.pctCumplimiento === undefined ? "Sin registros" : ac.pctCumplimiento + "% (" + ac.cantidad + ")";
-
+    document.getElementById("informeSedeAcompanamientos").textContent = (resp.acompanamientos || {}).cantidad ?? 0;
     document.getElementById("informeSedeIncidencias").textContent = (resp.incidencias || {}).cantidad ?? 0;
 
     const tabla = document.getElementById("tablaFacilitadoresInforme");
@@ -13680,7 +13767,7 @@ const respuestasTexto = {
       }
       // si mismoGrupoQueAnterior es true, no se repiten (ya quedaron fusionadas arriba)
 
-      filas += `<tr class="${mismoGrupoQueAnterior ? "fila-pareja-grupo" : ""}">
+      filas += `<tr class="fila-facilitador-clic ${mismoGrupoQueAnterior ? "fila-pareja-grupo" : ""}" data-cedula="${escapeHtml(f.cedula || "")}" data-nombre="${escapeHtml(f.nombre || "")}">
         <td>${escapeHtml(f.nombre)}</td>
         ${celdasCompartidas}
       </tr>`;
@@ -13690,19 +13777,36 @@ const respuestasTexto = {
       <thead><tr><th>Facilitador</th><th>Grupo</th><th>Informes completados</th><th>% avance</th></tr></thead>
       <tbody>${filas || '<tr><td colspan="4">No hay facilitadores activos en esta sede.</td></tr>'}</tbody>
     </table>`;
+    tabla.querySelectorAll(".fila-facilitador-clic").forEach(function(fila) {
+      fila.addEventListener("click", function() {
+        if (fila.dataset.cedula) verEstudiantesFacilitadorSede(fila.dataset.cedula, fila.dataset.nombre);
+      });
+    });
+    cerrarEstudiantesFacilitadorSede();
 
-    document.getElementById("informeSedeValoracion").value = resp.valoracionGeneral || "";
-    document.getElementById("informeSedeRecomendaciones").value = resp.recomendaciones || "";
+    document.getElementById("informeSedeFortalezas").value = resp.fortalezasObservadas || "";
+    document.getElementById("informeSedeOportunidades").value = resp.oportunidadesMejora || "";
+    document.getElementById("informeSedeAcuerdos").value = resp.acuerdosRealizados || "";
+
+    // Solo el coordinador de sede (y el administrador) puede editar y
+    // guardar. El resto (técnicos por ámbito) lo ve en solo lectura.
+    const puedeEditar = resp.puedeEditar !== false;
+    document.getElementById("notaSoloLecturaInforme").classList.toggle("oculto", puedeEditar);
+    document.getElementById("btnGuardarInformeSede").classList.toggle("oculto", !puedeEditar);
+    ["informeSedeFortalezas", "informeSedeOportunidades", "informeSedeAcuerdos"].forEach(function(id) {
+      document.getElementById(id).disabled = !puedeEditar;
+    });
   }
 
   function guardarInformeSedeActual() {
     const centroSede = (document.getElementById("informeSedeSelector").value) || (datosInformeSedeActual && datosInformeSedeActual.centroSede);
-    const valoracion = document.getElementById("informeSedeValoracion").value.trim();
-    const recomendaciones = document.getElementById("informeSedeRecomendaciones").value.trim();
+    const fortalezas = document.getElementById("informeSedeFortalezas").value.trim();
+    const oportunidades = document.getElementById("informeSedeOportunidades").value.trim();
+    const acuerdos = document.getElementById("informeSedeAcuerdos").value.trim();
     const mensaje = document.getElementById("mensajeInformeSede");
 
-    if (!valoracion) {
-      mensaje.textContent = "Debe escribir una valoración general antes de guardar.";
+    if (!fortalezas) {
+      mensaje.textContent = "Debe describir las fortalezas observadas antes de guardar.";
       mensaje.className = "mensaje error";
       return;
     }
@@ -13715,7 +13819,7 @@ const respuestasTexto = {
         accion: "guardarInformeSede",
         payload: JSON.stringify({
           cedula: usuarioActual.cedula, centroSede: centroSede,
-          valoracionGeneral: valoracion, recomendaciones: recomendaciones,
+          fortalezasObservadas: fortalezas, oportunidadesMejora: oportunidades, acuerdosRealizados: acuerdos,
         }),
       },
       function(resp) {
@@ -13727,8 +13831,9 @@ const respuestasTexto = {
         mensaje.textContent = "Informe de sede guardado correctamente.";
         mensaje.className = "mensaje ok";
         if (datosInformeSedeActual) {
-          datosInformeSedeActual.valoracionGeneral = valoracion;
-          datosInformeSedeActual.recomendaciones = recomendaciones;
+          datosInformeSedeActual.fortalezasObservadas = fortalezas;
+          datosInformeSedeActual.oportunidadesMejora = oportunidades;
+          datosInformeSedeActual.acuerdosRealizados = acuerdos;
         }
       }
     );
@@ -13745,11 +13850,12 @@ const respuestasTexto = {
       fechaGeneracion: new Date().toLocaleDateString("es-DO"),
       asistencia: a.pctAsistenciaSede === null || a.pctAsistenciaSede === undefined ? "Sin registros" : a.pctAsistenciaSede + "%",
       estudiantes: a.totalEstudiantesActivos ?? 0,
-      mejoraron: p.mejoraron ?? 0, seMantuvieron: p.seMantuvieron ?? 0, bajaron: p.bajaron ?? 0,
-      cumplimiento: ac.pctCumplimiento === null || ac.pctCumplimiento === undefined ? "Sin registros" : ac.pctCumplimiento + "%",
+      mejoraron: p.mejoraron ?? 0, seMantuvieron: p.seMantuvieron ?? 0, bajaron: p.bajaron ?? 0, pendientes: p.pendientes ?? 0,
+      acompanamientos: ac.cantidad ?? 0,
       incidencias: (d.incidencias || {}).cantidad ?? 0,
-      valoracion: document.getElementById("informeSedeValoracion").value.trim() || "(sin valoración)",
-      recomendaciones: document.getElementById("informeSedeRecomendaciones").value.trim() || "(sin recomendaciones)",
+      fortalezas: document.getElementById("informeSedeFortalezas").value.trim() || "(sin descripción)",
+      oportunidades: document.getElementById("informeSedeOportunidades").value.trim() || "(sin descripción)",
+      acuerdos: document.getElementById("informeSedeAcuerdos").value.trim() || "(sin descripción)",
     };
   }
 
@@ -13782,18 +13888,20 @@ const respuestasTexto = {
     });
     y = yInfo + 10;
 
-    // Tarjetas de indicadores clave: 3 columnas x 2 filas
+    // Tarjetas de indicadores clave (grilla de 3 columnas, tantas filas como haga falta)
     y = dibujarSeccionInformePDF(doc, "Indicadores generales", margen, y, anchoDisponible);
     const tarjetas = [
       ["Estudiantes activos", String(t.estudiantes)],
       ["% Asistencia general", String(t.asistencia)],
-      ["Cumplimiento acompañamientos", String(t.cumplimiento)],
+      ["Acompañamientos realizados", String(t.acompanamientos)],
       ["Mejoraron de nivel", String(t.mejoraron)],
       ["Se mantuvieron", String(t.seMantuvieron)],
       ["Bajaron de nivel", String(t.bajaron)],
+      ["Pendientes de evaluación final", String(t.pendientes)],
     ];
     const colAncho = (anchoDisponible - 2 * 6) / 3;
     const filaAlto = 20;
+    const filasTarjetas = Math.ceil(tarjetas.length / 3);
     tarjetas.forEach(function(tj, i) {
       const col = i % 3, fila = Math.floor(i / 3);
       const x = margen + col * (colAncho + 6);
@@ -13809,21 +13917,27 @@ const respuestasTexto = {
       doc.text(tj[0], x + colAncho / 2, yy + 16, { align: "center", maxWidth: colAncho - 4 });
       doc.setTextColor(0, 0, 0);
     });
-    y += 2 * (filaAlto + 5) + 4;
+    y += filasTarjetas * (filaAlto + 5) + 4;
 
     doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
     doc.text("Incidencias registradas: " + t.incidencias, margen, y);
     y += 10;
 
-    y = dibujarSeccionInformePDF(doc, "Valoración general", margen, y, anchoDisponible);
+    y = dibujarSeccionInformePDF(doc, "Fortalezas observadas", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-    let lineas = doc.splitTextToSize(t.valoracion, anchoDisponible);
+    let lineas = doc.splitTextToSize(t.fortalezas, anchoDisponible);
     doc.text(lineas, margen, y); y += lineas.length * 5 + 8;
 
     if (y > altoPagina - 45) { doc.addPage(); y = 36; }
-    y = dibujarSeccionInformePDF(doc, "Recomendaciones", margen, y, anchoDisponible);
+    y = dibujarSeccionInformePDF(doc, "Oportunidades de mejora", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal");
-    lineas = doc.splitTextToSize(t.recomendaciones, anchoDisponible);
+    lineas = doc.splitTextToSize(t.oportunidades, anchoDisponible);
+    doc.text(lineas, margen, y); y += lineas.length * 5 + 8;
+
+    if (y > altoPagina - 45) { doc.addPage(); y = 36; }
+    y = dibujarSeccionInformePDF(doc, "Acuerdos realizados", margen, y, anchoDisponible);
+    doc.setFont("helvetica", "normal");
+    lineas = doc.splitTextToSize(t.acuerdos, anchoDisponible);
     doc.text(lineas, margen, y); y += lineas.length * 5;
 
     dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Coordinador(a) de sede", t.elaboradoPor, t.fechaGeneracion);
@@ -13843,12 +13957,13 @@ const respuestasTexto = {
       <p style="font-family:Arial;">
         Estudiantes activos: ${t.estudiantes}<br>
         % Asistencia general: ${escapeHtml(String(t.asistencia))}<br>
-        Progreso de nivel — mejoraron: ${t.mejoraron} · se mantuvieron: ${t.seMantuvieron} · bajaron: ${t.bajaron}<br>
-        Cumplimiento de acompañamientos realizados: ${escapeHtml(String(t.cumplimiento))}<br>
+        Progreso de nivel — mejoraron: ${t.mejoraron} · se mantuvieron: ${t.seMantuvieron} · bajaron: ${t.bajaron} · pendientes: ${t.pendientes}<br>
+        Acompañamientos realizados: ${t.acompanamientos}<br>
         Incidencias registradas: ${t.incidencias}
       </p>
-      <p style="font-family:Arial;"><b>Valoración general:</b><br>${escapeHtml(t.valoracion).replace(/\n/g, "<br>")}</p>
-      <p style="font-family:Arial;"><b>Recomendaciones:</b><br>${escapeHtml(t.recomendaciones).replace(/\n/g, "<br>")}</p>
+      <p style="font-family:Arial;"><b>Fortalezas observadas:</b><br>${escapeHtml(t.fortalezas).replace(/\n/g, "<br>")}</p>
+      <p style="font-family:Arial;"><b>Oportunidades de mejora:</b><br>${escapeHtml(t.oportunidades).replace(/\n/g, "<br>")}</p>
+      <p style="font-family:Arial;"><b>Acuerdos realizados:</b><br>${escapeHtml(t.acuerdos).replace(/\n/g, "<br>")}</p>
     `;
     descargarHTMLComoWord(html, "Informe_Sede_" + t.centroSede.replace(/[^a-zA-Z0-9]/g, "_") + ".doc");
   }
