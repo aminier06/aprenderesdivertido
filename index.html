@@ -1673,6 +1673,35 @@
     .grupo-asignacion-chip.vacio { opacity: 0.55; }
     .icono-exportar-chip { font-size: 11px; color: var(--texto-3); }
 
+    .barra-progreso-informes {
+      width: 100%; height: 10px; border-radius: 999px;
+      background: var(--fondo-2, #eef1f4); overflow: hidden; margin-bottom: 6px;
+    }
+    .barra-progreso-informes-relleno {
+      height: 100%; background: #0d9488; transition: width 0.25s ease;
+    }
+    .lista-estudiantes-informes {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 10px;
+    }
+    .item-estudiante-informe {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: var(--blanco); border: 1.5px solid var(--borde); border-radius: var(--r);
+      padding: 10px 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .item-estudiante-informe:hover { border-color: #0d9488; background: #f4fbfa; }
+    .item-estudiante-informe.completado { border-left: 4px solid #0d9488; }
+    .item-estudiante-informe.pendiente { border-left: 4px solid #d97706; }
+    .estado-informe-chip {
+      font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+    }
+    .estado-informe-chip.completado { background: #d5f2ec; color: #0d6d61; }
+    .estado-informe-chip.pendiente { background: #fdecd2; color: #9a5b06; }
+
+    #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
+    #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
+    #tablaIndicadoresLengua td.elemental, #tablaIndicadoresMat td.elemental { color: #c0392b; font-weight: 600; }
+
     #tablaAsistenciaGrupo th.fecha-sin-registrar,
     #tablaAsistenciaGrupo td.fecha-sin-registrar {
       background: #fff3cd;
@@ -2698,6 +2727,16 @@
         <p>Cartas compromiso de facilitadores y coordinadores por distrito</p>
         <span class="modulo-flecha">›</span>
       </div>
+
+      <div id="tileInformes" class="modulo modulo-asignacion oculto" onclick="abrirModulo('informes')">
+        <div class="modulo-acento"></div>
+        <div class="icono-modulo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M9 12h6"></path><path d="M9 16h4"></path><circle cx="7.5" cy="12.2" r="0.6" fill="currentColor" stroke="none"></circle></svg>
+        </div>
+        <h3>Informes de cierre</h3>
+        <p>Informe por estudiante (facilitador) o por sede (coordinador)</p>
+        <span class="modulo-flecha">›</span>
+      </div>
     </div>
   </section>
 
@@ -3595,6 +3634,105 @@
   </section>
 
 
+  <section id="moduloInformes" class="tarjeta oculto">
+    <div class="encabezado-modulo">
+      <div>
+        <h2>Informes de cierre</h2>
+        <p class="nota" id="notaInformes">Informe individual por estudiante (facilitador) o informe general de la sede (coordinador).</p>
+      </div>
+      <div class="acciones-modulo">
+        <button type="button" class="btn-secundario" onclick="volverAlPanel()">Volver al panel</button>
+      </div>
+    </div>
+
+    <!-- ══════════ VISTA FACILITADOR: un informe por estudiante ══════════ -->
+    <div id="vistaInformesFacilitador" class="oculto">
+      <div class="resumen-asignacion" style="margin-bottom:14px;">
+        <div class="dato-asignacion">
+          <span>Progreso</span>
+          <strong id="progresoInformesTexto">0 / 0</strong>
+        </div>
+      </div>
+      <div class="barra-progreso-informes">
+        <div id="barraProgresoInformes" class="barra-progreso-informes-relleno" style="width:0%;"></div>
+      </div>
+
+      <div class="acciones-asignacion" style="margin:14px 0;">
+        <button type="button" class="btn-secundario" id="btnDescargarTodosPDF" onclick="descargarTodosLosInformesPDF()" disabled>Descargar todos (PDF)</button>
+      </div>
+
+      <div id="mensajeListaInformes" class="mensaje"></div>
+      <div id="listaEstudiantesInformes" class="lista-estudiantes-informes"></div>
+
+      <!-- Formulario del estudiante seleccionado -->
+      <div id="formInformeEstudiante" class="bloque-formulario oculto" style="margin-top:18px;">
+        <h3 id="tituloInformeEstudiante">Informe de estudiante</h3>
+
+        <div class="resumen-asignacion">
+          <div class="dato-asignacion"><span>Asistencia</span><strong id="informeEstAsistenciaPct">—</strong></div>
+          <div class="dato-asignacion"><span>Nivel de entrada — Lengua</span><strong id="informeEstEntradaLengua">—</strong></div>
+          <div class="dato-asignacion"><span>Nivel final — Lengua</span><strong id="informeEstFinalLengua">—</strong></div>
+          <div class="dato-asignacion"><span>Nivel de entrada — Matemática</span><strong id="informeEstEntradaMat">—</strong></div>
+          <div class="dato-asignacion"><span>Nivel final — Matemática</span><strong id="informeEstFinalMat">—</strong></div>
+        </div>
+
+        <h4 style="margin-top:14px;">Indicadores — Lengua Española</h4>
+        <div id="tablaIndicadoresLengua" class="tabla-contenedor"></div>
+
+        <h4 style="margin-top:14px;">Indicadores — Matemática</h4>
+        <div id="tablaIndicadoresMat" class="tabla-contenedor"></div>
+
+        <label for="informeEstDescripcion" style="margin-top:12px; display:block;">Descripción cualitativa de los avances</label>
+        <textarea id="informeEstDescripcion" rows="5" placeholder="Fortalezas observadas, dificultades, recomendación para el próximo año..."></textarea>
+
+        <div class="acciones-asignacion" style="margin-top:12px;">
+          <button type="button" onclick="guardarInformeEstudianteActual()">Guardar informe</button>
+          <button type="button" class="btn-secundario" onclick="descargarInformeEstudiantePDF(estudianteInformeActual)">Descargar PDF</button>
+          <button type="button" class="btn-secundario" onclick="cerrarFormInformeEstudiante()">Cerrar</button>
+        </div>
+        <div id="mensajeInformeEstudiante" class="mensaje"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ VISTA COORDINADOR: un informe por sede ══════════ -->
+    <div id="vistaInformesCoordinador" class="oculto">
+      <div class="form-grid-3" id="bloqueSelectorSedeInforme">
+        <div>
+          <label for="informeSedeSelector">Centro sede</label>
+          <select id="informeSedeSelector" onchange="cargarInformeSedeSeleccionada()"></select>
+        </div>
+      </div>
+
+      <div id="mensajeInformeSede" class="mensaje"></div>
+
+      <div class="resumen-asignacion" style="margin:14px 0;">
+        <div class="dato-asignacion"><span>% Asistencia general</span><strong id="informeSedeAsistencia">—</strong></div>
+        <div class="dato-asignacion"><span>Estudiantes activos</span><strong id="informeSedeEstudiantes">—</strong></div>
+        <div class="dato-asignacion"><span>Mejoraron de nivel</span><strong id="informeSedeMejoraron">—</strong></div>
+        <div class="dato-asignacion"><span>Se mantuvieron</span><strong id="informeSedeMantuvieron">—</strong></div>
+        <div class="dato-asignacion"><span>Bajaron</span><strong id="informeSedeBajaron">—</strong></div>
+        <div class="dato-asignacion"><span>Cumplimiento de mis acompañamientos</span><strong id="informeSedeAcompanamientos">—</strong></div>
+        <div class="dato-asignacion"><span>Incidencias registradas</span><strong id="informeSedeIncidencias">—</strong></div>
+      </div>
+
+      <h3>Avance de informes por facilitador</h3>
+      <div id="tablaFacilitadoresInforme" class="tabla-contenedor"></div>
+
+      <div class="bloque-formulario" style="margin-top:14px;">
+        <label for="informeSedeValoracion">Valoración general de la sede</label>
+        <textarea id="informeSedeValoracion" rows="4" placeholder="Logros de la sede, dificultades enfrentadas..."></textarea>
+        <label for="informeSedeRecomendaciones" style="margin-top:10px; display:block;">Recomendaciones</label>
+        <textarea id="informeSedeRecomendaciones" rows="4" placeholder="Recomendaciones para el próximo año..."></textarea>
+
+        <div class="acciones-asignacion" style="margin-top:12px;">
+          <button type="button" onclick="guardarInformeSedeActual()">Guardar informe</button>
+          <button type="button" class="btn-secundario" onclick="descargarInformeSedePDF()">Descargar PDF</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
 
   <section id="moduloGestionSedes" class="tarjeta oculto">
     <div class="encabezado-modulo">
@@ -4335,7 +4473,7 @@
     "moduloAcompanamientos", "moduloIncidencias",
     "moduloAsignacionGrupos", "moduloAsignacionEstudiantesGrupos",
     "moduloGestionUsuarios", "moduloEvaluaciones", "login", "cambioPassword",
-    "moduloGestionSedes", "moduloInscripcion", "moduloContratos"
+    "moduloGestionSedes", "moduloInscripcion", "moduloContratos", "moduloInformes"
   ];
 
   function mostrarModulo(id) {
@@ -4362,7 +4500,8 @@
     moduloGestionSedes:    "Gestión de sedes",
     moduloEvaluaciones: "Evaluaciones",
     moduloInscripcion: "Inscripción",
-    moduloContratos: "Contratos"
+    moduloContratos: "Contratos",
+    moduloInformes: "Informes de cierre"
   };
 
   function actualizarBreadcrumb(moduloId) {
@@ -5105,6 +5244,19 @@
       if (puedeContratos) tileContratos.classList.remove("oculto");
       else tileContratos.classList.add("oculto");
     }
+
+    // Informes de cierre: Facilitador (informe por estudiante) y
+    // Coordinador de sede (informe de la sede). El administrador también
+    // lo ve, para poder revisar/generar informes de sede si hiciera falta.
+    const tileInformes = document.getElementById("tileInformes");
+    if (tileInformes) {
+      const rolVistaI = normalizarRol(usuario && usuario.rol);
+      const puedeVerInformes = esAdministradorReal() ||
+        rolVistaI === "facilitador" || rolVistaI === "coordinador sede" || rolVistaI === "coordinador de sede" ||
+        rolVistaI === "administrador";
+      if (puedeVerInformes) tileInformes.classList.remove("oculto");
+      else tileInformes.classList.add("oculto");
+    }
   }
 
   function actualizarVisibilidadGestionUsuarios() {
@@ -5522,6 +5674,11 @@
 
     if (modulo === "contratos") {
       abrirModuloContratos();
+      return;
+    }
+
+    if (modulo === "informes") {
+      abrirModuloInformes();
       return;
     }
 
@@ -12921,6 +13078,634 @@ const respuestasTexto = {
       document.getElementById("resultadoGlobalMatematica").textContent = "Puntuación: 0 / 12";
     }
   
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // MÓDULO DE INFORMES DE CIERRE
+  // ═══════════════════════════════════════════════════════════════════════
+  let estudianteInformeActual = null;      // idEstudiante abierto en el formulario
+  let datosEstudianteInformeActual = null; // datos calculados del estudiante abierto
+  let sedesInformeCoordinador = [];        // sedes del coordinador (para el selector)
+  let datosInformeSedeActual = null;       // último informe de sede cargado (para exportar)
+
+  function abrirModuloInformes() {
+    mostrarModulo("moduloInformes");
+    document.getElementById("vistaInformesFacilitador").classList.add("oculto");
+    document.getElementById("vistaInformesCoordinador").classList.add("oculto");
+
+    const rol = normalizarRol(usuarioActual && usuarioActual.rol);
+    if (rol === "facilitador") {
+      document.getElementById("notaInformes").textContent =
+        "Complete un informe por cada estudiante de su grupo. Los datos de asistencia y nivel se calculan solos; solo tiene que describir los avances.";
+      document.getElementById("vistaInformesFacilitador").classList.remove("oculto");
+      cargarListaEstudiantesInformes();
+    } else {
+      document.getElementById("notaInformes").textContent =
+        "Informe general de la sede: datos calculados de toda la sede, más su valoración y recomendaciones.";
+      document.getElementById("vistaInformesCoordinador").classList.remove("oculto");
+      cargarModuloInformesCoordinador();
+    }
+  }
+
+  /* ---------------------- FACILITADOR: por estudiante ---------------------- */
+
+  function cargarListaEstudiantesInformes() {
+    const mensaje = document.getElementById("mensajeListaInformes");
+    mensaje.textContent = "Cargando estudiantes...";
+    mensaje.className = "mensaje";
+    document.getElementById("formInformeEstudiante").classList.add("oculto");
+
+    llamarBackend(
+      { accion: "listarEstudiantesParaInformes", cedula: usuarioActual.cedula },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo cargar la lista de estudiantes.";
+          mensaje.className = "mensaje error";
+          document.getElementById("listaEstudiantesInformes").innerHTML = "";
+          return;
+        }
+        mensaje.textContent = "";
+        renderizarListaEstudiantesInformes(resp);
+      }
+    );
+  }
+
+  function renderizarListaEstudiantesInformes(resp) {
+    const total = resp.totalEstudiantes || 0;
+    const completados = resp.totalCompletados || 0;
+    document.getElementById("progresoInformesTexto").textContent = completados + " / " + total;
+    document.getElementById("barraProgresoInformes").style.width =
+      (total > 0 ? Math.round((completados / total) * 100) : 0) + "%";
+
+    const hayCompletados = completados > 0;
+    document.getElementById("btnDescargarTodosPDF").disabled = !hayCompletados;
+    document.getElementById("btnDescargarTodosWord").disabled = !hayCompletados;
+
+    const contenedor = document.getElementById("listaEstudiantesInformes");
+    contenedor.innerHTML = (resp.estudiantes || []).map(function(e) {
+      const estado = e.completado ? "completado" : "pendiente";
+      return `<div class="item-estudiante-informe ${estado}" data-id="${escapeHtml(e.idEstudiante)}" data-nombre="${escapeHtml(e.nombre)}">
+        <span>${escapeHtml(e.nombre)}</span>
+        <span class="estado-informe-chip ${estado}">${e.completado ? "Completado" : "Pendiente"}</span>
+      </div>`;
+    }).join("");
+
+    contenedor.querySelectorAll(".item-estudiante-informe").forEach(function(item) {
+      item.addEventListener("click", function() {
+        abrirFormInformeEstudiante(item.dataset.id, item.dataset.nombre);
+      });
+    });
+  }
+
+  function abrirFormInformeEstudiante(idEstudiante, nombre) {
+    estudianteInformeActual = idEstudiante;
+    const form = document.getElementById("formInformeEstudiante");
+    form.classList.remove("oculto");
+    document.getElementById("tituloInformeEstudiante").textContent = "Informe de " + nombre;
+    document.getElementById("mensajeInformeEstudiante").textContent = "Cargando datos del estudiante...";
+    document.getElementById("mensajeInformeEstudiante").className = "mensaje";
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    llamarBackend(
+      { accion: "obtenerInformeEstudiante", cedula: usuarioActual.cedula, idEstudiante: idEstudiante },
+      function(resp) {
+        const mensaje = document.getElementById("mensajeInformeEstudiante");
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo cargar el informe.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "";
+        datosEstudianteInformeActual = resp;
+        pintarDatosInformeEstudiante(resp);
+      }
+    );
+  }
+
+  // Construye una tabla HTML con el nivel de cada indicador, entrada vs.
+  // final, y un color simple según el nivel (mismo criterio de colores que
+  // ya usa el módulo de evaluaciones: elemental/aceptable/satisfactorio).
+  function construirTablaIndicadores(indicadores) {
+    if (!indicadores || !indicadores.length) {
+      return '<p class="nota">Sin evaluación registrada para esta prueba.</p>';
+    }
+    const claseNivel = function(nivel) {
+      const n = normalizarTexto(nivel).toLowerCase();
+      if (n === "satisfactorio") return "satisfactorio";
+      if (n === "aceptable") return "aceptable";
+      if (n === "elemental") return "elemental";
+      return "";
+    };
+    const filas = indicadores.map(function(ind) {
+      return `<tr>
+        <td>${escapeHtml(ind.nombre)}</td>
+        <td class="${claseNivel(ind.entrada)}">${escapeHtml(ind.entrada)}</td>
+        <td class="${claseNivel(ind.final)}">${escapeHtml(ind.final)}</td>
+      </tr>`;
+    }).join("");
+    return `<table>
+      <thead><tr><th>Indicador</th><th>Nivel de entrada</th><th>Nivel final</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+  }
+
+  function pintarDatosInformeEstudiante(resp) {
+    const a = resp.asistencia || {};
+    document.getElementById("informeEstAsistenciaPct").textContent =
+      a.pctAsistencia === null || a.pctAsistencia === undefined ? "Sin registros" : a.pctAsistencia + "% (" + a.totalDias + " días)";
+
+    const lengua = (resp.evaluaciones || {}).LENGUA;
+    const mat = (resp.evaluaciones || {}).MATEMATICA;
+    document.getElementById("informeEstEntradaLengua").textContent = lengua ? lengua.entrada : "Sin evaluar";
+    document.getElementById("informeEstFinalLengua").textContent = lengua ? (lengua.soloUna ? lengua.final + " (sin final aún)" : lengua.final) : "Sin evaluar";
+    document.getElementById("informeEstEntradaMat").textContent = mat ? mat.entrada : "Sin evaluar";
+    document.getElementById("informeEstFinalMat").textContent = mat ? (mat.soloUna ? mat.final + " (sin final aún)" : mat.final) : "Sin evaluar";
+
+    document.getElementById("tablaIndicadoresLengua").innerHTML = construirTablaIndicadores(lengua && lengua.indicadores);
+    document.getElementById("tablaIndicadoresMat").innerHTML = construirTablaIndicadores(mat && mat.indicadores);
+
+    document.getElementById("informeEstDescripcion").value = resp.descripcionAvances || "";
+  }
+
+  function cerrarFormInformeEstudiante() {
+    document.getElementById("formInformeEstudiante").classList.add("oculto");
+    estudianteInformeActual = null;
+    datosEstudianteInformeActual = null;
+  }
+
+  function guardarInformeEstudianteActual() {
+    if (!estudianteInformeActual) return;
+    const descripcion = document.getElementById("informeEstDescripcion").value.trim();
+    const mensaje = document.getElementById("mensajeInformeEstudiante");
+
+    if (!descripcion) {
+      mensaje.textContent = "Debe describir los avances del estudiante antes de guardar.";
+      mensaje.className = "mensaje error";
+      return;
+    }
+
+    mensaje.textContent = "Guardando...";
+    mensaje.className = "mensaje";
+
+    llamarBackend(
+      {
+        accion: "guardarInformeEstudiante",
+        payload: JSON.stringify({
+          cedula: usuarioActual.cedula,
+          idEstudiante: estudianteInformeActual,
+          descripcionAvances: descripcion,
+        }),
+      },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo guardar el informe.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "Informe guardado correctamente.";
+        mensaje.className = "mensaje ok";
+        if (datosEstudianteInformeActual) datosEstudianteInformeActual.descripcionAvances = descripcion;
+        cargarListaEstudiantesInformes(); // refresca la barra de progreso
+      }
+    );
+  }
+
+  // Dibuja el informe de UN estudiante en un documento jsPDF ya creado
+  // (mismo estilo que el resto de la app: encabezado MINERD + helvetica).
+  function dibujarInformeEstudiantePDF(doc, datos) {
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    const margen = 20;
+    let y = 20;
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text("REPÚBLICA DOMINICANA", anchoPagina / 2, y, { align: "center" }); y += 5;
+    doc.text("MINISTERIO DE EDUCACIÓN", anchoPagina / 2, y, { align: "center" }); y += 5;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text("Campamento \u201cAprender es Divertido\u201d \u2014 Informe de cierre del estudiante", anchoPagina / 2, y, { align: "center" }); y += 10;
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+    doc.text(datos.estudiante.nombre || "", margen, y); y += 6;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text("ID del estudiante: " + (datos.estudiante.idEstudiante || ""), margen, y); y += 7;
+
+    doc.setFontSize(10);
+    const sede = datos.sede || {};
+    [
+      "Regional: " + (sede.regional || ""),
+      "Distrito: " + (sede.distrito || ""),
+      "Centro sede: " + (sede.centroSede || ""),
+      "Grupo: " + (sede.grupo || ""),
+      "Elaborado por: " + (datos.elaboradoPor || "—"),
+      "Fecha de generación: " + (datos.fechaGeneracion || new Date().toLocaleDateString("es-DO")),
+    ].forEach(function(linea) { doc.text(linea, margen, y); y += 5.5; });
+    y += 4;
+
+    const a = datos.asistencia || {};
+    doc.setFont("helvetica", "bold"); doc.text("Asistencia", margen, y); y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      a.pctAsistencia === null || a.pctAsistencia === undefined
+        ? "Sin registros de asistencia."
+        : `${a.pctAsistencia}% (${a.totalDias} días registrados — Presente: ${a.Presente}, Tardanza: ${a.Tardanza}, Ausente: ${a.Ausente}, Excusa: ${a.Excusa})`,
+      margen, y
+    );
+    y += 9;
+
+    doc.setFont("helvetica", "bold"); doc.text("Evaluación de entrada y final", margen, y); y += 7;
+
+    const colorNivel = function(nivel) {
+      const n = normalizarTexto(nivel).toLowerCase();
+      if (n === "satisfactorio") return [22, 125, 74];
+      if (n === "aceptable") return [180, 83, 9];
+      if (n === "elemental") return [192, 57, 43];
+      return [60, 60, 60];
+    };
+
+    [["LENGUA", "Lengua Española"], ["MATEMATICA", "Matemática"]].forEach(function(par) {
+      const tipo = par[0], etiqueta = par[1];
+      const ev = (datos.evaluaciones || {})[tipo];
+
+      if (y > doc.internal.pageSize.getHeight() - 30) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
+      doc.text(etiqueta, margen, y); y += 6;
+
+      if (!ev) {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+        doc.text("Sin evaluar.", margen, y); y += 8;
+        return;
+      }
+
+      const finalGeneral = ev.soloUna ? ev.final + " (aún sin final)" : ev.final;
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+      doc.text(`Resultado general: entrada ${ev.entrada} \u2192 final ${finalGeneral}`, margen, y); y += 6.5;
+
+      // Tabla de indicadores: nombre | nivel entrada | nivel final
+      const colIndicador = margen, colEntrada = margen + 108, colFinal = margen + 145;
+      doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+      doc.text("Indicador", colIndicador, y);
+      doc.text("Entrada", colEntrada, y);
+      doc.text("Final", colFinal, y);
+      y += 1.5;
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margen, y, anchoPagina - margen, y);
+      y += 4.5;
+
+      (ev.indicadores || []).forEach(function(ind) {
+        const lineasNombre = doc.splitTextToSize(ind.nombre, 104);
+        const alturaFila = Math.max(lineasNombre.length * 4.5, 4.5);
+        if (y + alturaFila > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
+
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(0, 0, 0);
+        doc.text(lineasNombre, colIndicador, y);
+
+        const cEntrada = colorNivel(ind.entrada);
+        doc.setTextColor(cEntrada[0], cEntrada[1], cEntrada[2]);
+        doc.text(ind.entrada, colEntrada, y);
+
+        const cFinal = colorNivel(ind.final);
+        doc.setTextColor(cFinal[0], cFinal[1], cFinal[2]);
+        doc.text(ind.final, colFinal, y);
+
+        doc.setTextColor(0, 0, 0);
+        y += alturaFila + 2;
+      });
+      y += 4;
+    });
+
+    if (y > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
+    doc.text("Descripción cualitativa de los avances", margen, y); y += 6;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    const lineas = doc.splitTextToSize(datos.descripcionAvances || "(sin descripción)", anchoPagina - margen * 2);
+    doc.text(lineas, margen, y);
+  }
+
+  function descargarInformeEstudiantePDF(idEstudiante) {
+    if (!datosEstudianteInformeActual || !idEstudiante) { alert("Primero guarde el informe."); return; }
+    const jsPDFCtor = window.jspdf.jsPDF;
+    const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    const datosCompletos = Object.assign(
+      { estudiante: { idEstudiante: idEstudiante, nombre: document.getElementById("tituloInformeEstudiante").textContent.replace("Informe de ", "") } },
+      datosEstudianteInformeActual,
+      {
+        descripcionAvances: document.getElementById("informeEstDescripcion").value.trim(),
+        elaboradoPor: usuarioActual.nombre,
+        fechaGeneracion: new Date().toLocaleDateString("es-DO"),
+      }
+    );
+    dibujarInformeEstudiantePDF(doc, datosCompletos);
+    doc.save("Informe_" + datosCompletos.estudiante.nombre.replace(/\s+/g, "_") + ".pdf");
+  }
+
+  // Genera un .doc simple a partir de HTML — Word lo abre sin problema, sin
+  // necesitar una librería de generación de .docx en el navegador.
+  function construirHTMLInformeEstudiante(datos) {
+    const a = datos.asistencia || {};
+    const sede = datos.sede || {};
+    const bloqueEval = function(tipo, etiqueta) {
+      const ev = (datos.evaluaciones || {})[tipo];
+      if (!ev) return `<p style="font-family:Arial;"><b>${etiqueta}:</b> sin evaluar.</p>`;
+      const finalTxt = ev.soloUna ? ev.final + " (aún sin evaluación final)" : ev.final;
+      return `<p style="font-family:Arial;"><b>${etiqueta}</b> — resultado general: entrada ${escapeHtml(ev.entrada)} &rarr; final ${escapeHtml(finalTxt)}</p>
+        <div style="font-family:Arial;font-size:11px;">${construirTablaIndicadores(ev.indicadores)}</div>`;
+    };
+    return `
+      <h2 style="font-family:Arial;">${escapeHtml(datos.estudiante.nombre)}</h2>
+      <p style="font-family:Arial;font-size:11px;">
+        ID del estudiante: ${escapeHtml(datos.estudiante.idEstudiante)}<br>
+        Regional: ${escapeHtml(sede.regional)} · Distrito: ${escapeHtml(sede.distrito)}<br>
+        Centro sede: ${escapeHtml(sede.centroSede)} · Grupo: ${escapeHtml(sede.grupo)}<br>
+        Elaborado por: ${escapeHtml(datos.elaboradoPor || "—")} · Fecha de generación: ${escapeHtml(datos.fechaGeneracion || new Date().toLocaleDateString("es-DO"))}
+      </p>
+      <p style="font-family:Arial;"><b>Asistencia:</b> ${
+        a.pctAsistencia === null || a.pctAsistencia === undefined
+          ? "sin registros."
+          : `${a.pctAsistencia}% (${a.totalDias} días — Presente: ${a.Presente}, Tardanza: ${a.Tardanza}, Ausente: ${a.Ausente}, Excusa: ${a.Excusa})`
+      }</p>
+      <div style="font-family:Arial;">
+        ${bloqueEval("LENGUA", "Lengua Española")}
+        ${bloqueEval("MATEMATICA", "Matemática")}
+      </div>
+      <p style="font-family:Arial;"><b>Descripción cualitativa de los avances:</b></p>
+      <p style="font-family:Arial;">${escapeHtml(datos.descripcionAvances || "(sin descripción)").replace(/\n/g, "<br>")}</p>
+      <hr>
+    `;
+  }
+
+  function descargarHTMLComoWord(htmlInterno, nombreArchivo) {
+    const htmlCompleto = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset="utf-8"></head><body>${htmlInterno}</body></html>`;
+    const blob = new Blob(["\ufeff", htmlCompleto], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nombreArchivo;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function descargarInformeEstudianteWord(idEstudiante) {
+    if (!datosEstudianteInformeActual || !idEstudiante) { alert("Primero guarde el informe."); return; }
+    const nombre = document.getElementById("tituloInformeEstudiante").textContent.replace("Informe de ", "");
+    const datosCompletos = Object.assign(
+      { estudiante: { idEstudiante: idEstudiante, nombre: nombre } },
+      datosEstudianteInformeActual,
+      {
+        descripcionAvances: document.getElementById("informeEstDescripcion").value.trim(),
+        elaboradoPor: usuarioActual.nombre,
+        fechaGeneracion: new Date().toLocaleDateString("es-DO"),
+      }
+    );
+    descargarHTMLComoWord(construirHTMLInformeEstudiante(datosCompletos), "Informe_" + nombre.replace(/\s+/g, "_") + ".doc");
+  }
+
+  function descargarTodosLosInformesPDF() {
+    llamarBackend(
+      { accion: "listarInformesCompletosFacilitador", cedula: usuarioActual.cedula },
+      function(resp) {
+        if (!resp || !resp.ok || !resp.informes || !resp.informes.length) {
+          alert((resp && resp.mensaje) || "Todavía no hay ningún informe completado para descargar.");
+          return;
+        }
+        const fechaGeneracion = new Date().toLocaleDateString("es-DO");
+        const nombreFacilitador = (resp.facilitador && resp.facilitador.nombre) || "";
+        const jsPDFCtor = window.jspdf.jsPDF;
+        const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+        resp.informes.forEach(function(datos, i) {
+          if (i > 0) doc.addPage();
+          dibujarInformeEstudiantePDF(doc, Object.assign({}, datos, { elaboradoPor: nombreFacilitador, fechaGeneracion: fechaGeneracion }));
+        });
+        doc.save("Informes_" + nombreFacilitador.replace(/\s+/g, "_") + ".pdf");
+      }
+    );
+  }
+
+  function descargarTodosLosInformesWord() {
+    llamarBackend(
+      { accion: "listarInformesCompletosFacilitador", cedula: usuarioActual.cedula },
+      function(resp) {
+        if (!resp || !resp.ok || !resp.informes || !resp.informes.length) {
+          alert((resp && resp.mensaje) || "Todavía no hay ningún informe completado para descargar.");
+          return;
+        }
+        const fechaGeneracion = new Date().toLocaleDateString("es-DO");
+        const nombreFacilitador = (resp.facilitador && resp.facilitador.nombre) || "";
+        const htmlTotal = resp.informes
+          .map(function(datos) { return construirHTMLInformeEstudiante(Object.assign({}, datos, { elaboradoPor: nombreFacilitador, fechaGeneracion: fechaGeneracion })); })
+          .join("<br style='page-break-before:always'>");
+        descargarHTMLComoWord(htmlTotal, "Informes_" + nombreFacilitador.replace(/\s+/g, "_") + ".doc");
+      }
+    );
+  }
+
+  /* ---------------------- COORDINADOR: por sede ---------------------- */
+
+  function cargarModuloInformesCoordinador() {
+    const cedula = usuarioActual.cedula;
+    llamarBackend(
+      { accion: "obtenerInformeSede", cedula: cedula },
+      function(resp) {
+        const mensaje = document.getElementById("mensajeInformeSede");
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo cargar el informe de la sede.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "";
+        sedesInformeCoordinador = resp.sedesDisponibles || [resp.centroSede];
+        const selector = document.getElementById("informeSedeSelector");
+        selector.innerHTML = sedesInformeCoordinador.map(function(s) {
+          return `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+        }).join("");
+        selector.value = resp.centroSede;
+        document.getElementById("bloqueSelectorSedeInforme").classList.toggle("oculto", sedesInformeCoordinador.length <= 1);
+        datosInformeSedeActual = resp;
+        pintarDatosInformeSede(resp);
+      }
+    );
+  }
+
+  function cargarInformeSedeSeleccionada() {
+    const centroSede = document.getElementById("informeSedeSelector").value;
+    llamarBackend(
+      { accion: "obtenerInformeSede", cedula: usuarioActual.cedula, centroSede: centroSede },
+      function(resp) {
+        const mensaje = document.getElementById("mensajeInformeSede");
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo cargar el informe de la sede.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "";
+        datosInformeSedeActual = resp;
+        pintarDatosInformeSede(resp);
+      }
+    );
+  }
+
+  function pintarDatosInformeSede(resp) {
+    const a = resp.asistencia || {};
+    document.getElementById("informeSedeAsistencia").textContent =
+      a.pctAsistenciaSede === null || a.pctAsistenciaSede === undefined ? "Sin registros" : a.pctAsistenciaSede + "%";
+    document.getElementById("informeSedeEstudiantes").textContent = a.totalEstudiantesActivos ?? 0;
+
+    const p = resp.progreso || {};
+    document.getElementById("informeSedeMejoraron").textContent = p.mejoraron ?? 0;
+    document.getElementById("informeSedeMantuvieron").textContent = p.seMantuvieron ?? 0;
+    document.getElementById("informeSedeBajaron").textContent = p.bajaron ?? 0;
+
+    const ac = resp.acompanamientos || {};
+    document.getElementById("informeSedeAcompanamientos").textContent =
+      ac.pctCumplimiento === null || ac.pctCumplimiento === undefined ? "Sin registros" : ac.pctCumplimiento + "% (" + ac.cantidad + ")";
+
+    document.getElementById("informeSedeIncidencias").textContent = (resp.incidencias || {}).cantidad ?? 0;
+
+    const tabla = document.getElementById("tablaFacilitadoresInforme");
+    const filas = (resp.facilitadores || []).map(function(f) {
+      const pct = f.totalEstudiantes > 0 ? Math.round((f.completados / f.totalEstudiantes) * 100) : 0;
+      return `<tr>
+        <td>${escapeHtml(f.nombre)}</td>
+        <td>${escapeHtml(f.grupo || "")}</td>
+        <td>${f.completados} / ${f.totalEstudiantes}</td>
+        <td>${pct}%</td>
+      </tr>`;
+    }).join("");
+    tabla.innerHTML = `<table>
+      <thead><tr><th>Facilitador</th><th>Grupo</th><th>Informes completados</th><th>% avance</th></tr></thead>
+      <tbody>${filas || '<tr><td colspan="4">No hay facilitadores activos en esta sede.</td></tr>'}</tbody>
+    </table>`;
+
+    document.getElementById("informeSedeValoracion").value = resp.valoracionGeneral || "";
+    document.getElementById("informeSedeRecomendaciones").value = resp.recomendaciones || "";
+  }
+
+  function guardarInformeSedeActual() {
+    const centroSede = (document.getElementById("informeSedeSelector").value) || (datosInformeSedeActual && datosInformeSedeActual.centroSede);
+    const valoracion = document.getElementById("informeSedeValoracion").value.trim();
+    const recomendaciones = document.getElementById("informeSedeRecomendaciones").value.trim();
+    const mensaje = document.getElementById("mensajeInformeSede");
+
+    if (!valoracion) {
+      mensaje.textContent = "Debe escribir una valoración general antes de guardar.";
+      mensaje.className = "mensaje error";
+      return;
+    }
+
+    mensaje.textContent = "Guardando...";
+    mensaje.className = "mensaje";
+
+    llamarBackend(
+      {
+        accion: "guardarInformeSede",
+        payload: JSON.stringify({
+          cedula: usuarioActual.cedula, centroSede: centroSede,
+          valoracionGeneral: valoracion, recomendaciones: recomendaciones,
+        }),
+      },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo guardar el informe.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "Informe de sede guardado correctamente.";
+        mensaje.className = "mensaje ok";
+        if (datosInformeSedeActual) {
+          datosInformeSedeActual.valoracionGeneral = valoracion;
+          datosInformeSedeActual.recomendaciones = recomendaciones;
+        }
+      }
+    );
+  }
+
+  function construirTextoInformeSede() {
+    const d = datosInformeSedeActual || {};
+    const a = d.asistencia || {}, p = d.progreso || {}, ac = d.acompanamientos || {};
+    return {
+      centroSede: d.centroSede || "",
+      regional: d.regional || "",
+      distrito: d.distrito || "",
+      elaboradoPor: d.coordinador || usuarioActual.nombre || "—",
+      fechaGeneracion: new Date().toLocaleDateString("es-DO"),
+      asistencia: a.pctAsistenciaSede === null || a.pctAsistenciaSede === undefined ? "Sin registros" : a.pctAsistenciaSede + "%",
+      estudiantes: a.totalEstudiantesActivos ?? 0,
+      mejoraron: p.mejoraron ?? 0, seMantuvieron: p.seMantuvieron ?? 0, bajaron: p.bajaron ?? 0,
+      cumplimiento: ac.pctCumplimiento === null || ac.pctCumplimiento === undefined ? "Sin registros" : ac.pctCumplimiento + "%",
+      incidencias: (d.incidencias || {}).cantidad ?? 0,
+      valoracion: document.getElementById("informeSedeValoracion").value.trim() || "(sin valoración)",
+      recomendaciones: document.getElementById("informeSedeRecomendaciones").value.trim() || "(sin recomendaciones)",
+    };
+  }
+
+  function descargarInformeSedePDF() {
+    if (!datosInformeSedeActual) { alert("Todavía no se ha cargado el informe de la sede."); return; }
+    const t = construirTextoInformeSede();
+    const jsPDFCtor = window.jspdf.jsPDF;
+    const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    const margen = 20;
+    let y = 20;
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text("REPÚBLICA DOMINICANA", anchoPagina / 2, y, { align: "center" }); y += 5;
+    doc.text("MINISTERIO DE EDUCACIÓN", anchoPagina / 2, y, { align: "center" }); y += 5;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text("Campamento \u201cAprender es Divertido\u201d \u2014 Informe de cierre de sede", anchoPagina / 2, y, { align: "center" }); y += 10;
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+    doc.text(t.centroSede, margen, y); y += 8;
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    [
+      "Regional: " + t.regional,
+      "Distrito: " + t.distrito,
+      "Elaborado por: " + t.elaboradoPor,
+      "Fecha de generación: " + t.fechaGeneracion,
+    ].forEach(function(linea) { doc.text(linea, margen, y); y += 5.5; });
+    y += 5;
+
+    doc.setFontSize(10.5);
+    [
+      "Estudiantes activos: " + t.estudiantes,
+      "% Asistencia general: " + t.asistencia,
+      "Progreso de nivel — mejoraron: " + t.mejoraron + " · se mantuvieron: " + t.seMantuvieron + " · bajaron: " + t.bajaron,
+      "Cumplimiento de acompañamientos realizados: " + t.cumplimiento,
+      "Incidencias registradas: " + t.incidencias,
+    ].forEach(function(linea) { doc.text(linea, margen, y); y += 6.5; });
+    y += 5;
+
+    doc.setFont("helvetica", "bold"); doc.text("Valoración general", margen, y); y += 6;
+    doc.setFont("helvetica", "normal");
+    let lineas = doc.splitTextToSize(t.valoracion, anchoPagina - margen * 2);
+    doc.text(lineas, margen, y); y += lineas.length * 5 + 8;
+
+    doc.setFont("helvetica", "bold"); doc.text("Recomendaciones", margen, y); y += 6;
+    doc.setFont("helvetica", "normal");
+    lineas = doc.splitTextToSize(t.recomendaciones, anchoPagina - margen * 2);
+    doc.text(lineas, margen, y);
+
+    doc.save("Informe_Sede_" + t.centroSede.replace(/[^a-zA-Z0-9]/g, "_") + ".pdf");
+  }
+
+  function descargarInformeSedeWord() {
+    if (!datosInformeSedeActual) { alert("Todavía no se ha cargado el informe de la sede."); return; }
+    const t = construirTextoInformeSede();
+    const html = `
+      <h2 style="font-family:Arial;">Informe de cierre — ${escapeHtml(t.centroSede)}</h2>
+      <p style="font-family:Arial;font-size:11px;">
+        Regional: ${escapeHtml(t.regional)} · Distrito: ${escapeHtml(t.distrito)}<br>
+        Elaborado por: ${escapeHtml(t.elaboradoPor)} · Fecha de generación: ${escapeHtml(t.fechaGeneracion)}
+      </p>
+      <p style="font-family:Arial;">
+        Estudiantes activos: ${t.estudiantes}<br>
+        % Asistencia general: ${escapeHtml(String(t.asistencia))}<br>
+        Progreso de nivel — mejoraron: ${t.mejoraron} · se mantuvieron: ${t.seMantuvieron} · bajaron: ${t.bajaron}<br>
+        Cumplimiento de acompañamientos realizados: ${escapeHtml(String(t.cumplimiento))}<br>
+        Incidencias registradas: ${t.incidencias}
+      </p>
+      <p style="font-family:Arial;"><b>Valoración general:</b><br>${escapeHtml(t.valoracion).replace(/\n/g, "<br>")}</p>
+      <p style="font-family:Arial;"><b>Recomendaciones:</b><br>${escapeHtml(t.recomendaciones).replace(/\n/g, "<br>")}</p>
+    `;
+    descargarHTMLComoWord(html, "Informe_Sede_" + t.centroSede.replace(/[^a-zA-Z0-9]/g, "_") + ".doc");
+  }
 
   // ═══════════════════════════════════════════════════════════════════════
   // SERVICE WORKER – Caché de recursos estáticos
