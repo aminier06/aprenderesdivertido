@@ -1706,6 +1706,7 @@
     }
     #tablaFacilitadoresInforme tr.fila-facilitador-clic { cursor: pointer; }
     #tablaFacilitadoresInforme tr.fila-facilitador-clic:hover td { background: #f4fbfa; }
+    .tarjetas-acompanamientos-rol { display: contents; }
 
     #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
     #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
@@ -3718,7 +3719,8 @@
       <div class="resumen-asignacion" style="margin:14px 0;">
         <div class="dato-asignacion"><span>% Asistencia general</span><strong id="informeSedeAsistencia">—</strong></div>
         <div class="dato-asignacion"><span>Estudiantes activos</span><strong id="informeSedeEstudiantes">—</strong></div>
-        <div class="dato-asignacion"><span>Acompañamientos realizados</span><strong id="informeSedeAcompanamientos">—</strong></div>
+        <div class="dato-asignacion"><span>Cuota asignada</span><strong id="informeSedeCuota">—</strong></div>
+        <div id="tarjetasAcompanamientosPorRol" class="tarjetas-acompanamientos-rol"></div>
         <div class="dato-asignacion"><span>Mejoraron de nivel</span><strong id="informeSedeMejoraron">—</strong></div>
         <div class="dato-asignacion"><span>Se mantuvieron</span><strong id="informeSedeMantuvieron">—</strong></div>
         <div class="dato-asignacion"><span>Bajaron</span><strong id="informeSedeBajaron">—</strong></div>
@@ -13720,6 +13722,7 @@ const respuestasTexto = {
     document.getElementById("informeSedeAsistencia").textContent =
       a.pctAsistenciaSede === null || a.pctAsistenciaSede === undefined ? "Sin registros" : a.pctAsistenciaSede + "%";
     document.getElementById("informeSedeEstudiantes").textContent = a.totalEstudiantesActivos ?? 0;
+    document.getElementById("informeSedeCuota").textContent = a.cuota ?? 0;
 
     const p = resp.progreso || {};
     document.getElementById("informeSedeMejoraron").textContent = p.mejoraron ?? 0;
@@ -13727,7 +13730,11 @@ const respuestasTexto = {
     document.getElementById("informeSedeBajaron").textContent = p.bajaron ?? 0;
     document.getElementById("informeSedePendientes").textContent = p.pendientes ?? 0;
 
-    document.getElementById("informeSedeAcompanamientos").textContent = (resp.acompanamientos || {}).cantidad ?? 0;
+    const porRol = (resp.acompanamientos || {}).porRol || {};
+    document.getElementById("tarjetasAcompanamientosPorRol").innerHTML = Object.keys(porRol).map(function(rol) {
+      return `<div class="dato-asignacion"><span>Acompañ. — ${escapeHtml(rol)}</span><strong>${porRol[rol]}</strong></div>`;
+    }).join("");
+
     document.getElementById("informeSedeIncidencias").textContent = (resp.incidencias || {}).cantidad ?? 0;
 
     const tabla = document.getElementById("tablaFacilitadoresInforme");
@@ -13850,8 +13857,9 @@ const respuestasTexto = {
       fechaGeneracion: new Date().toLocaleDateString("es-DO"),
       asistencia: a.pctAsistenciaSede === null || a.pctAsistenciaSede === undefined ? "Sin registros" : a.pctAsistenciaSede + "%",
       estudiantes: a.totalEstudiantesActivos ?? 0,
+      cuota: a.cuota ?? 0,
       mejoraron: p.mejoraron ?? 0, seMantuvieron: p.seMantuvieron ?? 0, bajaron: p.bajaron ?? 0, pendientes: p.pendientes ?? 0,
-      acompanamientos: ac.cantidad ?? 0,
+      acompanamientosPorRol: ac.porRol || {},
       incidencias: (d.incidencias || {}).cantidad ?? 0,
       fortalezas: document.getElementById("informeSedeFortalezas").value.trim() || "(sin descripción)",
       oportunidades: document.getElementById("informeSedeOportunidades").value.trim() || "(sin descripción)",
@@ -13892,13 +13900,18 @@ const respuestasTexto = {
     y = dibujarSeccionInformePDF(doc, "Indicadores generales", margen, y, anchoDisponible);
     const tarjetas = [
       ["Estudiantes activos", String(t.estudiantes)],
+      ["Cuota asignada", String(t.cuota)],
       ["% Asistencia general", String(t.asistencia)],
-      ["Acompañamientos realizados", String(t.acompanamientos)],
       ["Mejoraron de nivel", String(t.mejoraron)],
       ["Se mantuvieron", String(t.seMantuvieron)],
       ["Bajaron de nivel", String(t.bajaron)],
       ["Pendientes de evaluación final", String(t.pendientes)],
     ];
+    // Una tarjeta por cada rol que realizó acompañamientos — no un total
+    // sumado — para que se vea de quién viene cada uno.
+    Object.keys(t.acompanamientosPorRol || {}).forEach(function(rol) {
+      tarjetas.push(["Acompañ. — " + rol, String(t.acompanamientosPorRol[rol])]);
+    });
     const colAncho = (anchoDisponible - 2 * 6) / 3;
     const filaAlto = 20;
     const filasTarjetas = Math.ceil(tarjetas.length / 3);
@@ -13956,9 +13969,10 @@ const respuestasTexto = {
       </p>
       <p style="font-family:Arial;">
         Estudiantes activos: ${t.estudiantes}<br>
+        Cuota asignada: ${t.cuota}<br>
         % Asistencia general: ${escapeHtml(String(t.asistencia))}<br>
         Progreso de nivel — mejoraron: ${t.mejoraron} · se mantuvieron: ${t.seMantuvieron} · bajaron: ${t.bajaron} · pendientes: ${t.pendientes}<br>
-        Acompañamientos realizados: ${t.acompanamientos}<br>
+        ${Object.keys(t.acompanamientosPorRol || {}).map(function(rol) { return "Acompañ. — " + rol + ": " + t.acompanamientosPorRol[rol]; }).join("<br>")}<br>
         Incidencias registradas: ${t.incidencias}
       </p>
       <p style="font-family:Arial;"><b>Fortalezas observadas:</b><br>${escapeHtml(t.fortalezas).replace(/\n/g, "<br>")}</p>
