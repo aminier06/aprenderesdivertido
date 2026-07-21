@@ -1729,15 +1729,19 @@
     }
     .foto-informe-item {
       position: relative; border: 1.5px solid var(--borde); border-radius: var(--r);
-      overflow: hidden; aspect-ratio: 1 / 1; background: #f4f4f6;
+      overflow: hidden; background: #f4f4f6; display: flex; flex-direction: column;
     }
-    .foto-informe-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .foto-informe-item img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
     .foto-informe-item .btn-eliminar-foto {
       position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
       background: rgba(0,0,0,0.6); color: #fff; border: none; cursor: pointer;
       font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center;
     }
     .foto-informe-item .btn-eliminar-foto:hover { background: #c0392b; }
+    .pie-foto-informe {
+      margin: 0; padding: 6px 8px; font-size: 11px; color: var(--texto-3, #6b7280);
+      line-height: 1.3; word-break: break-word;
+    }
 
     #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
     #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
@@ -3903,10 +3907,23 @@
 
           <label style="margin-top:14px; display:block;">Fotos del campamento (hasta 5)</label>
           <div id="galeriaFotosInforme" class="galeria-fotos-informe"></div>
-          <input type="file" id="inputFotoInformeSede" accept="image/*" class="oculto" onchange="subirFotoInformeSede(this)">
+          <input type="file" id="inputFotoInformeSede" accept="image/*" class="oculto" onchange="prepararSubidaFotoInforme(this)">
           <div class="acciones-asignacion" style="margin-top:8px;">
             <button type="button" id="btnAgregarFotoInforme" class="btn-secundario" onclick="document.getElementById('inputFotoInformeSede').click()">Agregar foto</button>
           </div>
+
+          <div id="bloqueSubidaFotoInforme" class="bloque-formulario oculto" style="margin-top:10px; display:flex; gap:14px; align-items:flex-start;">
+            <img id="previewFotoInforme" alt="Vista previa" style="width:110px; height:110px; object-fit:cover; border-radius:8px; border:1px solid var(--borde); flex-shrink:0;">
+            <div style="flex:1;">
+              <label for="descripcionFotoInforme">Descripción breve de la foto</label>
+              <input type="text" id="descripcionFotoInforme" maxlength="200" placeholder="Ej: Facilitadores repartiendo materiales didácticos">
+              <div class="acciones-asignacion" style="margin-top:8px;">
+                <button type="button" onclick="confirmarSubidaFotoInforme()">Subir foto</button>
+                <button type="button" class="btn-secundario" onclick="cancelarSubidaFotoInforme()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
           <div id="mensajeFotosInforme" class="mensaje"></div>
 
           <div class="acciones-asignacion" style="margin-top:12px;">
@@ -14416,7 +14433,7 @@ const respuestasTexto = {
     ["informeSedeFortalezas", "informeSedeOportunidades", "informeSedeAcuerdos"].forEach(function(id) {
       document.getElementById(id).disabled = !puedeEditar;
     });
-    renderizarGaleriaFotosInforme(resp.fotosUrls, resp.fotosRutas);
+    renderizarGaleriaFotosInforme(resp.fotos);
 
     const avisoFinalizado = document.getElementById("avisoInformeFinalizado");
     if (resp.finalizado) {
@@ -14466,54 +14483,71 @@ const respuestasTexto = {
     return sedeSupervisionSeleccionada ? sedeSupervisionSeleccionada.centroSede : "";
   }
 
-  function subirFotoInformeSede(input) {
+  let _dataUrlFotoPendiente = null;
+
+  // Paso 1: se elige el archivo, se redimensiona, y se muestra la vista
+  // previa junto al campo de descripción — todavía no se sube nada.
+  function prepararSubidaFotoInforme(input) {
     const archivo = input.files[0];
     input.value = ""; // para poder volver a elegir el mismo archivo despues si hace falta
     if (!archivo) return;
     if (!archivo.type.startsWith("image/")) { alert("Solo se pueden subir imágenes."); return; }
 
+    const totalActual = (datosInformeSedeActual && datosInformeSedeActual.fotos) ? datosInformeSedeActual.fotos.length : 0;
+    if (totalActual >= MAX_FOTOS_INFORME_SEDE) { alert("Ya hay " + MAX_FOTOS_INFORME_SEDE + " fotos — elimine alguna antes de agregar otra."); return; }
+
+    document.getElementById("mensajeFotosInforme").textContent = "";
+    redimensionarImagenABase64(archivo, 1600, 0.8, function(dataUrl) {
+      if (!dataUrl) { alert("No se pudo leer la imagen."); return; }
+      _dataUrlFotoPendiente = dataUrl;
+      document.getElementById("previewFotoInforme").src = dataUrl;
+      document.getElementById("descripcionFotoInforme").value = "";
+      document.getElementById("bloqueSubidaFotoInforme").classList.remove("oculto");
+      document.getElementById("descripcionFotoInforme").focus();
+    });
+  }
+
+  function cancelarSubidaFotoInforme() {
+    _dataUrlFotoPendiente = null;
+    document.getElementById("bloqueSubidaFotoInforme").classList.add("oculto");
+  }
+
+  // Paso 2: con la descripción ya escrita, se sube de verdad.
+  function confirmarSubidaFotoInforme() {
+    const descripcion = document.getElementById("descripcionFotoInforme").value.trim();
+    if (!descripcion) { alert("Escriba una descripción breve antes de subir la foto."); return; }
+    if (!_dataUrlFotoPendiente) return;
     const centroSede = obtenerCentroSedeInformeActivo();
     if (!centroSede) return;
-    const yaSubidas = (datosInformeSedeActual && datosInformeSedeActual.fotosRutas) ? datosInformeSedeActual.fotosRutas.length : 0;
-    if (yaSubidas >= MAX_FOTOS_INFORME_SEDE) { alert("Ya hay " + MAX_FOTOS_INFORME_SEDE + " fotos — elimine alguna antes de agregar otra."); return; }
 
     const mensaje = document.getElementById("mensajeFotosInforme");
     mensaje.textContent = "Subiendo foto...";
     mensaje.className = "mensaje";
 
-    redimensionarImagenABase64(archivo, 1600, 0.8, function(dataUrl) {
-      if (!dataUrl) {
-        mensaje.textContent = "No se pudo leer la imagen.";
-        mensaje.className = "mensaje error";
-        return;
-      }
-      fetch(URL_SCRIPT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cedula: usuarioActual.cedula,
-          payload: JSON.stringify({ centroSede: centroSede, imagenBase64: dataUrl }),
-        }),
-      })
-        .then(function(r) { return r.json(); })
-        .then(function(resp) {
-          if (!resp || !resp.ok) {
-            mensaje.textContent = (resp && resp.mensaje) || "No se pudo subir la foto.";
-            mensaje.className = "mensaje error";
-            return;
-          }
-          mensaje.textContent = "";
-          if (datosInformeSedeActual) {
-            datosInformeSedeActual.fotosUrls = resp.fotosUrls;
-            datosInformeSedeActual.fotosRutas = resp.fotosRutas;
-          }
-          renderizarGaleriaFotosInforme(resp.fotosUrls, resp.fotosRutas);
-        })
-        .catch(function() {
-          mensaje.textContent = "No se pudo conectar con el servidor para subir la foto.";
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cedula: usuarioActual.cedula,
+        payload: JSON.stringify({ centroSede: centroSede, imagenBase64: _dataUrlFotoPendiente, descripcion: descripcion }),
+      }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo subir la foto.";
           mensaje.className = "mensaje error";
-        });
-    });
+          return;
+        }
+        mensaje.textContent = "";
+        if (datosInformeSedeActual) datosInformeSedeActual.fotos = resp.fotos;
+        renderizarGaleriaFotosInforme(resp.fotos);
+        cancelarSubidaFotoInforme();
+      })
+      .catch(function() {
+        mensaje.textContent = "No se pudo conectar con el servidor para subir la foto.";
+        mensaje.className = "mensaje error";
+      });
   }
 
   function eliminarFotoInformeSedeClick(ruta) {
@@ -14540,11 +14574,8 @@ const respuestasTexto = {
           return;
         }
         mensaje.textContent = "";
-        if (datosInformeSedeActual) {
-          datosInformeSedeActual.fotosUrls = resp.fotosUrls;
-          datosInformeSedeActual.fotosRutas = resp.fotosRutas;
-        }
-        renderizarGaleriaFotosInforme(resp.fotosUrls, resp.fotosRutas);
+        if (datosInformeSedeActual) datosInformeSedeActual.fotos = resp.fotos;
+        renderizarGaleriaFotosInforme(resp.fotos);
       })
       .catch(function() {
         mensaje.textContent = "No se pudo conectar con el servidor para eliminar la foto.";
@@ -14554,16 +14585,19 @@ const respuestasTexto = {
 
   let puedeEditarInformeSedeActual = false;
 
-  function renderizarGaleriaFotosInforme(fotosUrls, fotosRutas) {
+  function renderizarGaleriaFotosInforme(fotos) {
     const contenedor = document.getElementById("galeriaFotosInforme");
-    contenedor.innerHTML = (fotosUrls || []).map(function(url, idx) {
-      const ruta = (fotosRutas || [])[idx] || "";
+    contenedor.innerHTML = (fotos || []).map(function(f) {
       const botonEliminar = puedeEditarInformeSedeActual
-        ? `<button type="button" class="btn-eliminar-foto" title="Eliminar" onclick="eliminarFotoInformeSedeClick('${ruta.replace(/'/g, "\\'")}')">✕</button>`
+        ? `<button type="button" class="btn-eliminar-foto" title="Eliminar" onclick="eliminarFotoInformeSedeClick('${f.ruta.replace(/'/g, "\\'")}')">✕</button>`
         : "";
-      return `<div class="foto-informe-item"><img src="${escapeHtml(url)}" alt="Foto del informe" loading="lazy">${botonEliminar}</div>`;
+      return `<div class="foto-informe-item">
+        <img src="${escapeHtml(f.url)}" alt="${escapeHtml(f.descripcion)}" loading="lazy">
+        ${botonEliminar}
+        <p class="pie-foto-informe">${escapeHtml(f.descripcion)}</p>
+      </div>`;
     }).join("");
-    document.getElementById("btnAgregarFotoInforme").disabled = (fotosUrls || []).length >= MAX_FOTOS_INFORME_SEDE;
+    document.getElementById("btnAgregarFotoInforme").disabled = (fotos || []).length >= MAX_FOTOS_INFORME_SEDE;
   }
 
   function guardarInformeSedeActual() {
@@ -14727,23 +14761,32 @@ const respuestasTexto = {
 
     // Fotos: se descargan y convierten a data URL antes de incrustarlas —
     // por eso toda la función es asíncrona. Hasta 5, en una grilla de 3
-    // columnas, cuadradas.
-    const fotosUrls = (datosInformeSedeActual.fotosUrls || []).slice(0, 5);
-    if (fotosUrls.length > 0) {
+    // columnas, cuadradas, con su descripción como pie de foto debajo
+    // (hasta 2 líneas; si es más larga, se corta ahí).
+    const fotos = (datosInformeSedeActual.fotos || []).slice(0, 5);
+    if (fotos.length > 0) {
       const colAncho = (anchoDisponible - 2 * 6) / 3;
-      const filasFotos = Math.ceil(fotosUrls.length / 3);
-      const alturaBloqueFotos = 8 + filasFotos * (colAncho + 6);
+      const altoCaption = 8;
+      const altoCelda = colAncho + altoCaption;
+      const filasFotos = Math.ceil(fotos.length / 3);
+      const alturaBloqueFotos = 8 + filasFotos * (altoCelda + 4);
       if (y + alturaBloqueFotos > altoPagina - 20) { doc.addPage(); y = 36; }
       y = dibujarSeccionInformePDF(doc, "Fotos del campamento", margen, y, anchoDisponible);
-      const dataUrls = await Promise.all(fotosUrls.map(cargarImagenComoDataURL));
+      const dataUrls = await Promise.all(fotos.map(function(f) { return cargarImagenComoDataURL(f.url); }));
       dataUrls.forEach(function(dataUrl, i) {
-        if (!dataUrl) return;
         const col = i % 3, fila = Math.floor(i / 3);
         const x = margen + col * (colAncho + 6);
-        const yy = y + fila * (colAncho + 6);
-        try { doc.addImage(dataUrl, "JPEG", x, yy, colAncho, colAncho); } catch (e) { /* imagen no soportada, se omite */ }
+        const yy = y + fila * (altoCelda + 4);
+        if (dataUrl) {
+          try { doc.addImage(dataUrl, "JPEG", x, yy, colAncho, colAncho); } catch (e) { /* imagen no soportada, se omite */ }
+        }
+        doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+        doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
+        const lineasCaption = doc.splitTextToSize(fotos[i].descripcion || "", colAncho).slice(0, 2);
+        doc.text(lineasCaption, x, yy + colAncho + 3.5);
+        doc.setTextColor(0, 0, 0);
       });
-      y += filasFotos * (colAncho + 6) + 6;
+      y += filasFotos * (altoCelda + 4) + 6;
     }
 
     dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Coordinador(a) de sede", t.elaboradoPor, t.fechaGeneracion);
