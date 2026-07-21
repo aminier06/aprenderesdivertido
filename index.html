@@ -1720,6 +1720,8 @@
     .dato-asignacion.tarjeta-bajaron strong { color: #c0392b; }
     .dato-asignacion.tarjeta-pendientes { border-left: 3px solid #b45309; }
     .dato-asignacion.tarjeta-pendientes strong { color: #b45309; }
+    .dato-asignacion.tarjeta-clicable { cursor: pointer; transition: box-shadow 0.15s; }
+    .dato-asignacion.tarjeta-clicable:hover { box-shadow: 0 0 0 2px #c0392b33; }
 
     #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
     #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
@@ -3670,7 +3672,13 @@
 
     <!-- ══════════ VISTA FACILITADOR: un informe por estudiante ══════════ -->
     <div id="vistaInformesFacilitador" class="oculto">
-      <div class="resumen-asignacion" style="margin-bottom:14px;">
+      <div class="form-grid-3">
+        <div>
+          <label for="buscadorEstudianteFacilitador">Buscar estudiante por nombre</label>
+          <input type="text" id="buscadorEstudianteFacilitador" placeholder="Escriba para filtrar..." oninput="filtrarListaEstudiantesInformes()">
+        </div>
+      </div>
+      <div class="resumen-asignacion" style="margin:14px 0;">
         <div class="dato-asignacion">
           <span>Progreso</span>
           <strong id="progresoInformesTexto">0 / 0</strong>
@@ -3731,6 +3739,62 @@
       <div id="bloqueFiltrosSupervisionInforme" class="oculto">
         <div class="form-grid-3">
           <div>
+            <label for="buscadorEstudianteInforme">Buscar estudiante por nombre o ID</label>
+            <input type="text" id="buscadorEstudianteInforme" placeholder="Escriba al menos 2 caracteres..." oninput="buscarEstudianteInformeDebounced()">
+          </div>
+        </div>
+        <div id="resultadosBusquedaEstudianteInforme" class="lista-estudiantes-informes oculto" style="margin-top:8px;"></div>
+
+        <div class="acciones-asignacion" style="margin:14px 0;">
+          <button type="button" class="btn-secundario" onclick="cargarResumenAmbitoInformes()">Resumen de mi ámbito</button>
+          <button type="button" class="btn-secundario" onclick="descargarResumenAmbitoExcel()">Descargar resumen (Excel)</button>
+        </div>
+
+        <div id="bloqueResumenAmbito" class="oculto">
+          <div id="mensajeResumenAmbito" class="mensaje"></div>
+          <div class="grupo-metricas-informe">
+            <h4 class="titulo-grupo-metricas">Avance del ámbito</h4>
+            <div class="resumen-asignacion">
+              <div class="dato-asignacion"><span>Sedes en el ámbito</span><strong id="ambitoTotalSedes">—</strong></div>
+              <div class="dato-asignacion"><span>Sedes con informe finalizado</span><strong id="ambitoSedesFinalizadas">—</strong></div>
+              <div class="dato-asignacion"><span>Facilitadores completos</span><strong id="ambitoFacilitadoresCompletos">—</strong></div>
+            </div>
+          </div>
+          <div class="grupo-metricas-informe">
+            <h4 class="titulo-grupo-metricas">Matrícula y asistencia</h4>
+            <div class="resumen-asignacion">
+              <div class="dato-asignacion"><span>Estudiantes activos</span><strong id="ambitoEstudiantes">—</strong></div>
+              <div class="dato-asignacion"><span>% Asistencia promedio</span><strong id="ambitoAsistencia">—</strong></div>
+              <div class="dato-asignacion"><span>Incidencias registradas</span><strong id="ambitoIncidencias">—</strong></div>
+            </div>
+          </div>
+          <div class="grupo-metricas-informe">
+            <h4 class="titulo-grupo-metricas">Progreso de nivel — Lengua Española</h4>
+            <div class="resumen-asignacion">
+              <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="ambitoMejoraronLengua">—</strong></div>
+              <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="ambitoMantuvieronLengua">—</strong></div>
+              <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="ambitoBajaronLengua">—</strong></div>
+              <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="ambitoPendientesLengua">—</strong></div>
+            </div>
+          </div>
+          <div class="grupo-metricas-informe">
+            <h4 class="titulo-grupo-metricas">Progreso de nivel — Matemática</h4>
+            <div class="resumen-asignacion">
+              <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="ambitoMejoraronMat">—</strong></div>
+              <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="ambitoMantuvieronMat">—</strong></div>
+              <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="ambitoBajaronMat">—</strong></div>
+              <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="ambitoPendientesMat">—</strong></div>
+            </div>
+          </div>
+          <div class="grupo-metricas-informe">
+            <h4 class="titulo-grupo-metricas">Acompañamientos realizados</h4>
+            <div id="tarjetasAcompanamientosAmbito" class="resumen-asignacion"></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top:20px;">Consultar una sede o grupo en particular</h3>
+        <div class="form-grid-3">
+          <div>
             <label for="supervisionTipoInforme">¿Qué desea consultar?</label>
             <select id="supervisionTipoInforme" onchange="cambiarTipoSupervisionInformes()">
               <option value="sede">Informes de coordinadores de sede</option>
@@ -3778,7 +3842,7 @@
           <div class="resumen-asignacion">
             <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="informeSedeMejoraronLengua">—</strong></div>
             <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="informeSedeMantuvieronLengua">—</strong></div>
-            <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="informeSedeBajaronLengua">—</strong></div>
+            <div class="dato-asignacion tarjeta-bajaron tarjeta-clicable" onclick="mostrarDetalleBajaron('LENGUA', 'Lengua Española')"><span>Bajaron (clic para ver)</span><strong id="informeSedeBajaronLengua">—</strong></div>
             <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="informeSedePendientesLengua">—</strong></div>
           </div>
         </div>
@@ -3788,8 +3852,16 @@
           <div class="resumen-asignacion">
             <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="informeSedeMejoraronMat">—</strong></div>
             <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="informeSedeMantuvieronMat">—</strong></div>
-            <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="informeSedeBajaronMat">—</strong></div>
+            <div class="dato-asignacion tarjeta-bajaron tarjeta-clicable" onclick="mostrarDetalleBajaron('MATEMATICA', 'Matemática')"><span>Bajaron (clic para ver)</span><strong id="informeSedeBajaronMat">—</strong></div>
             <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="informeSedePendientesMat">—</strong></div>
+          </div>
+        </div>
+
+        <div id="detalleBajaronInforme" class="bloque-formulario oculto" style="margin-bottom:14px;">
+          <h4 id="tituloDetalleBajaron">Estudiantes que bajaron de nivel</h4>
+          <div id="listaDetalleBajaron" class="tabla-contenedor"></div>
+          <div class="acciones-asignacion" style="margin-top:10px;">
+            <button type="button" class="btn-secundario" onclick="document.getElementById('detalleBajaronInforme').classList.add('oculto')">Cerrar</button>
           </div>
         </div>
 
@@ -3805,6 +3877,7 @@
         <div id="tablaFacilitadoresInforme" class="tabla-contenedor"></div>
 
         <div id="bloqueEscrituraInformeSede" class="bloque-formulario" style="margin-top:14px;">
+          <div id="avisoInformeFinalizado" class="mensaje ok oculto"></div>
           <label for="informeSedeFortalezas">Fortalezas observadas</label>
           <textarea id="informeSedeFortalezas" rows="4" placeholder="Logros de la sede durante el campamento..."></textarea>
           <label for="informeSedeOportunidades" style="margin-top:10px; display:block;">Oportunidades de mejora</label>
@@ -3814,6 +3887,7 @@
 
           <div class="acciones-asignacion" style="margin-top:12px;">
             <button type="button" id="btnGuardarInformeSede" onclick="guardarInformeSedeActual()">Guardar informe</button>
+            <button type="button" id="btnFinalizarInformeSede" class="btn-secundario" onclick="finalizarInformeSedeActual()">Finalizar informe</button>
             <button type="button" class="btn-secundario" onclick="descargarInformeSedePDF()">Descargar PDF</button>
           </div>
         </div>
@@ -13212,12 +13286,17 @@ const respuestasTexto = {
     document.getElementById("bloqueSelectorSedeInforme").classList.toggle("oculto", esSupervision);
     document.getElementById("bloqueFiltrosSupervisionInforme").classList.toggle("oculto", !esSupervision);
     document.getElementById("contenedorInformeDeSede").classList.remove("oculto");
+    document.getElementById("detalleBajaronInforme").classList.add("oculto");
     cerrarEstudiantesFacilitadorSede();
 
     if (esSupervision) {
       document.getElementById("notaInformes").textContent =
         "Consulte informes de coordinadores de sede o de facilitadores según su ámbito. Elija qué desea ver y navegue por regional, distrito, sede y grupo.";
       document.getElementById("mensajeInformeSede").textContent = "";
+      document.getElementById("bloqueResumenAmbito").classList.add("oculto");
+      document.getElementById("resultadosBusquedaEstudianteInforme").classList.add("oculto");
+      document.getElementById("buscadorEstudianteInforme").value = "";
+      datosResumenAmbitoActual = null;
       cargarFiltrosSupervisionInformes();
     } else {
       document.getElementById("notaInformes").textContent =
@@ -13272,6 +13351,14 @@ const respuestasTexto = {
       item.addEventListener("click", function() {
         abrirFormInformeEstudiante(item.dataset.id, item.dataset.nombre);
       });
+    });
+  }
+
+  function filtrarListaEstudiantesInformes() {
+    const texto = normalizarTexto(document.getElementById("buscadorEstudianteFacilitador").value).toLowerCase();
+    document.querySelectorAll("#listaEstudiantesInformes .item-estudiante-informe").forEach(function(item) {
+      const nombre = (item.dataset.nombre || "").toLowerCase();
+      item.style.display = (!texto || nombre.includes(texto)) ? "" : "none";
     });
   }
 
@@ -13791,6 +13878,7 @@ const respuestasTexto = {
     const tipo = document.getElementById("supervisionTipoInforme").value;
     document.getElementById("bloqueGrupoSupervision").classList.toggle("oculto", tipo !== "facilitador");
     document.getElementById("contenedorInformeDeSede").classList.toggle("oculto", tipo === "facilitador");
+    document.getElementById("detalleBajaronInforme").classList.add("oculto");
     cerrarEstudiantesFacilitadorSede();
     document.getElementById("mensajeInformeSede").textContent = "";
     if (tipo === "facilitador") {
@@ -13810,6 +13898,7 @@ const respuestasTexto = {
   function seleccionarSedeSupervision() {
     const centroSede = document.getElementById("supervisionSede").value;
     sedeSupervisionSeleccionada = sedesSupervisionInformes.find(function(s) { return normalizarTexto(s.centroSede) === normalizarTexto(centroSede); }) || null;
+    document.getElementById("detalleBajaronInforme").classList.add("oculto");
     cerrarEstudiantesFacilitadorSede();
     document.getElementById("mensajeInformeSede").textContent = "";
     if (!sedeSupervisionSeleccionada) return;
@@ -13874,6 +13963,212 @@ const respuestasTexto = {
     );
   }
 
+  /* ---------------------- Búsqueda de estudiante ---------------------- */
+
+  let _timeoutBusquedaEstudiante = null;
+  function buscarEstudianteInformeDebounced() {
+    clearTimeout(_timeoutBusquedaEstudiante);
+    _timeoutBusquedaEstudiante = setTimeout(ejecutarBusquedaEstudianteInforme, 350);
+  }
+
+  function ejecutarBusquedaEstudianteInforme() {
+    const query = document.getElementById("buscadorEstudianteInforme").value.trim();
+    const contenedor = document.getElementById("resultadosBusquedaEstudianteInforme");
+    if (query.length < 2) { contenedor.classList.add("oculto"); contenedor.innerHTML = ""; return; }
+
+    llamarBackend(
+      { accion: "buscarEstudianteInforme", cedula: usuarioActual.cedula, query: query },
+      function(resp) {
+        contenedor.classList.remove("oculto");
+        if (!resp || !resp.ok) {
+          contenedor.innerHTML = '<p class="mensaje error">' + escapeHtml((resp && resp.mensaje) || "No se pudo buscar.") + '</p>';
+          return;
+        }
+        if (!resp.estudiantes.length) {
+          contenedor.innerHTML = '<p class="nota">No se encontraron estudiantes con ese nombre o ID en su ámbito.</p>';
+          return;
+        }
+        contenedor.innerHTML = resp.estudiantes.map(function(e, idx) {
+          return `<div class="item-estudiante-informe" data-idx="${idx}">
+            <span>${escapeHtml(e.nombre)} <span class="nota">— ${escapeHtml(e.grupo)}, ${escapeHtml(e.centroSede)}</span></span>
+            <span class="estado-informe-chip completado">Ver grupo</span>
+          </div>`;
+        }).join("");
+        contenedor.querySelectorAll(".item-estudiante-informe").forEach(function(item) {
+          item.addEventListener("click", function() {
+            const e = resp.estudiantes[parseInt(item.dataset.idx, 10)];
+            irAGrupoDesdeBusqueda(e);
+          });
+        });
+      }
+    );
+  }
+
+  // Al hacer clic en un resultado de búsqueda, se navega directo a ese
+  // grupo (con los filtros ya seleccionados) en modo "informes de
+  // facilitadores" — desde ahí se puede ver/descargar el informe puntual
+  // del estudiante buscado, junto al resto de su grupo.
+  function irAGrupoDesdeBusqueda(estudiante) {
+    document.getElementById("supervisionTipoInforme").value = "facilitador";
+    document.getElementById("bloqueGrupoSupervision").classList.remove("oculto");
+    document.getElementById("contenedorInformeDeSede").classList.add("oculto");
+    document.getElementById("resultadosBusquedaEstudianteInforme").classList.add("oculto");
+    document.getElementById("buscadorEstudianteInforme").value = "";
+
+    sedeSupervisionSeleccionada = sedesSupervisionInformes.find(function(s) {
+      return normalizarTexto(s.centroSede) === normalizarTexto(estudiante.centroSede);
+    }) || { regional: estudiante.regional, distrito: estudiante.distrito, centroSede: estudiante.centroSede, grupos: [estudiante.grupo] };
+
+    document.getElementById("supervisionRegional").value = estudiante.regional;
+    cargarDistritosSupervision();
+    document.getElementById("supervisionDistrito").value = estudiante.distrito;
+    cargarSedesSupervision();
+    document.getElementById("supervisionSede").value = estudiante.centroSede;
+
+    const selectGrupo = document.getElementById("supervisionGrupo");
+    selectGrupo.innerHTML = '<option value="">Seleccione el grupo</option>';
+    (sedeSupervisionSeleccionada.grupos || [estudiante.grupo]).forEach(function(g) {
+      const opt = document.createElement("option");
+      opt.value = g; opt.textContent = g;
+      selectGrupo.appendChild(opt);
+    });
+    selectGrupo.value = estudiante.grupo;
+    cargarInformesGrupoSupervision();
+  }
+
+  /* ---------------------- Resumen de ámbito ---------------------- */
+
+  let datosResumenAmbitoActual = null;
+
+  function cargarResumenAmbitoInformes() {
+    const bloque = document.getElementById("bloqueResumenAmbito");
+    bloque.classList.remove("oculto");
+    bloque.scrollIntoView({ behavior: "smooth", block: "start" });
+    const mensaje = document.getElementById("mensajeResumenAmbito");
+    mensaje.textContent = "Cargando resumen de todo el ámbito — puede tardar unos segundos...";
+    mensaje.className = "mensaje";
+
+    llamarBackend(
+      { accion: "obtenerResumenAmbitoInformes", cedula: usuarioActual.cedula },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo cargar el resumen del ámbito.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "";
+        datosResumenAmbitoActual = resp;
+        pintarResumenAmbitoInformes(resp);
+      }
+    );
+  }
+
+  function pintarResumenAmbitoInformes(resp) {
+    document.getElementById("ambitoTotalSedes").textContent = resp.totalSedes ?? 0;
+    document.getElementById("ambitoSedesFinalizadas").textContent = (resp.sedesFinalizadas ?? 0) + " / " + (resp.totalSedes ?? 0);
+    document.getElementById("ambitoFacilitadoresCompletos").textContent = (resp.facilitadoresCompletos ?? 0) + " / " + (resp.totalFacilitadores ?? 0);
+    document.getElementById("ambitoEstudiantes").textContent = resp.totalEstudiantesActivos ?? 0;
+    document.getElementById("ambitoAsistencia").textContent =
+      resp.pctAsistenciaPromedio === null || resp.pctAsistenciaPromedio === undefined ? "Sin registros" : resp.pctAsistenciaPromedio + "%";
+    document.getElementById("ambitoIncidencias").textContent = resp.incidencias ?? 0;
+
+    const pL = (resp.progresoPorArea || {}).LENGUA || {};
+    document.getElementById("ambitoMejoraronLengua").textContent = pL.mejoraron ?? 0;
+    document.getElementById("ambitoMantuvieronLengua").textContent = pL.seMantuvieron ?? 0;
+    document.getElementById("ambitoBajaronLengua").textContent = pL.bajaron ?? 0;
+    document.getElementById("ambitoPendientesLengua").textContent = pL.pendientes ?? 0;
+
+    const pM = (resp.progresoPorArea || {}).MATEMATICA || {};
+    document.getElementById("ambitoMejoraronMat").textContent = pM.mejoraron ?? 0;
+    document.getElementById("ambitoMantuvieronMat").textContent = pM.seMantuvieron ?? 0;
+    document.getElementById("ambitoBajaronMat").textContent = pM.bajaron ?? 0;
+    document.getElementById("ambitoPendientesMat").textContent = pM.pendientes ?? 0;
+
+    const porRol = resp.acompanamientosPorRol || {};
+    document.getElementById("tarjetasAcompanamientosAmbito").innerHTML = Object.keys(porRol).map(function(rol) {
+      return `<div class="dato-asignacion"><span>Acompañ. — ${escapeHtml(rol)}</span><strong>${porRol[rol]}</strong></div>`;
+    }).join("");
+  }
+
+  function descargarResumenAmbitoExcel() {
+    if (!datosResumenAmbitoActual) { cargarResumenAmbitoInformes(); alert("Cargando el resumen — inténtelo de nuevo en un momento."); return; }
+    const r = datosResumenAmbitoActual;
+    const pL = (r.progresoPorArea || {}).LENGUA || {}, pM = (r.progresoPorArea || {}).MATEMATICA || {};
+    const filas = [
+      { Indicador: "Sedes en el ámbito", Valor: r.totalSedes ?? 0 },
+      { Indicador: "Sedes con informe finalizado", Valor: r.sedesFinalizadas ?? 0 },
+      { Indicador: "Facilitadores completos", Valor: (r.facilitadoresCompletos ?? 0) + " / " + (r.totalFacilitadores ?? 0) },
+      { Indicador: "Estudiantes activos", Valor: r.totalEstudiantesActivos ?? 0 },
+      { Indicador: "% Asistencia promedio", Valor: r.pctAsistenciaPromedio ?? "" },
+      { Indicador: "Incidencias registradas", Valor: r.incidencias ?? 0 },
+      { Indicador: "Lengua — Mejoraron", Valor: pL.mejoraron ?? 0 },
+      { Indicador: "Lengua — Se mantuvieron", Valor: pL.seMantuvieron ?? 0 },
+      { Indicador: "Lengua — Bajaron", Valor: pL.bajaron ?? 0 },
+      { Indicador: "Lengua — Pendientes de final", Valor: pL.pendientes ?? 0 },
+      { Indicador: "Matemática — Mejoraron", Valor: pM.mejoraron ?? 0 },
+      { Indicador: "Matemática — Se mantuvieron", Valor: pM.seMantuvieron ?? 0 },
+      { Indicador: "Matemática — Bajaron", Valor: pM.bajaron ?? 0 },
+      { Indicador: "Matemática — Pendientes de final", Valor: pM.pendientes ?? 0 },
+    ];
+    Object.keys(r.acompanamientosPorRol || {}).forEach(function(rol) {
+      filas.push({ Indicador: "Acompañamientos — " + rol, Valor: r.acompanamientosPorRol[rol] });
+    });
+
+    const hoja = XLSX.utils.json_to_sheet(filas);
+    hoja["!cols"] = [{ wch: 34 }, { wch: 14 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Resumen de ámbito");
+    XLSX.writeFile(libro, "Resumen_Ambito_Informes_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+  }
+
+  /* ---------------------- Detalle de "Bajaron" ---------------------- */
+
+  function mostrarDetalleBajaron(tipo, etiqueta) {
+    if (!datosInformeSedeActual) return;
+    const lista = (datosInformeSedeActual.bajaronDetalle || {})[tipo] || [];
+    const bloque = document.getElementById("detalleBajaronInforme");
+    document.getElementById("tituloDetalleBajaron").textContent = "Estudiantes que bajaron de nivel — " + etiqueta;
+    document.getElementById("listaDetalleBajaron").innerHTML = lista.length
+      ? `<table><thead><tr><th>Estudiante</th></tr></thead><tbody>${
+          lista.map(function(e) { return `<tr><td>${escapeHtml(e.nombre)}</td></tr>`; }).join("")
+        }</tbody></table>`
+      : '<p class="nota">Nadie bajó de nivel en esta materia.</p>';
+    bloque.classList.remove("oculto");
+    bloque.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  /* ---------------------- Finalizar informe de sede ---------------------- */
+
+  function finalizarInformeSedeActual() {
+    const centroSede = (document.getElementById("informeSedeSelector") && document.getElementById("informeSedeSelector").value) ||
+      (datosInformeSedeActual && datosInformeSedeActual.centroSede);
+    if (!centroSede) return;
+    if (!confirm("¿Finalizar este informe? Una vez finalizado, ya no se podrá editar. Esta acción no se puede deshacer.")) return;
+
+    const mensaje = document.getElementById("mensajeInformeSede");
+    mensaje.textContent = "Finalizando...";
+    mensaje.className = "mensaje";
+
+    llamarBackend(
+      { accion: "finalizarInformeSede", cedula: usuarioActual.cedula, payload: JSON.stringify({ cedula: usuarioActual.cedula, centroSede: centroSede }) },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo finalizar el informe.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = resp.mensaje || "Informe finalizado.";
+        mensaje.className = "mensaje ok";
+        // Recargar para reflejar el estado de solo lectura correctamente.
+        if (document.getElementById("informeSedeSelector") && document.getElementById("informeSedeSelector").value) {
+          cargarInformeSedeSeleccionada();
+        } else if (sedeSupervisionSeleccionada) {
+          cargarInformeSedeParaSupervision();
+        }
+      }
+    );
+  }
+
   /* ---------------------- COORDINADOR: por sede ---------------------- */
 
   function cargarModuloInformesCoordinador() {
@@ -13907,6 +14202,7 @@ const respuestasTexto = {
 
   function cargarInformeSedeSeleccionada() {
     const centroSede = document.getElementById("informeSedeSelector").value;
+    document.getElementById("detalleBajaronInforme").classList.add("oculto");
     llamarBackend(
       { accion: "obtenerInformeSede", cedula: usuarioActual.cedula, centroSede: centroSede },
       function(resp) {
@@ -14085,13 +14381,26 @@ const respuestasTexto = {
     document.getElementById("informeSedeAcuerdos").value = resp.acuerdosRealizados || "";
 
     // Solo el coordinador de sede (y el administrador) puede editar y
-    // guardar. El resto (técnicos por ámbito) lo ve en solo lectura.
+    // guardar. El resto (técnicos por ámbito) lo ve en solo lectura. Una
+    // vez finalizado, tampoco se puede editar — ni siquiera el coordinador
+    // que lo escribió — salvo el administrador, como excepción general.
     const puedeEditar = resp.puedeEditar !== false;
     document.getElementById("notaSoloLecturaInforme").classList.toggle("oculto", puedeEditar);
     document.getElementById("btnGuardarInformeSede").classList.toggle("oculto", !puedeEditar);
     ["informeSedeFortalezas", "informeSedeOportunidades", "informeSedeAcuerdos"].forEach(function(id) {
       document.getElementById(id).disabled = !puedeEditar;
     });
+
+    const avisoFinalizado = document.getElementById("avisoInformeFinalizado");
+    if (resp.finalizado) {
+      const fecha = resp.fechaFinalizacion ? new Date(resp.fechaFinalizacion).toLocaleDateString("es-DO") : "";
+      avisoFinalizado.textContent = "Este informe fue finalizado" + (fecha ? " el " + fecha : "") + " y ya no admite ediciones.";
+      avisoFinalizado.classList.remove("oculto");
+      document.getElementById("btnFinalizarInformeSede").classList.add("oculto");
+    } else {
+      avisoFinalizado.classList.add("oculto");
+      document.getElementById("btnFinalizarInformeSede").classList.toggle("oculto", !puedeEditar);
+    }
   }
 
   function guardarInformeSedeActual() {
