@@ -13284,46 +13284,107 @@ const respuestasTexto = {
 
   // Dibuja el informe de UN estudiante en un documento jsPDF ya creado
   // (mismo estilo que el resto de la app: encabezado MINERD + helvetica).
+  // ───────── Estilo visual compartido de los PDF de informes ─────────
+  const AZUL_INFORME = [31, 78, 120];       // mismo tono institucional que los Excel
+  const AZUL_CLARO_INFORME = [232, 240, 247];
+  const GRIS_TEXTO_INFORME = [90, 90, 90];
+  const GRIS_BORDE_INFORME = [210, 210, 210];
+
+  // Encabezado con banda de color + línea de acento. Devuelve el Y donde
+  // debe empezar el contenido.
+  function dibujarEncabezadoInformePDF(doc, subtitulo) {
+    const anchoPagina = doc.internal.pageSize.getWidth();
+    doc.setFillColor(AZUL_INFORME[0], AZUL_INFORME[1], AZUL_INFORME[2]);
+    doc.rect(0, 0, anchoPagina, 26, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+    doc.text("REPÚBLICA DOMINICANA", anchoPagina / 2, 10, { align: "center" });
+    doc.setFontSize(11);
+    doc.text("MINISTERIO DE EDUCACIÓN", anchoPagina / 2, 16, { align: "center" });
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text(subtitulo, anchoPagina / 2, 22, { align: "center" });
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFillColor(13, 148, 136); // el mismo teal de acento de la app
+    doc.rect(0, 26, anchoPagina, 1.4, "F");
+    return 36;
+  }
+
+  // Barra de título de sección: fondo azul claro + texto azul institucional.
+  function dibujarSeccionInformePDF(doc, titulo, margen, y, anchoDisponible) {
+    doc.setFillColor(AZUL_CLARO_INFORME[0], AZUL_CLARO_INFORME[1], AZUL_CLARO_INFORME[2]);
+    doc.rect(margen, y - 4.5, anchoDisponible, 7, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
+    doc.setTextColor(AZUL_INFORME[0], AZUL_INFORME[1], AZUL_INFORME[2]);
+    doc.text(titulo, margen + 3, y);
+    doc.setTextColor(0, 0, 0);
+    return y + 8;
+  }
+
+  // Bloque de firma al final: línea + nombre + rol + fecha. Salta de
+  // página si no queda espacio suficiente, para que no quede cortado.
+  function dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, rol, nombre, fecha) {
+    if (y > altoPagina - 45) { doc.addPage(); y = 36; }
+    y += 10;
+    doc.setDrawColor(GRIS_BORDE_INFORME[0], GRIS_BORDE_INFORME[1], GRIS_BORDE_INFORME[2]);
+    doc.line(margen, y, margen + 80, y);
+    y += 5;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+    doc.text(nombre || "____________________________", margen, y);
+    y += 5;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
+    doc.text(rol + " · Fecha: " + fecha, margen, y);
+    doc.setTextColor(0, 0, 0);
+    return y;
+  }
+
   function dibujarInformeEstudiantePDF(doc, datos) {
     const anchoPagina = doc.internal.pageSize.getWidth();
-    const margen = 20;
-    let y = 20;
+    const altoPagina = doc.internal.pageSize.getHeight();
+    const margen = 18;
+    const anchoDisponible = anchoPagina - margen * 2;
+    let y = dibujarEncabezadoInformePDF(doc, "Campamento \u201cAprender es Divertido\u201d \u2014 Informe de cierre del estudiante");
 
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    doc.text("REPÚBLICA DOMINICANA", anchoPagina / 2, y, { align: "center" }); y += 5;
-    doc.text("MINISTERIO DE EDUCACIÓN", anchoPagina / 2, y, { align: "center" }); y += 5;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.text("Campamento \u201cAprender es Divertido\u201d \u2014 Informe de cierre del estudiante", anchoPagina / 2, y, { align: "center" }); y += 10;
-
-    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(15);
     doc.text(datos.estudiante.nombre || "", margen, y); y += 6;
     doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.text("ID del estudiante: " + (datos.estudiante.idEstudiante || ""), margen, y); y += 7;
+    doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
+    doc.text("ID del estudiante: " + (datos.estudiante.idEstudiante || ""), margen, y);
+    doc.setTextColor(0, 0, 0);
+    y += 8;
 
-    doc.setFontSize(10);
     const sede = datos.sede || {};
-    [
-      "Regional: " + (sede.regional || ""),
-      "Distrito: " + (sede.distrito || ""),
-      "Centro sede: " + (sede.centroSede || ""),
-      "Grupo: " + (sede.grupo || ""),
-      "Elaborado por: " + (datos.elaboradoPor || "—"),
-      "Fecha de generación: " + (datos.fechaGeneracion || new Date().toLocaleDateString("es-DO")),
-    ].forEach(function(linea) { doc.text(linea, margen, y); y += 5.5; });
-    y += 4;
+    doc.setFontSize(9.5);
+    const col2 = margen + anchoDisponible / 2;
+    const filasInfo = [
+      ["Regional", sede.regional || ""], ["Distrito", sede.distrito || ""],
+      ["Centro sede", sede.centroSede || ""], ["Grupo", sede.grupo || ""],
+      ["Elaborado por", datos.elaboradoPor || "—"],
+      ["Fecha de generación", datos.fechaGeneracion || new Date().toLocaleDateString("es-DO")],
+    ];
+    let yInfo = y;
+    filasInfo.forEach(function(par, i) {
+      const x = i % 2 === 0 ? margen : col2;
+      if (i % 2 === 0 && i > 0) yInfo += 5.5;
+      doc.setFont("helvetica", "bold"); doc.text(par[0] + ":", x, yInfo);
+      doc.setFont("helvetica", "normal"); doc.text(par[1], x + 28, yInfo);
+    });
+    y = yInfo + 9;
 
+    y = dibujarSeccionInformePDF(doc, "Asistencia", margen, y, anchoDisponible);
     const a = datos.asistencia || {};
-    doc.setFont("helvetica", "bold"); doc.text("Asistencia", margen, y); y += 6;
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     doc.text(
       a.pctAsistencia === null || a.pctAsistencia === undefined
         ? "Sin registros de asistencia."
         : `${a.pctAsistencia}% (${a.totalDias} días registrados — Presente: ${a.Presente}, Tardanza: ${a.Tardanza}, Ausente: ${a.Ausente}, Excusa: ${a.Excusa})`,
       margen, y
     );
-    y += 9;
+    y += 10;
 
-    doc.setFont("helvetica", "bold"); doc.text("Evaluación de entrada y final", margen, y); y += 7;
+    y = dibujarSeccionInformePDF(doc, "Evaluación de entrada y final", margen, y, anchoDisponible);
 
     const colorNivel = function(nivel) {
       const n = normalizarTexto(nivel).toLowerCase();
@@ -13337,7 +13398,7 @@ const respuestasTexto = {
       const tipo = par[0], etiqueta = par[1];
       const ev = (datos.evaluaciones || {})[tipo];
 
-      if (y > doc.internal.pageSize.getHeight() - 30) { doc.addPage(); y = 20; }
+      if (y > altoPagina - 35) { doc.addPage(); y = 36; }
       doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
       doc.text(etiqueta, margen, y); y += 6;
 
@@ -13347,28 +13408,29 @@ const respuestasTexto = {
         return;
       }
 
+      // "de X a Y" en vez de una flecha: la fuente estándar de jsPDF no
+      // renderiza bien el carácter de flecha (\u2192) — salía como un
+      // glifo incorrecto en el PDF final.
       const finalGeneral = ev.soloUna ? ev.final + " (aún sin final)" : ev.final;
       doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-      doc.text(`Resultado general: entrada ${ev.entrada} \u2192 final ${finalGeneral}`, margen, y); y += 6.5;
+      doc.text(`Resultado general: de ${ev.entrada} a ${finalGeneral}`, margen, y); y += 7;
 
-      // Tabla de indicadores: nombre | nivel entrada | nivel final
-      const colIndicador = margen, colEntrada = margen + 108, colFinal = margen + 145;
+      const colIndicador = margen, colEntrada = margen + 100, colFinal = margen + 138;
+      doc.setFillColor(AZUL_CLARO_INFORME[0], AZUL_CLARO_INFORME[1], AZUL_CLARO_INFORME[2]);
+      doc.rect(margen, y - 4, anchoDisponible, 6, "F");
       doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-      doc.text("Indicador", colIndicador, y);
+      doc.text("Indicador", colIndicador + 2, y);
       doc.text("Entrada", colEntrada, y);
       doc.text("Final", colFinal, y);
-      y += 1.5;
-      doc.setDrawColor(200, 200, 200);
-      doc.line(margen, y, anchoPagina - margen, y);
-      y += 4.5;
+      y += 6;
 
       (ev.indicadores || []).forEach(function(ind) {
-        const lineasNombre = doc.splitTextToSize(ind.nombre, 104);
-        const alturaFila = Math.max(lineasNombre.length * 4.5, 4.5);
-        if (y + alturaFila > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
+        const lineasNombre = doc.splitTextToSize(ind.nombre, 94);
+        const alturaFila = Math.max(lineasNombre.length * 4.3, 4.3);
+        if (y + alturaFila > altoPagina - 20) { doc.addPage(); y = 36; }
 
         doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(0, 0, 0);
-        doc.text(lineasNombre, colIndicador, y);
+        doc.text(lineasNombre, colIndicador + 2, y);
 
         const cEntrada = colorNivel(ind.entrada);
         doc.setTextColor(cEntrada[0], cEntrada[1], cEntrada[2]);
@@ -13382,19 +13444,20 @@ const respuestasTexto = {
           doc.setTextColor(cFinal[0], cFinal[1], cFinal[2]);
           doc.text(ind.final, colFinal, y);
         }
-
         doc.setTextColor(0, 0, 0);
-        y += alturaFila + 2;
+        y += alturaFila + 2.2;
       });
-      y += 4;
+      y += 5;
     });
 
-    if (y > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); y = 20; }
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
-    doc.text("Descripción cualitativa de los avances", margen, y); y += 6;
+    if (y > altoPagina - 45) { doc.addPage(); y = 36; }
+    y = dibujarSeccionInformePDF(doc, "Descripción cualitativa de los avances", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-    const lineas = doc.splitTextToSize(datos.descripcionAvances || "(sin descripción)", anchoPagina - margen * 2);
+    const lineas = doc.splitTextToSize(datos.descripcionAvances || "(sin descripción)", anchoDisponible);
     doc.text(lineas, margen, y);
+    y += lineas.length * 5;
+
+    dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Facilitador(a)", datos.elaboradoPor, datos.fechaGeneracion || new Date().toLocaleDateString("es-DO"));
   }
 
   function descargarInformeEstudiantePDF(idEstudiante) {
@@ -13696,46 +13759,74 @@ const respuestasTexto = {
     const jsPDFCtor = window.jspdf.jsPDF;
     const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
     const anchoPagina = doc.internal.pageSize.getWidth();
-    const margen = 20;
-    let y = 20;
+    const altoPagina = doc.internal.pageSize.getHeight();
+    const margen = 18;
+    const anchoDisponible = anchoPagina - margen * 2;
+    let y = dibujarEncabezadoInformePDF(doc, "Campamento \u201cAprender es Divertido\u201d \u2014 Informe de cierre de sede");
 
-    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
-    doc.text("REPÚBLICA DOMINICANA", anchoPagina / 2, y, { align: "center" }); y += 5;
-    doc.text("MINISTERIO DE EDUCACIÓN", anchoPagina / 2, y, { align: "center" }); y += 5;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-    doc.text("Campamento \u201cAprender es Divertido\u201d \u2014 Informe de cierre de sede", anchoPagina / 2, y, { align: "center" }); y += 10;
-
-    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(15);
     doc.text(t.centroSede, margen, y); y += 8;
 
+    doc.setFontSize(9.5);
+    const col2 = margen + anchoDisponible / 2;
+    const filasInfo = [
+      ["Regional", t.regional], ["Distrito", t.distrito],
+      ["Elaborado por", t.elaboradoPor], ["Fecha de generación", t.fechaGeneracion],
+    ];
+    let yInfo = y;
+    filasInfo.forEach(function(par, i) {
+      const x = i % 2 === 0 ? margen : col2;
+      if (i % 2 === 0 && i > 0) yInfo += 5.5;
+      doc.setFont("helvetica", "bold"); doc.text(par[0] + ":", x, yInfo);
+      doc.setFont("helvetica", "normal"); doc.text(String(par[1]), x + 32, yInfo);
+    });
+    y = yInfo + 10;
+
+    // Tarjetas de indicadores clave: 3 columnas x 2 filas
+    y = dibujarSeccionInformePDF(doc, "Indicadores generales", margen, y, anchoDisponible);
+    const tarjetas = [
+      ["Estudiantes activos", String(t.estudiantes)],
+      ["% Asistencia general", String(t.asistencia)],
+      ["Cumplimiento acompañamientos", String(t.cumplimiento)],
+      ["Mejoraron de nivel", String(t.mejoraron)],
+      ["Se mantuvieron", String(t.seMantuvieron)],
+      ["Bajaron de nivel", String(t.bajaron)],
+    ];
+    const colAncho = (anchoDisponible - 2 * 6) / 3;
+    const filaAlto = 20;
+    tarjetas.forEach(function(tj, i) {
+      const col = i % 3, fila = Math.floor(i / 3);
+      const x = margen + col * (colAncho + 6);
+      const yy = y + fila * (filaAlto + 5);
+      doc.setDrawColor(GRIS_BORDE_INFORME[0], GRIS_BORDE_INFORME[1], GRIS_BORDE_INFORME[2]);
+      doc.setFillColor(250, 250, 251);
+      doc.roundedRect(x, yy, colAncho, filaAlto, 1.5, 1.5, "FD");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+      doc.setTextColor(AZUL_INFORME[0], AZUL_INFORME[1], AZUL_INFORME[2]);
+      doc.text(tj[1], x + colAncho / 2, yy + 10, { align: "center" });
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+      doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
+      doc.text(tj[0], x + colAncho / 2, yy + 16, { align: "center", maxWidth: colAncho - 4 });
+      doc.setTextColor(0, 0, 0);
+    });
+    y += 2 * (filaAlto + 5) + 4;
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
+    doc.text("Incidencias registradas: " + t.incidencias, margen, y);
+    y += 10;
+
+    y = dibujarSeccionInformePDF(doc, "Valoración general", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-    [
-      "Regional: " + t.regional,
-      "Distrito: " + t.distrito,
-      "Elaborado por: " + t.elaboradoPor,
-      "Fecha de generación: " + t.fechaGeneracion,
-    ].forEach(function(linea) { doc.text(linea, margen, y); y += 5.5; });
-    y += 5;
-
-    doc.setFontSize(10.5);
-    [
-      "Estudiantes activos: " + t.estudiantes,
-      "% Asistencia general: " + t.asistencia,
-      "Progreso de nivel — mejoraron: " + t.mejoraron + " · se mantuvieron: " + t.seMantuvieron + " · bajaron: " + t.bajaron,
-      "Cumplimiento de acompañamientos realizados: " + t.cumplimiento,
-      "Incidencias registradas: " + t.incidencias,
-    ].forEach(function(linea) { doc.text(linea, margen, y); y += 6.5; });
-    y += 5;
-
-    doc.setFont("helvetica", "bold"); doc.text("Valoración general", margen, y); y += 6;
-    doc.setFont("helvetica", "normal");
-    let lineas = doc.splitTextToSize(t.valoracion, anchoPagina - margen * 2);
+    let lineas = doc.splitTextToSize(t.valoracion, anchoDisponible);
     doc.text(lineas, margen, y); y += lineas.length * 5 + 8;
 
-    doc.setFont("helvetica", "bold"); doc.text("Recomendaciones", margen, y); y += 6;
+    if (y > altoPagina - 45) { doc.addPage(); y = 36; }
+    y = dibujarSeccionInformePDF(doc, "Recomendaciones", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal");
-    lineas = doc.splitTextToSize(t.recomendaciones, anchoPagina - margen * 2);
-    doc.text(lineas, margen, y);
+    lineas = doc.splitTextToSize(t.recomendaciones, anchoDisponible);
+    doc.text(lineas, margen, y); y += lineas.length * 5;
+
+    dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Coordinador(a) de sede", t.elaboradoPor, t.fechaGeneracion);
 
     doc.save("Informe_Sede_" + t.centroSede.replace(/[^a-zA-Z0-9]/g, "_") + ".pdf");
   }
