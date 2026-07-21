@@ -1698,6 +1698,13 @@
     .estado-informe-chip.completado { background: #d5f2ec; color: #0d6d61; }
     .estado-informe-chip.pendiente { background: #fdecd2; color: #9a5b06; }
 
+    #tablaFacilitadoresInforme td.celda-par-grupo {
+      vertical-align: middle;
+      text-align: center;
+      font-weight: 600;
+      background: #f4fbfa;
+    }
+
     #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
     #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
     #tablaIndicadoresLengua td.elemental, #tablaIndicadoresMat td.elemental { color: #c0392b; font-weight: 600; }
@@ -13183,7 +13190,7 @@ const respuestasTexto = {
   // Construye una tabla HTML con el nivel de cada indicador, entrada vs.
   // final, y un color simple según el nivel (mismo criterio de colores que
   // ya usa el módulo de evaluaciones: elemental/aceptable/satisfactorio).
-  function construirTablaIndicadores(indicadores) {
+  function construirTablaIndicadores(indicadores, soloUna) {
     if (!indicadores || !indicadores.length) {
       return '<p class="nota">Sin evaluación registrada para esta prueba.</p>';
     }
@@ -13195,10 +13202,17 @@ const respuestasTexto = {
       return "";
     };
     const filas = indicadores.map(function(ind) {
+      // Si todavía no se ha registrado una evaluación final (solo existe la
+      // de entrada), antes esta columna repetía el mismo valor sin ninguna
+      // aclaración — parecía un error, cuando en realidad es lo esperado
+      // hasta que se aplique la evaluación final (a partir del 27 de julio).
+      const celdaFinal = soloUna
+        ? `<td title="Aún no se ha registrado la evaluación final" style="color:#999;font-style:italic;">Pendiente</td>`
+        : `<td class="${claseNivel(ind.final)}">${escapeHtml(ind.final)}</td>`;
       return `<tr>
         <td>${escapeHtml(ind.nombre)}</td>
         <td class="${claseNivel(ind.entrada)}">${escapeHtml(ind.entrada)}</td>
-        <td class="${claseNivel(ind.final)}">${escapeHtml(ind.final)}</td>
+        ${celdaFinal}
       </tr>`;
     }).join("");
     return `<table>
@@ -13219,8 +13233,8 @@ const respuestasTexto = {
     document.getElementById("informeEstEntradaMat").textContent = mat ? mat.entrada : "Sin evaluar";
     document.getElementById("informeEstFinalMat").textContent = mat ? (mat.soloUna ? mat.final + " (sin final aún)" : mat.final) : "Sin evaluar";
 
-    document.getElementById("tablaIndicadoresLengua").innerHTML = construirTablaIndicadores(lengua && lengua.indicadores);
-    document.getElementById("tablaIndicadoresMat").innerHTML = construirTablaIndicadores(mat && mat.indicadores);
+    document.getElementById("tablaIndicadoresLengua").innerHTML = construirTablaIndicadores(lengua && lengua.indicadores, lengua && lengua.soloUna);
+    document.getElementById("tablaIndicadoresMat").innerHTML = construirTablaIndicadores(mat && mat.indicadores, mat && mat.soloUna);
 
     document.getElementById("informeEstDescripcion").value = resp.descripcionAvances || "";
   }
@@ -13360,9 +13374,14 @@ const respuestasTexto = {
         doc.setTextColor(cEntrada[0], cEntrada[1], cEntrada[2]);
         doc.text(ind.entrada, colEntrada, y);
 
-        const cFinal = colorNivel(ind.final);
-        doc.setTextColor(cFinal[0], cFinal[1], cFinal[2]);
-        doc.text(ind.final, colFinal, y);
+        if (ev.soloUna) {
+          doc.setTextColor(140, 140, 140);
+          doc.text("Pendiente", colFinal, y);
+        } else {
+          const cFinal = colorNivel(ind.final);
+          doc.setTextColor(cFinal[0], cFinal[1], cFinal[2]);
+          doc.text(ind.final, colFinal, y);
+        }
 
         doc.setTextColor(0, 0, 0);
         y += alturaFila + 2;
@@ -13405,7 +13424,7 @@ const respuestasTexto = {
       if (!ev) return `<p style="font-family:Arial;"><b>${etiqueta}:</b> sin evaluar.</p>`;
       const finalTxt = ev.soloUna ? ev.final + " (aún sin evaluación final)" : ev.final;
       return `<p style="font-family:Arial;"><b>${etiqueta}</b> — resultado general: entrada ${escapeHtml(ev.entrada)} &rarr; final ${escapeHtml(finalTxt)}</p>
-        <div style="font-family:Arial;font-size:11px;">${construirTablaIndicadores(ev.indicadores)}</div>`;
+        <div style="font-family:Arial;font-size:11px;">${construirTablaIndicadores(ev.indicadores, ev.soloUna)}</div>`;
     };
     return `
       <h2 style="font-family:Arial;">${escapeHtml(datos.estudiante.nombre)}</h2>
@@ -13562,15 +13581,41 @@ const respuestasTexto = {
     document.getElementById("informeSedeIncidencias").textContent = (resp.incidencias || {}).cantidad ?? 0;
 
     const tabla = document.getElementById("tablaFacilitadoresInforme");
-    const filas = (resp.facilitadores || []).map(function(f) {
+
+    // Se ordena por grupo (numéricamente: Grupo 1, 2, 3...) y luego por
+    // nombre, para que los dos facilitadores de un mismo grupo queden
+    // siempre juntos, uno debajo del otro, en vez de alternados como antes.
+    const facilitadoresOrdenados = (resp.facilitadores || []).slice().sort(function(a, b) {
+      const na = parseInt((String(a.grupo || "").match(/\d+/) || [0])[0], 10);
+      const nb = parseInt((String(b.grupo || "").match(/\d+/) || [0])[0], 10);
+      if (na !== nb) return na - nb;
+      return String(a.nombre || "").localeCompare(String(b.nombre || ""));
+    });
+
+    let filas = "";
+    facilitadoresOrdenados.forEach(function(f, i) {
       const pct = f.totalEstudiantes > 0 ? Math.round((f.completados / f.totalEstudiantes) * 100) : 0;
-      return `<tr>
+      const mismoGrupoQueAnterior = i > 0 && normalizarTexto(facilitadoresOrdenados[i - 1].grupo) === normalizarTexto(f.grupo);
+      const mismoGrupoQueSiguiente = i < facilitadoresOrdenados.length - 1 && normalizarTexto(facilitadoresOrdenados[i + 1].grupo) === normalizarTexto(f.grupo);
+
+      // La celda de "Grupo" se fusiona (rowspan) en la primera fila del par,
+      // y se omite en la segunda — así la pareja se ve como un solo bloque.
+      let celdaGrupo = "";
+      if (mismoGrupoQueSiguiente) {
+        celdaGrupo = `<td rowspan="2" class="celda-par-grupo">${escapeHtml(f.grupo || "")}</td>`;
+      } else if (!mismoGrupoQueAnterior) {
+        celdaGrupo = `<td>${escapeHtml(f.grupo || "")}</td>`;
+      }
+      // si mismoGrupoQueAnterior es true, no se repite la celda (ya quedó fusionada arriba)
+
+      filas += `<tr class="${mismoGrupoQueAnterior ? "fila-pareja-grupo" : ""}">
         <td>${escapeHtml(f.nombre)}</td>
-        <td>${escapeHtml(f.grupo || "")}</td>
+        ${celdaGrupo}
         <td>${f.completados} / ${f.totalEstudiantes}</td>
         <td>${pct}%</td>
       </tr>`;
-    }).join("");
+    });
+
     tabla.innerHTML = `<table>
       <thead><tr><th>Facilitador</th><th>Grupo</th><th>Informes completados</th><th>% avance</th></tr></thead>
       <tbody>${filas || '<tr><td colspan="4">No hay facilitadores activos en esta sede.</td></tr>'}</tbody>
