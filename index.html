@@ -3774,12 +3774,22 @@
         </div>
 
         <div class="grupo-metricas-informe">
-          <h4 class="titulo-grupo-metricas">Progreso de nivel (entrada → final)</h4>
+          <h4 class="titulo-grupo-metricas">Progreso de nivel — Lengua Española (entrada a final)</h4>
           <div class="resumen-asignacion">
-            <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="informeSedeMejoraron">—</strong></div>
-            <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="informeSedeMantuvieron">—</strong></div>
-            <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="informeSedeBajaron">—</strong></div>
-            <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="informeSedePendientes">—</strong></div>
+            <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="informeSedeMejoraronLengua">—</strong></div>
+            <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="informeSedeMantuvieronLengua">—</strong></div>
+            <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="informeSedeBajaronLengua">—</strong></div>
+            <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="informeSedePendientesLengua">—</strong></div>
+          </div>
+        </div>
+
+        <div class="grupo-metricas-informe">
+          <h4 class="titulo-grupo-metricas">Progreso de nivel — Matemática (entrada a final)</h4>
+          <div class="resumen-asignacion">
+            <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="informeSedeMejoraronMat">—</strong></div>
+            <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="informeSedeMantuvieronMat">—</strong></div>
+            <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="informeSedeBajaronMat">—</strong></div>
+            <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="informeSedePendientesMat">—</strong></div>
           </div>
         </div>
 
@@ -13998,11 +14008,16 @@ const respuestasTexto = {
     document.getElementById("informeSedeEstudiantes").textContent = a.totalEstudiantesActivos ?? 0;
     document.getElementById("informeSedeCuota").textContent = a.cuota ?? 0;
 
-    const p = resp.progreso || {};
-    document.getElementById("informeSedeMejoraron").textContent = p.mejoraron ?? 0;
-    document.getElementById("informeSedeMantuvieron").textContent = p.seMantuvieron ?? 0;
-    document.getElementById("informeSedeBajaron").textContent = p.bajaron ?? 0;
-    document.getElementById("informeSedePendientes").textContent = p.pendientes ?? 0;
+    const progresoPorArea = resp.progresoPorArea || {};
+    const pLengua = progresoPorArea.LENGUA || {}, pMat = progresoPorArea.MATEMATICA || {};
+    document.getElementById("informeSedeMejoraronLengua").textContent = pLengua.mejoraron ?? 0;
+    document.getElementById("informeSedeMantuvieronLengua").textContent = pLengua.seMantuvieron ?? 0;
+    document.getElementById("informeSedeBajaronLengua").textContent = pLengua.bajaron ?? 0;
+    document.getElementById("informeSedePendientesLengua").textContent = pLengua.pendientes ?? 0;
+    document.getElementById("informeSedeMejoraronMat").textContent = pMat.mejoraron ?? 0;
+    document.getElementById("informeSedeMantuvieronMat").textContent = pMat.seMantuvieron ?? 0;
+    document.getElementById("informeSedeBajaronMat").textContent = pMat.bajaron ?? 0;
+    document.getElementById("informeSedePendientesMat").textContent = pMat.pendientes ?? 0;
 
     const porRol = (resp.acompanamientos || {}).porRol || {};
     document.getElementById("tarjetasAcompanamientosPorRol").innerHTML = Object.keys(porRol).map(function(rol) {
@@ -14122,7 +14137,7 @@ const respuestasTexto = {
 
   function construirTextoInformeSede() {
     const d = datosInformeSedeActual || {};
-    const a = d.asistencia || {}, p = d.progreso || {}, ac = d.acompanamientos || {};
+    const a = d.asistencia || {}, prog = d.progresoPorArea || {}, ac = d.acompanamientos || {};
     return {
       centroSede: d.centroSede || "",
       regional: d.regional || "",
@@ -14132,7 +14147,8 @@ const respuestasTexto = {
       asistencia: a.pctAsistenciaSede === null || a.pctAsistenciaSede === undefined ? "Sin registros" : a.pctAsistenciaSede + "%",
       estudiantes: a.totalEstudiantesActivos ?? 0,
       cuota: a.cuota ?? 0,
-      mejoraron: p.mejoraron ?? 0, seMantuvieron: p.seMantuvieron ?? 0, bajaron: p.bajaron ?? 0, pendientes: p.pendientes ?? 0,
+      progresoLengua: prog.LENGUA || { mejoraron: 0, seMantuvieron: 0, bajaron: 0, pendientes: 0 },
+      progresoMat: prog.MATEMATICA || { mejoraron: 0, seMantuvieron: 0, bajaron: 0, pendientes: 0 },
       acompanamientosPorRol: ac.porRol || {},
       incidencias: (d.incidencias || {}).cantidad ?? 0,
       fortalezas: document.getElementById("informeSedeFortalezas").value.trim() || "(sin descripción)",
@@ -14178,11 +14194,18 @@ const respuestasTexto = {
       { etiqueta: "% Asistencia general", valor: String(t.asistencia) },
     ], margen, y, anchoDisponible, altoPagina);
 
-    y = dibujarGrupoTarjetasPDF(doc, "Progreso de nivel (entrada a final)", [
-      { etiqueta: "Mejoraron", valor: String(t.mejoraron), color: [22, 125, 74] },
-      { etiqueta: "Se mantuvieron", valor: String(t.seMantuvieron), color: [37, 99, 235] },
-      { etiqueta: "Bajaron", valor: String(t.bajaron), color: [192, 57, 43] },
-      { etiqueta: "Pendientes de final", valor: String(t.pendientes), color: [180, 83, 9] },
+    y = dibujarGrupoTarjetasPDF(doc, "Progreso de nivel — Lengua Española (entrada a final)", [
+      { etiqueta: "Mejoraron", valor: String(t.progresoLengua.mejoraron), color: [22, 125, 74] },
+      { etiqueta: "Se mantuvieron", valor: String(t.progresoLengua.seMantuvieron), color: [37, 99, 235] },
+      { etiqueta: "Bajaron", valor: String(t.progresoLengua.bajaron), color: [192, 57, 43] },
+      { etiqueta: "Pendientes de final", valor: String(t.progresoLengua.pendientes), color: [180, 83, 9] },
+    ], margen, y, anchoDisponible, altoPagina);
+
+    y = dibujarGrupoTarjetasPDF(doc, "Progreso de nivel — Matemática (entrada a final)", [
+      { etiqueta: "Mejoraron", valor: String(t.progresoMat.mejoraron), color: [22, 125, 74] },
+      { etiqueta: "Se mantuvieron", valor: String(t.progresoMat.seMantuvieron), color: [37, 99, 235] },
+      { etiqueta: "Bajaron", valor: String(t.progresoMat.bajaron), color: [192, 57, 43] },
+      { etiqueta: "Pendientes de final", valor: String(t.progresoMat.pendientes), color: [180, 83, 9] },
     ], margen, y, anchoDisponible, altoPagina);
 
     const tarjetasAcomp = Object.keys(t.acompanamientosPorRol || {}).map(function(rol) {
@@ -14231,7 +14254,8 @@ const respuestasTexto = {
         Estudiantes activos: ${t.estudiantes}<br>
         Cuota asignada: ${t.cuota}<br>
         % Asistencia general: ${escapeHtml(String(t.asistencia))}<br>
-        Progreso de nivel — mejoraron: ${t.mejoraron} · se mantuvieron: ${t.seMantuvieron} · bajaron: ${t.bajaron} · pendientes: ${t.pendientes}<br>
+        Progreso Lengua — mejoraron: ${t.progresoLengua.mejoraron} · se mantuvieron: ${t.progresoLengua.seMantuvieron} · bajaron: ${t.progresoLengua.bajaron} · pendientes: ${t.progresoLengua.pendientes}<br>
+        Progreso Matemática — mejoraron: ${t.progresoMat.mejoraron} · se mantuvieron: ${t.progresoMat.seMantuvieron} · bajaron: ${t.progresoMat.bajaron} · pendientes: ${t.progresoMat.pendientes}<br>
         ${Object.keys(t.acompanamientosPorRol || {}).map(function(rol) { return "Acompañ. — " + rol + ": " + t.acompanamientosPorRol[rol]; }).join("<br>")}<br>
         Incidencias registradas: ${t.incidencias}
       </p>
