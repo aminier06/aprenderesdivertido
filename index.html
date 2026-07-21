@@ -1706,7 +1706,20 @@
     }
     #tablaFacilitadoresInforme tr.fila-facilitador-clic { cursor: pointer; }
     #tablaFacilitadoresInforme tr.fila-facilitador-clic:hover td { background: #f4fbfa; }
-    .tarjetas-acompanamientos-rol { display: contents; }
+    .grupo-metricas-informe { margin: 16px 0; }
+    .titulo-grupo-metricas {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--texto-3, #6b7280); margin: 0 0 8px; padding-bottom: 4px;
+      border-bottom: 2px solid var(--borde, #e5e7eb);
+    }
+    .dato-asignacion.tarjeta-mejoraron { border-left: 3px solid #167d4a; }
+    .dato-asignacion.tarjeta-mejoraron strong { color: #167d4a; }
+    .dato-asignacion.tarjeta-mantuvieron { border-left: 3px solid #2563eb; }
+    .dato-asignacion.tarjeta-mantuvieron strong { color: #2563eb; }
+    .dato-asignacion.tarjeta-bajaron { border-left: 3px solid #c0392b; }
+    .dato-asignacion.tarjeta-bajaron strong { color: #c0392b; }
+    .dato-asignacion.tarjeta-pendientes { border-left: 3px solid #b45309; }
+    .dato-asignacion.tarjeta-pendientes strong { color: #b45309; }
 
     #tablaIndicadoresLengua td.satisfactorio, #tablaIndicadoresMat td.satisfactorio { color: #167d4a; font-weight: 600; }
     #tablaIndicadoresLengua td.aceptable, #tablaIndicadoresMat td.aceptable { color: #b45309; font-weight: 600; }
@@ -3704,8 +3717,9 @@
       </div>
     </div>
 
-    <!-- ══════════ VISTA COORDINADOR: un informe por sede ══════════ -->
+    <!-- ══════════ VISTA COORDINADOR / SUPERVISIÓN: un informe por sede o por grupo ══════════ -->
     <div id="vistaInformesCoordinador" class="oculto">
+      <!-- Selector simple: lo usa el coordinador de sede (1-2 sedes propias) -->
       <div class="form-grid-3" id="bloqueSelectorSedeInforme">
         <div>
           <label for="informeSedeSelector">Centro sede</label>
@@ -3713,24 +3727,87 @@
         </div>
       </div>
 
+      <!-- Filtros completos: los usan técnico distrital/regional/nacional y administrador -->
+      <div id="bloqueFiltrosSupervisionInforme" class="oculto">
+        <div class="form-grid-3">
+          <div>
+            <label for="supervisionTipoInforme">¿Qué desea consultar?</label>
+            <select id="supervisionTipoInforme" onchange="cambiarTipoSupervisionInformes()">
+              <option value="sede">Informes de coordinadores de sede</option>
+              <option value="facilitador">Informes de facilitadores (por grupo)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-3" style="margin-top:10px;">
+          <div>
+            <label for="supervisionRegional">Regional</label>
+            <select id="supervisionRegional" onchange="cargarDistritosSupervision()"><option value="">Seleccione la regional</option></select>
+          </div>
+          <div>
+            <label for="supervisionDistrito">Distrito</label>
+            <select id="supervisionDistrito" onchange="cargarSedesSupervision()"><option value="">Seleccione el distrito</option></select>
+          </div>
+          <div>
+            <label for="supervisionSede">Centro sede</label>
+            <select id="supervisionSede" onchange="seleccionarSedeSupervision()"><option value="">Seleccione la sede</option></select>
+          </div>
+        </div>
+        <div class="form-grid-3 oculto" id="bloqueGrupoSupervision" style="margin-top:10px;">
+          <div>
+            <label for="supervisionGrupo">Grupo</label>
+            <select id="supervisionGrupo" onchange="cargarInformesGrupoSupervision()"><option value="">Seleccione el grupo</option></select>
+          </div>
+        </div>
+      </div>
+
       <div id="mensajeInformeSede" class="mensaje"></div>
       <div id="notaSoloLecturaInforme" class="nota oculto">Está viendo este informe según su ámbito. Solo el coordinador de la sede puede editarlo y guardarlo.</div>
 
-      <div class="resumen-asignacion" style="margin:14px 0;">
-        <div class="dato-asignacion"><span>% Asistencia general</span><strong id="informeSedeAsistencia">—</strong></div>
-        <div class="dato-asignacion"><span>Estudiantes activos</span><strong id="informeSedeEstudiantes">—</strong></div>
-        <div class="dato-asignacion"><span>Cuota asignada</span><strong id="informeSedeCuota">—</strong></div>
-        <div id="tarjetasAcompanamientosPorRol" class="tarjetas-acompanamientos-rol"></div>
-        <div class="dato-asignacion"><span>Mejoraron de nivel</span><strong id="informeSedeMejoraron">—</strong></div>
-        <div class="dato-asignacion"><span>Se mantuvieron</span><strong id="informeSedeMantuvieron">—</strong></div>
-        <div class="dato-asignacion"><span>Bajaron</span><strong id="informeSedeBajaron">—</strong></div>
-        <div class="dato-asignacion"><span>Pendientes de evaluación final</span><strong id="informeSedePendientes">—</strong></div>
-        <div class="dato-asignacion"><span>Incidencias registradas</span><strong id="informeSedeIncidencias">—</strong></div>
-      </div>
+      <div id="contenedorInformeDeSede">
+        <div class="grupo-metricas-informe">
+          <h4 class="titulo-grupo-metricas">Matrícula y asistencia</h4>
+          <div class="resumen-asignacion">
+            <div class="dato-asignacion"><span>Estudiantes activos</span><strong id="informeSedeEstudiantes">—</strong></div>
+            <div class="dato-asignacion"><span>Cuota asignada</span><strong id="informeSedeCuota">—</strong></div>
+            <div class="dato-asignacion"><span>% Asistencia general</span><strong id="informeSedeAsistencia">—</strong></div>
+          </div>
+        </div>
 
-      <h3>Avance de informes por facilitador</h3>
-      <p class="nota">Haga clic en un facilitador para ver y descargar los informes de sus estudiantes.</p>
-      <div id="tablaFacilitadoresInforme" class="tabla-contenedor"></div>
+        <div class="grupo-metricas-informe">
+          <h4 class="titulo-grupo-metricas">Progreso de nivel (entrada → final)</h4>
+          <div class="resumen-asignacion">
+            <div class="dato-asignacion tarjeta-mejoraron"><span>Mejoraron</span><strong id="informeSedeMejoraron">—</strong></div>
+            <div class="dato-asignacion tarjeta-mantuvieron"><span>Se mantuvieron</span><strong id="informeSedeMantuvieron">—</strong></div>
+            <div class="dato-asignacion tarjeta-bajaron"><span>Bajaron</span><strong id="informeSedeBajaron">—</strong></div>
+            <div class="dato-asignacion tarjeta-pendientes"><span>Pendientes de final</span><strong id="informeSedePendientes">—</strong></div>
+          </div>
+        </div>
+
+        <div class="grupo-metricas-informe">
+          <h4 class="titulo-grupo-metricas">Acompañamientos realizados</h4>
+          <div id="tarjetasAcompanamientosPorRol" class="resumen-asignacion"></div>
+        </div>
+
+        <p class="nota" style="margin:4px 0 14px;">Incidencias registradas: <strong id="informeSedeIncidencias">—</strong></p>
+
+        <h3>Avance de informes por facilitador</h3>
+        <p class="nota">Haga clic en un facilitador para ver y descargar los informes de sus estudiantes.</p>
+        <div id="tablaFacilitadoresInforme" class="tabla-contenedor"></div>
+
+        <div id="bloqueEscrituraInformeSede" class="bloque-formulario" style="margin-top:14px;">
+          <label for="informeSedeFortalezas">Fortalezas observadas</label>
+          <textarea id="informeSedeFortalezas" rows="4" placeholder="Logros de la sede durante el campamento..."></textarea>
+          <label for="informeSedeOportunidades" style="margin-top:10px; display:block;">Oportunidades de mejora</label>
+          <textarea id="informeSedeOportunidades" rows="4" placeholder="Dificultades enfrentadas, áreas a fortalecer..."></textarea>
+          <label for="informeSedeAcuerdos" style="margin-top:10px; display:block;">Acuerdos realizados</label>
+          <textarea id="informeSedeAcuerdos" rows="4" placeholder="Compromisos para el próximo cierre..."></textarea>
+
+          <div class="acciones-asignacion" style="margin-top:12px;">
+            <button type="button" id="btnGuardarInformeSede" onclick="guardarInformeSedeActual()">Guardar informe</button>
+            <button type="button" class="btn-secundario" onclick="descargarInformeSedePDF()">Descargar PDF</button>
+          </div>
+        </div>
+      </div>
 
       <div id="bloqueEstudiantesFacilitadorSede" class="bloque-formulario oculto" style="margin-top:14px;">
         <h3 id="tituloEstudiantesFacilitadorSede">Estudiantes</h3>
@@ -3739,20 +3816,6 @@
           <button type="button" class="btn-secundario" onclick="cerrarEstudiantesFacilitadorSede()">Cerrar</button>
         </div>
         <div id="listaEstudiantesFacilitadorSede" class="lista-estudiantes-informes"></div>
-      </div>
-
-      <div id="bloqueEscrituraInformeSede" class="bloque-formulario" style="margin-top:14px;">
-        <label for="informeSedeFortalezas">Fortalezas observadas</label>
-        <textarea id="informeSedeFortalezas" rows="4" placeholder="Logros de la sede durante el campamento..."></textarea>
-        <label for="informeSedeOportunidades" style="margin-top:10px; display:block;">Oportunidades de mejora</label>
-        <textarea id="informeSedeOportunidades" rows="4" placeholder="Dificultades enfrentadas, áreas a fortalecer..."></textarea>
-        <label for="informeSedeAcuerdos" style="margin-top:10px; display:block;">Acuerdos realizados</label>
-        <textarea id="informeSedeAcuerdos" rows="4" placeholder="Compromisos para el próximo cierre..."></textarea>
-
-        <div class="acciones-asignacion" style="margin-top:12px;">
-          <button type="button" id="btnGuardarInformeSede" onclick="guardarInformeSedeActual()">Guardar informe</button>
-          <button type="button" class="btn-secundario" onclick="descargarInformeSedePDF()">Descargar PDF</button>
-        </div>
       </div>
     </div>
   </section>
@@ -13114,6 +13177,12 @@ const respuestasTexto = {
   let sedesInformeCoordinador = [];        // sedes del coordinador (para el selector)
   let datosInformeSedeActual = null;       // último informe de sede cargado (para exportar)
 
+  function esRolSupervisionInformes() {
+    const rol = normalizarRol(usuarioActual && usuarioActual.rol);
+    return rol === "tecnico distrital" || rol === "tecnico regional" ||
+      rol === "tecnico nacional" || rol === "director nacional" || rol === "administrador";
+  }
+
   function abrirModuloInformes() {
     mostrarModulo("moduloInformes");
     document.getElementById("vistaInformesFacilitador").classList.add("oculto");
@@ -13125,10 +13194,24 @@ const respuestasTexto = {
         "Complete un informe por cada estudiante de su grupo. Los datos de asistencia y nivel se calculan solos; solo tiene que describir los avances.";
       document.getElementById("vistaInformesFacilitador").classList.remove("oculto");
       cargarListaEstudiantesInformes();
+      return;
+    }
+
+    document.getElementById("vistaInformesCoordinador").classList.remove("oculto");
+    const esSupervision = esRolSupervisionInformes();
+    document.getElementById("bloqueSelectorSedeInforme").classList.toggle("oculto", esSupervision);
+    document.getElementById("bloqueFiltrosSupervisionInforme").classList.toggle("oculto", !esSupervision);
+    document.getElementById("contenedorInformeDeSede").classList.remove("oculto");
+    cerrarEstudiantesFacilitadorSede();
+
+    if (esSupervision) {
+      document.getElementById("notaInformes").textContent =
+        "Consulte informes de coordinadores de sede o de facilitadores según su ámbito. Elija qué desea ver y navegue por regional, distrito, sede y grupo.";
+      document.getElementById("mensajeInformeSede").textContent = "";
+      cargarFiltrosSupervisionInformes();
     } else {
       document.getElementById("notaInformes").textContent =
         "Informe general de la sede: datos calculados de toda la sede, más fortalezas, oportunidades de mejora y acuerdos realizados.";
-      document.getElementById("vistaInformesCoordinador").classList.remove("oculto");
       cargarModuloInformesCoordinador();
     }
   }
@@ -13340,6 +13423,47 @@ const respuestasTexto = {
     doc.text(titulo, margen + 3, y);
     doc.setTextColor(0, 0, 0);
     return y + 8;
+  }
+
+  // Un grupo de tarjetas con su propio encabezado pequeño (mayúsculas +
+  // línea) arriba, y una franja de color a la izquierda de cada tarjeta
+  // cuando se indica — el mismo lenguaje visual que las tarjetas en
+  // pantalla (border-left de color). Salta de página si el grupo completo
+  // no cabe en lo que queda.
+  function dibujarGrupoTarjetasPDF(doc, titulo, tarjetas, margen, y, anchoDisponible, altoPagina) {
+    const colAncho = (anchoDisponible - 2 * 6) / 3;
+    const filaAlto = 20;
+    const filas = Math.ceil(tarjetas.length / 3);
+    const alturaGrupo = 8 + filas * (filaAlto + 5);
+    if (y + alturaGrupo > altoPagina - 20) { doc.addPage(); y = 36; }
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
+    doc.text(titulo.toUpperCase(), margen, y);
+    doc.setDrawColor(GRIS_BORDE_INFORME[0], GRIS_BORDE_INFORME[1], GRIS_BORDE_INFORME[2]);
+    doc.line(margen, y + 1.8, margen + anchoDisponible, y + 1.8);
+    doc.setTextColor(0, 0, 0);
+    y += 8;
+
+    tarjetas.forEach(function(tj, i) {
+      const col = i % 3, fila = Math.floor(i / 3);
+      const x = margen + col * (colAncho + 6);
+      const yy = y + fila * (filaAlto + 5);
+      const color = tj.color || AZUL_INFORME;
+      doc.setDrawColor(GRIS_BORDE_INFORME[0], GRIS_BORDE_INFORME[1], GRIS_BORDE_INFORME[2]);
+      doc.setFillColor(250, 250, 251);
+      doc.roundedRect(x, yy, colAncho, filaAlto, 1.5, 1.5, "FD");
+      doc.setFillColor(color[0], color[1], color[2]);
+      doc.rect(x, yy, 1.3, filaAlto, "F"); // franja de acento a la izquierda
+      doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.text(tj.valor, x + colAncho / 2, yy + 10, { align: "center" });
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+      doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
+      doc.text(tj.etiqueta, x + colAncho / 2, yy + 16, { align: "center", maxWidth: colAncho - 4 });
+      doc.setTextColor(0, 0, 0);
+    });
+    return y + filas * (filaAlto + 5) + 6;
   }
 
   // Bloque de firma al final: línea + nombre + rol + fecha. Salta de
@@ -13597,6 +13721,149 @@ const respuestasTexto = {
     );
   }
 
+  /* ---------------------- TÉCNICO/ADMINISTRADOR: por ámbito ---------------------- */
+
+  let sedesSupervisionInformes = [];
+  let sedeSupervisionSeleccionada = null;
+
+  function cargarFiltrosSupervisionInformes() {
+    const selectRegional = document.getElementById("supervisionRegional");
+    selectRegional.innerHTML = '<option value="">Seleccione la regional</option>';
+    document.getElementById("supervisionDistrito").innerHTML = '<option value="">Seleccione el distrito</option>';
+    document.getElementById("supervisionSede").innerHTML = '<option value="">Seleccione la sede</option>';
+    document.getElementById("supervisionGrupo").innerHTML = '<option value="">Seleccione el grupo</option>';
+
+    obtenerSedesGlobales(function(sedes) {
+      sedesSupervisionInformes = sedes || [];
+      obtenerValoresUnicos(sedesSupervisionInformes, "regional").forEach(function(regional) {
+        const opt = document.createElement("option");
+        opt.value = regional; opt.textContent = regional;
+        selectRegional.appendChild(opt);
+      });
+    });
+  }
+
+  function cargarDistritosSupervision() {
+    const regional = document.getElementById("supervisionRegional").value;
+    const selectDistrito = document.getElementById("supervisionDistrito");
+    selectDistrito.innerHTML = '<option value="">Seleccione el distrito</option>';
+    document.getElementById("supervisionSede").innerHTML = '<option value="">Seleccione la sede</option>';
+    document.getElementById("supervisionGrupo").innerHTML = '<option value="">Seleccione el grupo</option>';
+    sedeSupervisionSeleccionada = null;
+    if (!regional) return;
+    const filtradas = sedesSupervisionInformes.filter(function(s) { return normalizarTexto(s.regional) === normalizarTexto(regional); });
+    obtenerValoresUnicos(filtradas, "distrito").forEach(function(distrito) {
+      const opt = document.createElement("option");
+      opt.value = distrito; opt.textContent = distrito;
+      selectDistrito.appendChild(opt);
+    });
+  }
+
+  function cargarSedesSupervision() {
+    const regional = document.getElementById("supervisionRegional").value;
+    const distrito = document.getElementById("supervisionDistrito").value;
+    const selectSede = document.getElementById("supervisionSede");
+    selectSede.innerHTML = '<option value="">Seleccione la sede</option>';
+    document.getElementById("supervisionGrupo").innerHTML = '<option value="">Seleccione el grupo</option>';
+    sedeSupervisionSeleccionada = null;
+    if (!distrito) return;
+    const filtradas = sedesSupervisionInformes.filter(function(s) {
+      return normalizarTexto(s.regional) === normalizarTexto(regional) && normalizarTexto(s.distrito) === normalizarTexto(distrito);
+    });
+    filtradas.forEach(function(sede) {
+      const opt = document.createElement("option");
+      opt.value = sede.centroSede; opt.textContent = sede.centroSede;
+      selectSede.appendChild(opt);
+    });
+  }
+
+  function cambiarTipoSupervisionInformes() {
+    const tipo = document.getElementById("supervisionTipoInforme").value;
+    document.getElementById("bloqueGrupoSupervision").classList.toggle("oculto", tipo !== "facilitador");
+    document.getElementById("contenedorInformeDeSede").classList.toggle("oculto", tipo === "facilitador");
+    cerrarEstudiantesFacilitadorSede();
+    document.getElementById("mensajeInformeSede").textContent = "";
+    if (tipo === "facilitador") {
+      document.getElementById("supervisionGrupo").innerHTML = '<option value="">Seleccione el grupo</option>';
+      if (sedeSupervisionSeleccionada) {
+        (sedeSupervisionSeleccionada.grupos || []).forEach(function(g) {
+          const opt = document.createElement("option");
+          opt.value = g; opt.textContent = g;
+          document.getElementById("supervisionGrupo").appendChild(opt);
+        });
+      }
+    } else if (sedeSupervisionSeleccionada) {
+      cargarInformeSedeParaSupervision();
+    }
+  }
+
+  function seleccionarSedeSupervision() {
+    const centroSede = document.getElementById("supervisionSede").value;
+    sedeSupervisionSeleccionada = sedesSupervisionInformes.find(function(s) { return normalizarTexto(s.centroSede) === normalizarTexto(centroSede); }) || null;
+    cerrarEstudiantesFacilitadorSede();
+    document.getElementById("mensajeInformeSede").textContent = "";
+    if (!sedeSupervisionSeleccionada) return;
+
+    const tipo = document.getElementById("supervisionTipoInforme").value;
+    if (tipo === "facilitador") {
+      const selectGrupo = document.getElementById("supervisionGrupo");
+      selectGrupo.innerHTML = '<option value="">Seleccione el grupo</option>';
+      (sedeSupervisionSeleccionada.grupos || []).forEach(function(g) {
+        const opt = document.createElement("option");
+        opt.value = g; opt.textContent = g;
+        selectGrupo.appendChild(opt);
+      });
+    } else {
+      cargarInformeSedeParaSupervision();
+    }
+  }
+
+  function cargarInformeSedeParaSupervision() {
+    if (!sedeSupervisionSeleccionada) return;
+    const mensaje = document.getElementById("mensajeInformeSede");
+    mensaje.textContent = "Cargando...";
+    mensaje.className = "mensaje";
+    llamarBackend(
+      { accion: "obtenerInformeSede", cedula: usuarioActual.cedula, centroSede: sedeSupervisionSeleccionada.centroSede },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo cargar el informe de la sede.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = "";
+        datosInformeSedeActual = resp;
+        pintarDatosInformeSede(resp);
+      }
+    );
+  }
+
+  function cargarInformesGrupoSupervision() {
+    const grupo = document.getElementById("supervisionGrupo").value;
+    if (!grupo || !sedeSupervisionSeleccionada) return;
+    const bloque = document.getElementById("bloqueEstudiantesFacilitadorSede");
+    bloque.classList.remove("oculto");
+    document.getElementById("tituloEstudiantesFacilitadorSede").textContent = "Estudiantes del " + grupo + " — " + sedeSupervisionSeleccionada.centroSede;
+    document.getElementById("listaEstudiantesFacilitadorSede").innerHTML = "Cargando...";
+    bloque.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    llamarBackend(
+      {
+        accion: "listarInformesEstudiantesGrupo", cedula: usuarioActual.cedula,
+        regional: sedeSupervisionSeleccionada.regional, distrito: sedeSupervisionSeleccionada.distrito,
+        centroSede: sedeSupervisionSeleccionada.centroSede, grupo: grupo,
+      },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          document.getElementById("listaEstudiantesFacilitadorSede").innerHTML =
+            '<p class="mensaje error">' + escapeHtml((resp && resp.mensaje) || "No se pudo cargar.") + '</p>';
+          return;
+        }
+        renderizarListaInformesFacilitador(resp, "Todavía no hay ningún informe completado en este grupo.");
+      }
+    );
+  }
+
   /* ---------------------- COORDINADOR: por sede ---------------------- */
 
   function cargarModuloInformesCoordinador() {
@@ -13663,25 +13930,32 @@ const respuestasTexto = {
             '<p class="mensaje error">' + escapeHtml((resp && resp.mensaje) || "No se pudo cargar.") + '</p>';
           return;
         }
-        facilitadorEstudiantesActual = resp;
-        if (!resp.informes.length) {
-          document.getElementById("listaEstudiantesFacilitadorSede").innerHTML =
-            '<p class="nota">Este facilitador todavía no ha completado ningún informe.</p>';
-          return;
-        }
-        document.getElementById("listaEstudiantesFacilitadorSede").innerHTML = resp.informes.map(function(inf, idx) {
-          return `<div class="item-estudiante-informe completado" data-idx="${idx}">
-            <span>${escapeHtml(inf.estudiante.nombre)}</span>
-            <span class="estado-informe-chip completado">Descargar</span>
-          </div>`;
-        }).join("");
-        document.getElementById("listaEstudiantesFacilitadorSede").querySelectorAll(".item-estudiante-informe").forEach(function(item) {
-          item.addEventListener("click", function() {
-            descargarInformeIndividualDesdeSede(parseInt(item.dataset.idx, 10));
-          });
-        });
+        renderizarListaInformesFacilitador(resp, "Este facilitador todavía no ha completado ningún informe.");
       }
     );
+  }
+
+  // Reutilizada tanto por "clic en un facilitador de la tabla" como por
+  // "técnico/administrador consultando por grupo" — misma lista visual,
+  // dos formas distintas de obtener los datos.
+  function renderizarListaInformesFacilitador(resp, mensajeVacio) {
+    facilitadorEstudiantesActual = resp;
+    if (!resp.informes.length) {
+      document.getElementById("listaEstudiantesFacilitadorSede").innerHTML =
+        '<p class="nota">' + escapeHtml(mensajeVacio || "Todavía no hay ningún informe completado aquí.") + '</p>';
+      return;
+    }
+    document.getElementById("listaEstudiantesFacilitadorSede").innerHTML = resp.informes.map(function(inf, idx) {
+      return `<div class="item-estudiante-informe completado" data-idx="${idx}">
+        <span>${escapeHtml(inf.estudiante.nombre)}</span>
+        <span class="estado-informe-chip completado">Descargar</span>
+      </div>`;
+    }).join("");
+    document.getElementById("listaEstudiantesFacilitadorSede").querySelectorAll(".item-estudiante-informe").forEach(function(item) {
+      item.addEventListener("click", function() {
+        descargarInformeIndividualDesdeSede(parseInt(item.dataset.idx, 10));
+      });
+    });
   }
 
   function descargarInformeIndividualDesdeSede(idx) {
@@ -13896,41 +14170,27 @@ const respuestasTexto = {
     });
     y = yInfo + 10;
 
-    // Tarjetas de indicadores clave (grilla de 3 columnas, tantas filas como haga falta)
-    y = dibujarSeccionInformePDF(doc, "Indicadores generales", margen, y, anchoDisponible);
-    const tarjetas = [
-      ["Estudiantes activos", String(t.estudiantes)],
-      ["Cuota asignada", String(t.cuota)],
-      ["% Asistencia general", String(t.asistencia)],
-      ["Mejoraron de nivel", String(t.mejoraron)],
-      ["Se mantuvieron", String(t.seMantuvieron)],
-      ["Bajaron de nivel", String(t.bajaron)],
-      ["Pendientes de evaluación final", String(t.pendientes)],
-    ];
-    // Una tarjeta por cada rol que realizó acompañamientos — no un total
-    // sumado — para que se vea de quién viene cada uno.
-    Object.keys(t.acompanamientosPorRol || {}).forEach(function(rol) {
-      tarjetas.push(["Acompañ. — " + rol, String(t.acompanamientosPorRol[rol])]);
+    // Tres grupos, igual que en pantalla: matrícula/asistencia, progreso
+    // de nivel (con color de acento por resultado) y acompañamientos.
+    y = dibujarGrupoTarjetasPDF(doc, "Matrícula y asistencia", [
+      { etiqueta: "Estudiantes activos", valor: String(t.estudiantes) },
+      { etiqueta: "Cuota asignada", valor: String(t.cuota) },
+      { etiqueta: "% Asistencia general", valor: String(t.asistencia) },
+    ], margen, y, anchoDisponible, altoPagina);
+
+    y = dibujarGrupoTarjetasPDF(doc, "Progreso de nivel (entrada a final)", [
+      { etiqueta: "Mejoraron", valor: String(t.mejoraron), color: [22, 125, 74] },
+      { etiqueta: "Se mantuvieron", valor: String(t.seMantuvieron), color: [37, 99, 235] },
+      { etiqueta: "Bajaron", valor: String(t.bajaron), color: [192, 57, 43] },
+      { etiqueta: "Pendientes de final", valor: String(t.pendientes), color: [180, 83, 9] },
+    ], margen, y, anchoDisponible, altoPagina);
+
+    const tarjetasAcomp = Object.keys(t.acompanamientosPorRol || {}).map(function(rol) {
+      return { etiqueta: rol, valor: String(t.acompanamientosPorRol[rol]) };
     });
-    const colAncho = (anchoDisponible - 2 * 6) / 3;
-    const filaAlto = 20;
-    const filasTarjetas = Math.ceil(tarjetas.length / 3);
-    tarjetas.forEach(function(tj, i) {
-      const col = i % 3, fila = Math.floor(i / 3);
-      const x = margen + col * (colAncho + 6);
-      const yy = y + fila * (filaAlto + 5);
-      doc.setDrawColor(GRIS_BORDE_INFORME[0], GRIS_BORDE_INFORME[1], GRIS_BORDE_INFORME[2]);
-      doc.setFillColor(250, 250, 251);
-      doc.roundedRect(x, yy, colAncho, filaAlto, 1.5, 1.5, "FD");
-      doc.setFont("helvetica", "bold"); doc.setFontSize(13);
-      doc.setTextColor(AZUL_INFORME[0], AZUL_INFORME[1], AZUL_INFORME[2]);
-      doc.text(tj[1], x + colAncho / 2, yy + 10, { align: "center" });
-      doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
-      doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
-      doc.text(tj[0], x + colAncho / 2, yy + 16, { align: "center", maxWidth: colAncho - 4 });
-      doc.setTextColor(0, 0, 0);
-    });
-    y += filasTarjetas * (filaAlto + 5) + 4;
+    if (tarjetasAcomp.length > 0) {
+      y = dibujarGrupoTarjetasPDF(doc, "Acompañamientos realizados", tarjetasAcomp, margen, y, anchoDisponible, altoPagina);
+    }
 
     doc.setFont("helvetica", "normal"); doc.setFontSize(9.5);
     doc.text("Incidencias registradas: " + t.incidencias, margen, y);
