@@ -13516,7 +13516,11 @@ const respuestasTexto = {
           return `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
         }).join("");
         selector.value = resp.centroSede;
-        document.getElementById("bloqueSelectorSedeInforme").classList.toggle("oculto", sedesInformeCoordinador.length <= 1);
+        // Antes esto ocultaba por completo el selector cuando el
+        // coordinador solo tenía una sede (el caso más común) — pero como
+        // no había ningún otro lugar que mostrara el nombre de la sede,
+        // simplemente desaparecía de la pantalla. Ahora se deja siempre
+        // visible; con una sola sede, el <select> solo trae esa opción.
         datosInformeSedeActual = resp;
         pintarDatosInformeSede(resp);
       }
