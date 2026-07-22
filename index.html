@@ -13652,8 +13652,12 @@ const respuestasTexto = {
     filasInfo.forEach(function(par, i) {
       const x = i % 2 === 0 ? margen : col2;
       if (i % 2 === 0 && i > 0) yInfo += 5.5;
-      doc.setFont("helvetica", "bold"); doc.text(par[0] + ":", x, yInfo);
-      doc.setFont("helvetica", "normal"); doc.text(par[1], x + 28, yInfo);
+      doc.setFont("helvetica", "bold");
+      const etiqueta = par[0] + ":";
+      doc.text(etiqueta, x, yInfo);
+      const anchoEtiqueta = doc.getTextWidth(etiqueta);
+      doc.setFont("helvetica", "normal");
+      doc.text(par[1], x + anchoEtiqueta + 2, yInfo);
     });
     y = yInfo + 9;
 
@@ -14547,6 +14551,7 @@ const respuestasTexto = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        accion: "agregarFotoInformeSede",
         cedula: usuarioActual.cedula,
         payload: JSON.stringify({ centroSede: centroSede, imagenBase64: _dataUrlFotoPendiente, descripcion: descripcion }),
       }),
@@ -14581,6 +14586,7 @@ const respuestasTexto = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        accion: "eliminarFotoInformeSede",
         cedula: usuarioActual.cedula,
         payload: JSON.stringify({ centroSede: centroSede, ruta: ruta }),
       }),
@@ -14723,8 +14729,12 @@ const respuestasTexto = {
     filasInfo.forEach(function(par, i) {
       const x = i % 2 === 0 ? margen : col2;
       if (i % 2 === 0 && i > 0) yInfo += 5.5;
-      doc.setFont("helvetica", "bold"); doc.text(par[0] + ":", x, yInfo);
-      doc.setFont("helvetica", "normal"); doc.text(String(par[1]), x + 32, yInfo);
+      doc.setFont("helvetica", "bold");
+      const etiqueta = par[0] + ":";
+      doc.text(etiqueta, x, yInfo);
+      const anchoEtiqueta = doc.getTextWidth(etiqueta);
+      doc.setFont("helvetica", "normal");
+      doc.text(String(par[1]), x + anchoEtiqueta + 2, yInfo);
     });
     y = yInfo + 10;
 
