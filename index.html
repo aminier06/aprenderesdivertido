@@ -3738,6 +3738,7 @@
 
         <div class="acciones-asignacion" style="margin-top:12px;">
           <button type="button" onclick="guardarInformeEstudianteActual()">Guardar informe</button>
+          <button type="button" class="btn-secundario" onclick="previsualizarInformeEstudiantePDF(estudianteInformeActual)">Previsualizar PDF</button>
           <button type="button" class="btn-secundario" onclick="descargarInformeEstudiantePDF(estudianteInformeActual)">Descargar PDF</button>
           <button type="button" class="btn-secundario" onclick="cerrarFormInformeEstudiante()">Cerrar</button>
         </div>
@@ -3929,6 +3930,7 @@
           <div class="acciones-asignacion" style="margin-top:12px;">
             <button type="button" id="btnGuardarInformeSede" onclick="guardarInformeSedeActual()">Guardar informe</button>
             <button type="button" id="btnFinalizarInformeSede" class="btn-secundario" onclick="finalizarInformeSedeActual()">Finalizar informe</button>
+            <button type="button" class="btn-secundario" onclick="previsualizarInformeSedePDF()">Previsualizar PDF</button>
             <button type="button" class="btn-secundario" onclick="descargarInformeSedePDF()">Descargar PDF</button>
           </div>
         </div>
@@ -13742,8 +13744,11 @@ const respuestasTexto = {
     dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Facilitador(a)", datos.elaboradoPor, datos.fechaGeneracion || new Date().toLocaleDateString("es-DO"));
   }
 
-  function descargarInformeEstudiantePDF(idEstudiante) {
-    if (!datosEstudianteInformeActual || !idEstudiante) { alert("Primero guarde el informe."); return; }
+  // Arma el documento del informe de estudiante a partir del estado actual
+  // del formulario (aunque todavía no se haya guardado) — lo reutilizan
+  // tanto la descarga como la previsualización.
+  function construirDocInformeEstudianteActual(idEstudiante) {
+    if (!datosEstudianteInformeActual || !idEstudiante) { alert("Espere a que termine de cargar el informe."); return null; }
     const jsPDFCtor = window.jspdf.jsPDF;
     const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
     const datosCompletos = Object.assign(
@@ -13756,7 +13761,21 @@ const respuestasTexto = {
       }
     );
     dibujarInformeEstudiantePDF(doc, datosCompletos);
-    doc.save("Informe_" + datosCompletos.estudiante.nombre.replace(/\s+/g, "_") + ".pdf");
+    return { doc: doc, nombre: datosCompletos.estudiante.nombre };
+  }
+
+  function descargarInformeEstudiantePDF(idEstudiante) {
+    const listo = construirDocInformeEstudianteActual(idEstudiante);
+    if (!listo) return;
+    listo.doc.save("Informe_" + listo.nombre.replace(/\s+/g, "_") + ".pdf");
+  }
+
+  // Abre el PDF en una pestaña nueva usando el visor del navegador, sin
+  // descargar nada — para ver cómo va a quedar antes de guardar o exportar.
+  function previsualizarInformeEstudiantePDF(idEstudiante) {
+    const listo = construirDocInformeEstudianteActual(idEstudiante);
+    if (!listo) return;
+    window.open(listo.doc.output("bloburl"), "_blank");
   }
 
   // Genera un .doc simple a partir de HTML — Word lo abre sin problema, sin
@@ -14680,8 +14699,8 @@ const respuestasTexto = {
       .catch(function() { return null; });
   }
 
-  async function descargarInformeSedePDF() {
-    if (!datosInformeSedeActual) { alert("Todavía no se ha cargado el informe de la sede."); return; }
+  async function construirDocInformeSedeActual() {
+    if (!datosInformeSedeActual) { alert("Todavía no se ha cargado el informe de la sede."); return null; }
     const t = construirTextoInformeSede();
     const jsPDFCtor = window.jspdf.jsPDF;
     const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
@@ -14791,7 +14810,21 @@ const respuestasTexto = {
 
     dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Coordinador(a) de sede", t.elaboradoPor, t.fechaGeneracion);
 
-    doc.save("Informe_Sede_" + t.centroSede.replace(/[^a-zA-Z0-9]/g, "_") + ".pdf");
+    return { doc: doc, nombre: t.centroSede };
+  }
+
+  async function descargarInformeSedePDF() {
+    const listo = await construirDocInformeSedeActual();
+    if (!listo) return;
+    listo.doc.save("Informe_Sede_" + listo.nombre.replace(/[^a-zA-Z0-9]/g, "_") + ".pdf");
+  }
+
+  // Abre el PDF de la sede en una pestaña nueva usando el visor del
+  // navegador, sin descargar nada — para ver cómo va a quedar.
+  async function previsualizarInformeSedePDF() {
+    const listo = await construirDocInformeSedeActual();
+    if (!listo) return;
+    window.open(listo.doc.output("bloburl"), "_blank");
   }
 
   function descargarInformeSedeWord() {
