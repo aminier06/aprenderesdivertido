@@ -13608,7 +13608,7 @@ const respuestasTexto = {
 
   // Bloque de firma al final: línea + nombre + rol + fecha. Salta de
   // página si no queda espacio suficiente, para que no quede cortado.
-  function dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, rol, nombre, fecha) {
+  function dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, rol, nombre) {
     if (y > altoPagina - 45) { doc.addPage(); y = 36; }
     y += 10;
     doc.setDrawColor(GRIS_BORDE_INFORME[0], GRIS_BORDE_INFORME[1], GRIS_BORDE_INFORME[2]);
@@ -13619,7 +13619,7 @@ const respuestasTexto = {
     y += 5;
     doc.setFont("helvetica", "normal"); doc.setFontSize(9);
     doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
-    doc.text(rol + " · Fecha: " + fecha, margen, y);
+    doc.text(rol, margen, y);
     doc.setTextColor(0, 0, 0);
     return y;
   }
@@ -13627,7 +13627,7 @@ const respuestasTexto = {
   // Firma de los DOS facilitadores del grupo (el estudiante pertenece a un
   // grupo que siempre comparten dos facilitadores) — una línea por cada
   // uno, lado a lado, en vez de una sola.
-  function dibujarBloqueFirmaDobleInformePDF(doc, margen, anchoDisponible, altoPagina, y, rol, personas, fecha) {
+  function dibujarBloqueFirmaDobleInformePDF(doc, margen, anchoDisponible, altoPagina, y, rol, personas) {
     if (y > altoPagina - 45) { doc.addPage(); y = 36; }
     y += 10;
     const anchoColumna = (anchoDisponible - 10) / 2;
@@ -13645,8 +13645,8 @@ const respuestasTexto = {
     y += 5;
     doc.setFont("helvetica", "normal"); doc.setFontSize(9);
     doc.setTextColor(GRIS_TEXTO_INFORME[0], GRIS_TEXTO_INFORME[1], GRIS_TEXTO_INFORME[2]);
-    doc.text(rol + " · Fecha: " + fecha, margen, y);
-    doc.text(rol + " · Fecha: " + fecha, col2, y);
+    doc.text(rol, margen, y);
+    doc.text(rol, col2, y);
     doc.setTextColor(0, 0, 0);
     return y;
   }
@@ -13669,22 +13669,28 @@ const respuestasTexto = {
     const sede = datos.sede || {};
     doc.setFontSize(9.5);
     const col2 = margen + anchoDisponible / 2;
+    // "Centro sede" y "Elaborado por" van en su propia fila completa —sus
+    // valores pueden ser muy largos (nombres de escuela, nombres de
+    // persona) y se metían encima del campo vecino cuando compartían fila.
+    // Regional/Distrito y Grupo/Fecha sí son cortos y pueden ir en pareja.
     const filasInfo = [
-      ["Regional", sede.regional || ""], ["Distrito", sede.distrito || ""],
-      ["Centro sede", sede.centroSede || ""], ["Grupo", sede.grupo || ""],
-      ["Elaborado por", datos.elaboradoPor || "—"],
-      ["Fecha de generación", datos.fechaGeneracion || new Date().toLocaleDateString("es-DO")],
+      [["Regional", sede.regional || ""], ["Distrito", sede.distrito || ""]],
+      [["Centro sede", sede.centroSede || ""]],
+      [["Grupo", sede.grupo || ""], ["Fecha de generación", datos.fechaGeneracion || new Date().toLocaleDateString("es-DO")]],
+      [["Elaborado por", datos.elaboradoPor || "—"]],
     ];
     let yInfo = y;
-    filasInfo.forEach(function(par, i) {
-      const x = i % 2 === 0 ? margen : col2;
-      if (i % 2 === 0 && i > 0) yInfo += 5.5;
-      doc.setFont("helvetica", "bold");
-      const etiqueta = par[0] + ":";
-      doc.text(etiqueta, x, yInfo);
-      const anchoEtiqueta = doc.getTextWidth(etiqueta);
-      doc.setFont("helvetica", "normal");
-      doc.text(par[1], x + anchoEtiqueta + 2, yInfo);
+    filasInfo.forEach(function(fila, i) {
+      if (i > 0) yInfo += 5.5;
+      fila.forEach(function(par, j) {
+        const x = j === 0 ? margen : col2;
+        doc.setFont("helvetica", "bold");
+        const etiqueta = par[0] + ":";
+        doc.text(etiqueta, x, yInfo);
+        const anchoEtiqueta = doc.getTextWidth(etiqueta);
+        doc.setFont("helvetica", "normal");
+        doc.text(par[1], x + anchoEtiqueta + 2, yInfo);
+      });
     });
     y = yInfo + 9;
 
@@ -13772,7 +13778,7 @@ const respuestasTexto = {
     doc.text(lineas, margen, y);
     y += lineas.length * 5;
 
-    dibujarBloqueFirmaDobleInformePDF(doc, margen, anchoDisponible, altoPagina, y, "Facilitador(a)", datos.facilitadoresGrupo, datos.fechaGeneracion || new Date().toLocaleDateString("es-DO"));
+    dibujarBloqueFirmaDobleInformePDF(doc, margen, anchoDisponible, altoPagina, y, "Facilitador(a)", datos.facilitadoresGrupo);
   }
 
   // Arma el documento del informe de estudiante a partir del estado actual
@@ -14748,20 +14754,26 @@ const respuestasTexto = {
 
     doc.setFontSize(9.5);
     const col2 = margen + anchoDisponible / 2;
+    // "Elaborado por" va en su propia fila completa — el nombre del
+    // coordinador puede ser largo y se metía encima de "Fecha de
+    // generación" cuando compartían fila.
     const filasInfo = [
-      ["Regional", t.regional], ["Distrito", t.distrito],
-      ["Elaborado por", t.elaboradoPor], ["Fecha de generación", t.fechaGeneracion],
+      [["Regional", t.regional], ["Distrito", t.distrito]],
+      [["Elaborado por", t.elaboradoPor]],
+      [["Fecha de generación", t.fechaGeneracion]],
     ];
     let yInfo = y;
-    filasInfo.forEach(function(par, i) {
-      const x = i % 2 === 0 ? margen : col2;
-      if (i % 2 === 0 && i > 0) yInfo += 5.5;
-      doc.setFont("helvetica", "bold");
-      const etiqueta = par[0] + ":";
-      doc.text(etiqueta, x, yInfo);
-      const anchoEtiqueta = doc.getTextWidth(etiqueta);
-      doc.setFont("helvetica", "normal");
-      doc.text(String(par[1]), x + anchoEtiqueta + 2, yInfo);
+    filasInfo.forEach(function(fila, i) {
+      if (i > 0) yInfo += 5.5;
+      fila.forEach(function(par, j) {
+        const x = j === 0 ? margen : col2;
+        doc.setFont("helvetica", "bold");
+        const etiqueta = par[0] + ":";
+        doc.text(etiqueta, x, yInfo);
+        const anchoEtiqueta = doc.getTextWidth(etiqueta);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(par[1]), x + anchoEtiqueta + 2, yInfo);
+      });
     });
     y = yInfo + 10;
 
@@ -14845,7 +14857,7 @@ const respuestasTexto = {
       y += filasFotos * (altoCelda + 4) + 6;
     }
 
-    dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Coordinador(a) de sede", t.elaboradoPor, t.fechaGeneracion);
+    dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, "Coordinador(a) de sede", t.elaboradoPor);
 
     return { doc: doc, nombre: t.centroSede };
   }
