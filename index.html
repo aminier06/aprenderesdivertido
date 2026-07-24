@@ -3738,6 +3738,7 @@
 
         <div class="acciones-asignacion" style="margin-top:12px;">
           <button type="button" onclick="guardarInformeEstudianteActual()">Guardar informe</button>
+          <button type="button" id="btnEliminarInformeEstudiante" class="btn-secundario oculto" onclick="eliminarInformeEstudianteActual()">Eliminar informe</button>
           <button type="button" class="btn-secundario" onclick="previsualizarInformeEstudiantePDF(estudianteInformeActual)">Previsualizar PDF</button>
           <button type="button" class="btn-secundario" onclick="descargarInformeEstudiantePDF(estudianteInformeActual)">Descargar PDF</button>
           <button type="button" class="btn-secundario" onclick="cerrarFormInformeEstudiante()">Cerrar</button>
@@ -13480,6 +13481,7 @@ const respuestasTexto = {
     document.getElementById("tablaIndicadoresMat").innerHTML = construirTablaIndicadores(mat && mat.indicadores, mat && mat.sinFinal);
 
     document.getElementById("informeEstDescripcion").value = resp.descripcionAvances || "";
+    document.getElementById("btnEliminarInformeEstudiante").classList.toggle("oculto", !resp.descripcionAvances);
   }
 
   function cerrarFormInformeEstudiante() {
@@ -13521,6 +13523,37 @@ const respuestasTexto = {
         mensaje.textContent = "Informe guardado correctamente.";
         mensaje.className = "mensaje ok";
         if (datosEstudianteInformeActual) datosEstudianteInformeActual.descripcionAvances = descripcion;
+        document.getElementById("btnEliminarInformeEstudiante").classList.remove("oculto");
+        cargarListaEstudiantesInformes(); // refresca la barra de progreso
+      }
+    );
+  }
+
+  function eliminarInformeEstudianteActual() {
+    if (!estudianteInformeActual) return;
+    if (!confirm("¿Eliminar este informe? Esta acción no se puede deshacer.")) return;
+
+    const mensaje = document.getElementById("mensajeInformeEstudiante");
+    mensaje.textContent = "Eliminando...";
+    mensaje.className = "mensaje";
+
+    llamarBackend(
+      {
+        accion: "eliminarInformeEstudiante",
+        cedula: usuarioActual.cedula,
+        payload: JSON.stringify({ cedula: usuarioActual.cedula, idEstudiante: estudianteInformeActual }),
+      },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo eliminar el informe.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        document.getElementById("informeEstDescripcion").value = "";
+        document.getElementById("btnEliminarInformeEstudiante").classList.add("oculto");
+        if (datosEstudianteInformeActual) datosEstudianteInformeActual.descripcionAvances = "";
+        mensaje.textContent = "Informe eliminado correctamente.";
+        mensaje.className = "mensaje ok";
         cargarListaEstudiantesInformes(); // refresca la barra de progreso
       }
     );
