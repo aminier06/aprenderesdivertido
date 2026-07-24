@@ -13505,6 +13505,7 @@ const respuestasTexto = {
     llamarBackend(
       {
         accion: "guardarInformeEstudiante",
+        cedula: usuarioActual.cedula,
         payload: JSON.stringify({
           cedula: usuarioActual.cedula,
           idEstudiante: estudianteInformeActual,
@@ -14677,6 +14678,7 @@ const respuestasTexto = {
     llamarBackend(
       {
         accion: "guardarInformeSede",
+        cedula: usuarioActual.cedula,
         payload: JSON.stringify({
           cedula: usuarioActual.cedula, centroSede: centroSede,
           fortalezasObservadas: fortalezas, oportunidadesMejora: oportunidades, acuerdosRealizados: acuerdos,
