@@ -3734,6 +3734,7 @@
         <div id="tablaIndicadoresMat" class="tabla-contenedor"></div>
 
         <label for="informeEstDescripcion" style="margin-top:12px; display:block;">Descripción cualitativa de los avances</label>
+        <p id="notaCoautoriaInforme" class="nota oculto"></p>
         <textarea id="informeEstDescripcion" rows="5" placeholder="Fortalezas observadas, dificultades, recomendación para el próximo año..."></textarea>
 
         <div class="acciones-asignacion" style="margin-top:12px;">
@@ -13482,6 +13483,18 @@ const respuestasTexto = {
 
     document.getElementById("informeEstDescripcion").value = resp.descripcionAvances || "";
     document.getElementById("btnEliminarInformeEstudiante").classList.toggle("oculto", !resp.descripcionAvances);
+
+    // El informe es compartido entre los dos facilitadores del grupo — si
+    // ya tiene contenido, se indica quién lo escribió (puede ser uno mismo
+    // o el compañero de grupo), para que quede claro que no es un borrador
+    // propio y exclusivo.
+    const notaCoautoria = document.getElementById("notaCoautoriaInforme");
+    if (resp.descripcionAvances && resp.ultimoEnEscribir) {
+      notaCoautoria.textContent = "Último en escribir este informe: " + resp.ultimoEnEscribir;
+      notaCoautoria.classList.remove("oculto");
+    } else {
+      notaCoautoria.classList.add("oculto");
+    }
   }
 
   function cerrarFormInformeEstudiante() {
@@ -13642,6 +13655,20 @@ const respuestasTexto = {
 
   // Bloque de firma al final: línea + nombre + rol + fecha. Salta de
   // página si no queda espacio suficiente, para que no quede cortado.
+  // Dibuja un bloque de texto ya envuelto (líneas de doc.splitTextToSize)
+  // línea por línea, saltando de página cuando hace falta — doc.text() por
+  // sí solo no pagina, así que un texto largo simplemente se dibujaba más
+  // allá del borde inferior de la página y quedaba invisible/cortado.
+  function dibujarTextoPaginadoPDF(doc, lineas, margen, y, altoPagina, alturaLinea) {
+    alturaLinea = alturaLinea || 5;
+    for (let i = 0; i < lineas.length; i++) {
+      if (y > altoPagina - 20) { doc.addPage(); y = 36; }
+      doc.text(lineas[i], margen, y);
+      y += alturaLinea;
+    }
+    return y;
+  }
+
   function dibujarBloqueFirmaPDF(doc, margen, altoPagina, y, rol, nombre) {
     if (y > altoPagina - 45) { doc.addPage(); y = 36; }
     y += 10;
@@ -13809,8 +13836,7 @@ const respuestasTexto = {
     y = dibujarSeccionInformePDF(doc, "Descripción cualitativa de los avances", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     const lineas = doc.splitTextToSize(datos.descripcionAvances || "(sin descripción)", anchoDisponible);
-    doc.text(lineas, margen, y);
-    y += lineas.length * 5;
+    y = dibujarTextoPaginadoPDF(doc, lineas, margen, y, altoPagina);
 
     dibujarBloqueFirmaDobleInformePDF(doc, margen, anchoDisponible, altoPagina, y, "Facilitador(a)", datos.facilitadoresGrupo);
   }
@@ -14848,19 +14874,19 @@ const respuestasTexto = {
     y = dibujarSeccionInformePDF(doc, "Fortalezas observadas", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     let lineas = doc.splitTextToSize(t.fortalezas, anchoDisponible);
-    doc.text(lineas, margen, y); y += lineas.length * 5 + 8;
+    y = dibujarTextoPaginadoPDF(doc, lineas, margen, y, altoPagina) + 8;
 
     if (y > altoPagina - 45) { doc.addPage(); y = 36; }
     y = dibujarSeccionInformePDF(doc, "Oportunidades de mejora", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal");
     lineas = doc.splitTextToSize(t.oportunidades, anchoDisponible);
-    doc.text(lineas, margen, y); y += lineas.length * 5 + 8;
+    y = dibujarTextoPaginadoPDF(doc, lineas, margen, y, altoPagina) + 8;
 
     if (y > altoPagina - 45) { doc.addPage(); y = 36; }
     y = dibujarSeccionInformePDF(doc, "Acuerdos realizados", margen, y, anchoDisponible);
     doc.setFont("helvetica", "normal");
     lineas = doc.splitTextToSize(t.acuerdos, anchoDisponible);
-    doc.text(lineas, margen, y); y += lineas.length * 5;
+    y = dibujarTextoPaginadoPDF(doc, lineas, margen, y, altoPagina);
 
     // Fotos: se descargan y convierten a data URL antes de incrustarlas —
     // por eso toda la función es asíncrona. Hasta 5, en una grilla de 3
