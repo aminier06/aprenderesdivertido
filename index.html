@@ -1697,6 +1697,12 @@
     }
     .estado-informe-chip.completado { background: #d5f2ec; color: #0d6d61; }
     .estado-informe-chip.pendiente { background: #fdecd2; color: #9a5b06; }
+    .acciones-item-informe { display: flex; gap: 6px; flex-shrink: 0; }
+    .acciones-item-informe button {
+      font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+      border: none; cursor: pointer; background: #d5f2ec; color: #0d6d61;
+    }
+    .acciones-item-informe button:hover { background: #0d9488; color: #fff; }
 
     #tablaFacilitadoresInforme td.celda-par-grupo {
       vertical-align: middle;
@@ -14438,17 +14444,37 @@ const respuestasTexto = {
         '<p class="nota">' + escapeHtml(mensajeVacio || "Todavía no hay ningún informe completado aquí.") + '</p>';
       return;
     }
-    document.getElementById("listaEstudiantesFacilitadorSede").innerHTML = resp.informes.map(function(inf, idx) {
-      return `<div class="item-estudiante-informe completado" data-idx="${idx}">
+    const contenedor = document.getElementById("listaEstudiantesFacilitadorSede");
+    contenedor.innerHTML = resp.informes.map(function(inf, idx) {
+      return `<div class="item-estudiante-informe completado" style="cursor:default;">
         <span>${escapeHtml(inf.estudiante.nombre)}</span>
-        <span class="estado-informe-chip completado">Descargar</span>
+        <span class="acciones-item-informe">
+          <button type="button" class="btn-ver-informe" data-idx="${idx}">Ver</button>
+          <button type="button" class="btn-descargar-informe" data-idx="${idx}">Descargar</button>
+        </span>
       </div>`;
     }).join("");
-    document.getElementById("listaEstudiantesFacilitadorSede").querySelectorAll(".item-estudiante-informe").forEach(function(item) {
-      item.addEventListener("click", function() {
-        descargarInformeIndividualDesdeSede(parseInt(item.dataset.idx, 10));
-      });
+    contenedor.querySelectorAll(".btn-ver-informe").forEach(function(btn) {
+      btn.addEventListener("click", function() { previsualizarInformeIndividualDesdeSede(parseInt(btn.dataset.idx, 10)); });
     });
+    contenedor.querySelectorAll(".btn-descargar-informe").forEach(function(btn) {
+      btn.addEventListener("click", function() { descargarInformeIndividualDesdeSede(parseInt(btn.dataset.idx, 10)); });
+    });
+  }
+
+  // Abre el informe completo del estudiante en una pestaña nueva, con el
+  // visor de PDF del navegador — para que un técnico o coordinador pueda
+  // consultarlo íntegramente sin necesidad de descargar el archivo.
+  function previsualizarInformeIndividualDesdeSede(idx) {
+    if (!facilitadorEstudiantesActual) return;
+    const datos = facilitadorEstudiantesActual.informes[idx];
+    const jsPDFCtor = window.jspdf.jsPDF;
+    const doc = new jsPDFCtor({ unit: "mm", format: "a4" });
+    dibujarInformeEstudiantePDF(doc, Object.assign({}, datos, {
+      elaboradoPor: facilitadorEstudiantesActual.facilitador.nombre,
+      fechaGeneracion: new Date().toLocaleDateString("es-DO"),
+    }));
+    window.open(doc.output("bloburl"), "_blank");
   }
 
   function descargarInformeIndividualDesdeSede(idx) {
