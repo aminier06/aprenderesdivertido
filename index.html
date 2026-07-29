@@ -13524,8 +13524,13 @@ const respuestasTexto = {
     mensaje.textContent = "Guardando...";
     mensaje.className = "mensaje";
 
-    llamarBackend(
-      {
+    // Igual que en guardarInformeSedeActual: un POST real en vez de meter
+    // el texto en la URL, para que una descripción larga no falle con un
+    // error genérico de conexión.
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         accion: "guardarInformeEstudiante",
         cedula: usuarioActual.cedula,
         payload: JSON.stringify({
@@ -13533,8 +13538,10 @@ const respuestasTexto = {
           idEstudiante: estudianteInformeActual,
           descripcionAvances: descripcion,
         }),
-      },
-      function(resp) {
+      }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(resp) {
         if (!resp || !resp.ok) {
           mensaje.textContent = (resp && resp.mensaje) || "No se pudo guardar el informe.";
           mensaje.className = "mensaje error";
@@ -13545,8 +13552,11 @@ const respuestasTexto = {
         if (datosEstudianteInformeActual) datosEstudianteInformeActual.descripcionAvances = descripcion;
         document.getElementById("btnEliminarInformeEstudiante").classList.remove("oculto");
         cargarListaEstudiantesInformes(); // refresca la barra de progreso
-      }
-    );
+      })
+      .catch(function() {
+        mensaje.textContent = "No se pudo conectar con el servidor para guardar el informe.";
+        mensaje.className = "mensaje error";
+      });
   }
 
   function eliminarInformeEstudianteActual() {
@@ -14792,16 +14802,26 @@ const respuestasTexto = {
     mensaje.textContent = "Guardando...";
     mensaje.className = "mensaje";
 
-    llamarBackend(
-      {
+    // Antes esto usaba llamarBackend() (JSONP: todo el texto va metido en la
+    // URL de un <script src="...">). Con un texto largo (fortalezas +
+    // oportunidades + acuerdos), esa URL podía superar el límite que el
+    // navegador o el propio servidor aceptan, y la petición fallaba con un
+    // error genérico de "no se pudo conectar" que en realidad no tenía nada
+    // que ver con la conexión a internet. Un POST real no tiene ese límite.
+    fetch(URL_SCRIPT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         accion: "guardarInformeSede",
         cedula: usuarioActual.cedula,
         payload: JSON.stringify({
           cedula: usuarioActual.cedula, centroSede: centroSede,
           fortalezasObservadas: fortalezas, oportunidadesMejora: oportunidades, acuerdosRealizados: acuerdos,
         }),
-      },
-      function(resp) {
+      }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(resp) {
         if (!resp || !resp.ok) {
           mensaje.textContent = (resp && resp.mensaje) || "No se pudo guardar el informe.";
           mensaje.className = "mensaje error";
@@ -14814,8 +14834,11 @@ const respuestasTexto = {
           datosInformeSedeActual.oportunidadesMejora = oportunidades;
           datosInformeSedeActual.acuerdosRealizados = acuerdos;
         }
-      }
-    );
+      })
+      .catch(function() {
+        mensaje.textContent = "No se pudo conectar con el servidor para guardar el informe.";
+        mensaje.className = "mensaje error";
+      });
   }
 
   function construirTextoInformeSede() {
