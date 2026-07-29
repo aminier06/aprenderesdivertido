@@ -3901,6 +3901,7 @@
 
         <div id="bloqueEscrituraInformeSede" class="bloque-formulario" style="margin-top:14px;">
           <div id="avisoInformeFinalizado" class="mensaje ok oculto"></div>
+          <button type="button" id="btnReabrirInformeSede" class="btn-secundario oculto" onclick="reabrirInformeSedeActual()" style="margin-bottom:10px;">Reabrir informe (solo administrador)</button>
           <label for="informeSedeFortalezas">Fortalezas observadas</label>
           <textarea id="informeSedeFortalezas" rows="4" placeholder="Logros de la sede durante el campamento..."></textarea>
           <label for="informeSedeOportunidades" style="margin-top:10px; display:block;">Oportunidades de mejora</label>
@@ -14326,6 +14327,35 @@ const respuestasTexto = {
     );
   }
 
+  function reabrirInformeSedeActual() {
+    const centroSede = (document.getElementById("informeSedeSelector") && document.getElementById("informeSedeSelector").value) ||
+      (datosInformeSedeActual && datosInformeSedeActual.centroSede);
+    if (!centroSede) return;
+    if (!confirm("¿Reabrir este informe? El coordinador de sede podrá volver a editarlo.")) return;
+
+    const mensaje = document.getElementById("mensajeInformeSede");
+    mensaje.textContent = "Reabriendo...";
+    mensaje.className = "mensaje";
+
+    llamarBackend(
+      { accion: "reabrirInformeSede", cedula: usuarioActual.cedula, payload: JSON.stringify({ cedula: usuarioActual.cedula, centroSede: centroSede }) },
+      function(resp) {
+        if (!resp || !resp.ok) {
+          mensaje.textContent = (resp && resp.mensaje) || "No se pudo reabrir el informe.";
+          mensaje.className = "mensaje error";
+          return;
+        }
+        mensaje.textContent = resp.mensaje || "Informe reabierto.";
+        mensaje.className = "mensaje ok";
+        if (document.getElementById("informeSedeSelector") && document.getElementById("informeSedeSelector").value) {
+          cargarInformeSedeSeleccionada();
+        } else if (sedeSupervisionSeleccionada) {
+          cargarInformeSedeParaSupervision();
+        }
+      }
+    );
+  }
+
   /* ---------------------- COORDINADOR: por sede ---------------------- */
 
   function cargarModuloInformesCoordinador() {
@@ -14557,9 +14587,11 @@ const respuestasTexto = {
       avisoFinalizado.textContent = "Este informe fue finalizado" + (fecha ? " el " + fecha : "") + " y ya no admite ediciones.";
       avisoFinalizado.classList.remove("oculto");
       document.getElementById("btnFinalizarInformeSede").classList.add("oculto");
+      document.getElementById("btnReabrirInformeSede").classList.toggle("oculto", !esAdministradorReal());
     } else {
       avisoFinalizado.classList.add("oculto");
       document.getElementById("btnFinalizarInformeSede").classList.toggle("oculto", !puedeEditar);
+      document.getElementById("btnReabrirInformeSede").classList.add("oculto");
     }
   }
 
